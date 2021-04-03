@@ -120,7 +120,8 @@ def scan_traces(*traces, model = None, n_features = 400, shift = 10, global_norm
     #  predict = getattr(model, predict_method_name)
     #  predict(windows, *args, **kwargs)
     #  args and kwargs for predict pass as function arguments
-    scores = model.predict(windows, verbose = True, batch_size = batch_size)
+    # TODO: or rather pass a method as a parameter, like predict(model, *args, **kwargs)
+    scores = model.predict(windows, verbose = False, batch_size = batch_size)
 
     return scores
 
