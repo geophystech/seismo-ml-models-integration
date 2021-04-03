@@ -85,7 +85,7 @@ if __name__ == '__main__':
             None
 
         try:
-            date = UTCDateTime(params_dict[p_name])
+            return UTCDateTime(params_dict[p_name])
         except TypeError as e:
             print(f'Failed to parse "{p_name}" parameter (value: {params_dict[p_name]}).'
                   f' Use {__file__} -h for date format information.')
@@ -121,19 +121,21 @@ if __name__ == '__main__':
 
     except ModuleNotFoundError as e:
         print(f'Cannot find module \'{params["model_loader_module"]}\' specified as \'model_loader_module\' parameter!')
+        sys.exit(1)
     except AttributeError as e:
         print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
               f' as \'model_loader_name\' parameter: {e}')
+        sys.exit(1)
+    except Exception as e:
+        print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
+              f' as \'model_loader_name\' parameter: {e}')
+        raise
 
     # Main loop
-    # TODO: start_dt and end_dt make as loadable arguments
-    start_dt = UTCDateTime(date_str(2014, 9, 28, 12, 3, 2.5))
-    end_dt = UTCDateTime(date_str(2014, 10, 5, 12, 3, 2.5))
-
-    current_dt = start_dt
+    current_dt = start_date
     current_end_dt = None
-    if end_dt.year == current_dt.year and end_dt.julday == current_dt.julday:
-        current_end_dt = end_dt
+    if end_date.year == current_dt.year and end_date.julday == current_dt.julday:
+        current_end_dt = end_date
 
     # FOR TESTING ONLY
     allowed_archives = [params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHE.2014.274',
