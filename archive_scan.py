@@ -10,11 +10,11 @@ from obspy import read
 import numpy as np
 
 import argparse
-
+import sys
 if __name__ == '__main__':
-
     # Set default parameters
     params = {'day_length': 60. * 60 * 24,
+              'default_start_shift': 60 * 60 * 30,
               'config': 'config.ini',
               'verbosity': 1,
               'frequency': 100.,
@@ -76,7 +76,34 @@ if __name__ == '__main__':
     params = parse_ini(params['config'], params, param_set = param_set)  # load config
     convert_params(params, param_types)  # and convert types
 
-    # TODO: Check start_date and end_date params and set them if not provided
+    # Set start and end date
+    def parse_date_param(params_dict, p_name):
+        """
+        Parse parameter from dictionary to UTCDateTime type.
+        """
+        if p_name not in params_dict:
+            None
+
+        try:
+            date = UTCDateTime(params_dict[p_name])
+        except TypeError as e:
+            print(f'Failed to parse "{p_name}" parameter (value: {params_dict[p_name]}).'
+                  f' Use {__file__} -h for date format information.')
+            sys.exit(1)
+        except Exception as e:
+            print(f'Failed to parse "{p_name}" parameter (value: {params_dict[p_name]}).'
+                  f' Use {__file__} -h for date format information.')
+            raise
+
+    end_date = parse_date_param(params, 'end_date')
+    start_date = parse_date_param(params, 'start_date')
+
+    # Default start and/or end dates:
+    if end_date is None:
+        end_date = UTCDateTime()
+    if start_date is None:
+        start_date = UTCDateTime() - params['default_start_shift']
+
     # TODO: Add required arguments/parameters check, e.g. multplt_path, seisan_path, ...
 
     # Parse MULTPLT.DEF and SEISAN.DEF
