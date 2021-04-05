@@ -1,6 +1,7 @@
 from utils import predict
 from utils.ini import parse_ini, convert_params
 from utils.seisan import parse_multplt, parse_seisan_def, date_str, archive_to_path
+from utils.print_tools import progress_bar
 
 import importlib
 
@@ -21,7 +22,8 @@ if __name__ == '__main__':
               'model_path': None,
               'weights_path': None,
               'start_date': None,
-              'end_date': None}
+              'end_date': None,
+              'verbose': 1}
 
     param_set = []
 
@@ -30,11 +32,11 @@ if __name__ == '__main__':
                    'model_labels': int,
                    'positive_labels': int,
                    'day_length': float,
-                   'verbosity': int}
+                   'verbose': int}
 
     # Params help messages
     param_helps = {'config': 'path to the config file, default: "config.ini"',
-                   'verbosity': '0 - non verbose, 1 - verbose',
+                   'verbose': '0 - non verbose, 1 - verbose',
                    'frequency': 'base stream frequency, default: 100 (Hz)',
                    'output_file': 'output text file name, default: "out.txt"',
                    'multplt_path': 'path to MULTPLT.DEF file',
@@ -145,10 +147,14 @@ if __name__ == '__main__':
     detected_peaks = []  # TODO: maybe print detected peaks for every trace, not for the whole dataset?
 
     # TODO: Implement progress bar
-    #  Disable keras verbose output
-    while current_dt < end_dt:
+    # TODO: Check for verbose
+    while current_dt < end_date:
+
+        stream_count = 0  # .. for progress bar info
 
         for archive_list in seisan_parsed:
+
+            stream_count += 1
 
             # Archives path and meta data
             archive_data = archive_to_path(archive_list, current_dt, params['archives_path'], params['channel_order'])
@@ -163,7 +169,7 @@ if __name__ == '__main__':
 
                 if ch in archive_data:
 
-                    if archive_data[ch] in allowed_archives:  # TODO: remove following condition
+                    if archive_data[ch] in allowed_archives:  # TODO: remove this condition
                         streams.append(read(archive_data[ch]))
 
                         channel = None
@@ -219,7 +225,23 @@ if __name__ == '__main__':
                 continue
 
             # Process data
-            for i in range(len(streams[0])):
+            total_streams = len(streams[0])
+            for i in range(total_streams):
+
+                # TODO: Add info about which stream out of X
+                if params['verbose'] > 0:
+
+                    meta = archive_data['meta']
+
+                    prefix = f'{current_dt.strftime("%d.%m.%y")} ' \
+                             f'[{stream_count} archive out of {len(seisan_parsed)}] : ['
+                    postfix = f'] ' \
+                              f'{meta["station"]}.' \
+                              f'{meta["network_code"]}' \
+                              f'.{meta["location_code"]}'
+
+                    progress_bar(i / total_streams, 40, add_space_around = False,
+                                 prefix = prefix, postfix = postfix)
 
                 traces = [stream[i] for stream in streams]  # get traces
                 scores = predict.scan_traces(*traces, model=model)  # predict
@@ -273,7 +295,7 @@ if __name__ == '__main__':
         current_dt = UTCDateTime(date_str(current_dt.year, current_dt.month, current_dt.day))
 
         current_end_dt = None
-        if end_dt.year == current_dt.year and end_dt.julday == current_dt.julday:
-            current_end_dt = end_dt
+        if end_date.year == current_dt.year and end_date.julday == current_dt.julday:
+            current_end_dt = end_date
 
     predict.print_results(detected_peaks, params['output_file'])
