@@ -37,3 +37,14 @@ seisan/earthworm integration scripts to process seismology data using machine le
 ```--end_date END_DATE```   end date in ISO 8601 format
 <br><br>
 ```--threshold THRESHOLD``` model prediction threshold
+
+
+## Deployment:
+1. ```git clone https://github.com/Syler1984/seismo-ml-models-integration```
+2. ```virtualenv seismo-venv``` - better do in home dir
+3. ```source seismo-venv/bin/activate```
+4. ```pip install -r requirements.txt```
+5. In *test/config.ini* specify MULTPLT.DEF path
+6. ```python archive_scan.py --config test/config.ini```
+7. Read results in *out.txt*
+8. ```python archive_scan -h``` for more info
