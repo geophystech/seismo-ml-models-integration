@@ -141,6 +141,11 @@ def archive_to_path(arch, date, archives_path, allowed_channel_dims):
     julday = date.julday
     year = date.year
 
+    if julday // 10 == 0:
+        julday = '00' + f'{julday}'
+    elif julday // 100 == 0:
+        julday = '0' + f'{julday}'
+
     d_result = {}
 
     # Metadata
