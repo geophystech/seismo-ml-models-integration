@@ -23,7 +23,8 @@ if __name__ == '__main__':
               'weights_path': None,
               'start_date': None,
               'end_date': None,
-              'verbose': 1}
+              'verbose': 1,
+              'threshold': 0.8}
 
     param_set = []
 
@@ -56,7 +57,8 @@ if __name__ == '__main__':
                                  '{year}-{month}-{day}T{hour}:{minute}:{second}\n'
                                  'or\n'
                                  '{year}-{month}-{day}\n'
-                                 'default: now'}
+                                 'default: now',
+                   'threshold': 'model prediction threshold'}
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(formatter_class = argparse.RawTextHelpFormatter)
@@ -140,6 +142,7 @@ if __name__ == '__main__':
         current_end_dt = end_date
 
     # FOR TESTING ONLY
+    # TODO: disable this when done with everything else.
     allowed_archives = [params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHE.2014.274',
                         params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHN.2014.274',
                         params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHZ.2014.274']
@@ -259,7 +262,7 @@ if __name__ == '__main__':
                     positives = predict.get_positives(restored_scores,
                                                       params['positive_labels'][label],
                                                       other_labels,
-                                                      min_threshold=0.95)
+                                                      min_threshold = params['threshold'])
 
                     predicted_labels[label] = positives
 
@@ -290,6 +293,11 @@ if __name__ == '__main__':
 
                         detected_peaks.append(prediction)
 
+                # TODO: Print detected peaks after done with the archive. Append them to output file.
+                #   Open file only when needed.
+                #   Catch file open exceptions, track exception on file occupied if this one even exists.
+                #   Create file with <file>.n (when n - first number available) and write into it.
+
         # Get new dates
         current_dt += params['day_length']
         current_dt = UTCDateTime(date_str(current_dt.year, current_dt.month, current_dt.day))
@@ -298,4 +306,6 @@ if __name__ == '__main__':
         if end_date.year == current_dt.year and end_date.julday == current_dt.julday:
             current_end_dt = end_date
 
+    # TODO: Sort detected peaks by datetime
+    #  Or maybe they are already sorted by the design of how algorithm is working?
     predict.print_results(detected_peaks, params['output_file'])
