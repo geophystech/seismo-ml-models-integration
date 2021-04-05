@@ -52,12 +52,12 @@ if __name__ == '__main__':
                                  '{year}-{month}-{day}\n'
                                  'default: yesterday midnight',
                    'end_date': 'end date in ISO 8601 format:\n'
-                                 '{year}-{month}-{day}T{hour}:{minute}:{second}.{microsecond}\n'
-                                 'or\n'
-                                 '{year}-{month}-{day}T{hour}:{minute}:{second}\n'
-                                 'or\n'
-                                 '{year}-{month}-{day}\n'
-                                 'default: now',
+                               '{year}-{month}-{day}T{hour}:{minute}:{second}.{microsecond}\n'
+                               'or\n'
+                               '{year}-{month}-{day}T{hour}:{minute}:{second}\n'
+                               'or\n'
+                               '{year}-{month}-{day}\n'
+                               'default: now',
                    'threshold': 'model prediction threshold'}
 
     # Parse command line arguments
@@ -143,14 +143,12 @@ if __name__ == '__main__':
 
     # FOR TESTING ONLY
     # TODO: disable this when done with everything else.
-    allowed_archives = [params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHE.2014.274',
-                        params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHN.2014.274',
-                        params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHZ.2014.274']
+    # allowed_archives = [params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHE.2014.274',
+                        # params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHN.2014.274',
+                        # params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHZ.2014.274']
 
     detected_peaks = []  # TODO: maybe print detected peaks for every trace, not for the whole dataset?
 
-    # TODO: Implement progress bar
-    # TODO: Check for verbose
     while current_dt < end_date:
 
         stream_count = 0  # .. for progress bar info
@@ -172,14 +170,14 @@ if __name__ == '__main__':
 
                 if ch in archive_data:
 
-                    if archive_data[ch] in allowed_archives:  # TODO: remove this condition
-                        streams.append(read(archive_data[ch]))
+                    # if archive_data[ch] in allowed_archives:  # TODO: remove this condition
+                    streams.append(read(archive_data[ch]))
 
-                        channel = None
-                        if ch in archive_data['meta']['channels']:
-                            channel = archive_data['meta']['channels'][ch]
+                    channel = None
+                    if ch in archive_data['meta']['channels']:
+                        channel = archive_data['meta']['channels'][ch]
 
-                        streams_channels[ch] = [channel, archive_data[ch]]
+                    streams_channels[ch] = [channel, archive_data[ch]]
 
             if len(streams) != len(params['channel_order']):
                 continue
