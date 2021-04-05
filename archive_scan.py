@@ -86,7 +86,9 @@ if __name__ == '__main__':
         Parse parameter from dictionary to UTCDateTime type.
         """
         if p_name not in params_dict:
-            None
+            return None
+        if params_dict[p_name] is None:
+            return None
 
         try:
             return UTCDateTime(params_dict[p_name])
@@ -229,6 +231,8 @@ if __name__ == '__main__':
             total_streams = len(streams[0])
             for i in range(total_streams):
 
+                detected_peaks = []
+
                 # TODO: Add info about which stream out of X
                 if params['verbose'] > 0:
 
@@ -246,6 +250,10 @@ if __name__ == '__main__':
 
                 traces = [stream[i] for stream in streams]  # get traces
                 scores = predict.scan_traces(*traces, model=model)  # predict
+
+                if scores is None:
+                    continue
+
                 restored_scores = predict.restore_scores(scores, (len(traces[0]), len(params['model_labels'])), 10)
 
                 # Get indexes of predicted events
@@ -291,6 +299,8 @@ if __name__ == '__main__':
 
                         detected_peaks.append(prediction)
 
+                predict.print_results(detected_peaks, params['output_file'])
+
                 # TODO: Print detected peaks after done with the archive. Append them to output file.
                 #   Open file only when needed.
                 #   Catch file open exceptions, track exception on file occupied if this one even exists.
@@ -304,6 +314,8 @@ if __name__ == '__main__':
         if end_date.year == current_dt.year and end_date.julday == current_dt.julday:
             current_end_dt = end_date
 
+        # predict.print_results(detected_peaks, params['output_file'])
+
     # TODO: Sort detected peaks by datetime
     #  Or maybe they are already sorted by the design of how algorithm is working?
-    predict.print_results(detected_peaks, params['output_file'])
+    # predict.print_results(detected_peaks, params['output_file'])

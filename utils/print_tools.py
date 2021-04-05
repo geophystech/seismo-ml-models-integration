@@ -27,16 +27,16 @@ def progress_bar(progress, characters_count = 20,
             postfix = ' ' + postfix
 
     if erase_line:
-        print('\r', end='')
+        print('\r', end = '')
 
     progress_num = int(characters_count * progress)
     if filled_edge is None:
-        print(prefix + filled_bar * progress_num + empty_bar * (characters_count - progress_num) + postfix)
+        print(prefix + filled_bar * progress_num + empty_bar * (characters_count - progress_num) + postfix, end = '')
     else:
         bar_str = prefix + filled_bar * progress_num
         bar_str += filled_edge * min(characters_count - progress_num, 1)
         bar_str += empty_bar * (characters_count - progress_num - 1)
         bar_str += postfix
 
-        print(bar_str)
+        print(bar_str, end = '')
 

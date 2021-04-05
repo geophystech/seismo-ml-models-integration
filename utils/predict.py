@@ -105,14 +105,22 @@ def scan_traces(*traces, model = None, n_features = 400, shift = 10, global_norm
 
     # Get sliding window arrays
     l_windows = []
-    for x in traces:
-        l_windows.append(sliding_window(x.data, n_features = n_features, n_shift = shift))
+    try:
+        for x in traces:
+            l_windows.append(sliding_window(x.data, n_features = n_features, n_shift = shift))
+    except Error as e:
+        return None
+
+    # TODO: this is quick fix: remove later
+    w_length = min([x.shape[0] for x in l_windows])
 
     # Prepare data
-    windows = np.zeros((l_windows[0].shape[0], n_features, len(l_windows)))
+    windows = np.zeros((w_length, n_features, len(l_windows)))
 
+    # print(f'x.data.shape: {x.data.shape}')
     for i in range(len(l_windows)):
-        windows[:, :, i] = l_windows[i]
+        # print(f'{i}: {l_windows[i].shape}')
+        windows[:, :, i] = l_windows[i][:w_length]
 
     # Predict
     # TODO: check if verbose can be numerical like .fit()
@@ -201,7 +209,7 @@ def print_results(detected_peaks, filename):
     """
     Prints out peaks in the file.
     """
-    with open(filename, 'w') as f:
+    with open(filename, 'a') as f:
 
         for record in detected_peaks:
 
