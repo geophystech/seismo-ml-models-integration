@@ -3,8 +3,8 @@ import tensorflow as tf
 
 # TODO: remove following code and move GPU support somehow to config settings
 # Just disables the warning, doesn't take advantage of AVX/FMA to run faster
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+# import os
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 def json_load(model_path, weights_path):
