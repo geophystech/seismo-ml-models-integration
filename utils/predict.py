@@ -105,11 +105,11 @@ def scan_traces(*traces, model = None, n_features = 400, shift = 10, global_norm
 
     # Get sliding window arrays
     l_windows = []
-    try:
-        for x in traces:
-            l_windows.append(sliding_window(x.data, n_features = n_features, n_shift = shift))
-    except Error as e:
-        return None
+    #try:
+    for x in traces:
+        l_windows.append(sliding_window(x.data, n_features = n_features, n_shift = shift))
+    #except Error as e:
+        #return None
 
     # TODO: this is quick fix: remove later
     w_length = min([x.shape[0] for x in l_windows])

@@ -12,10 +12,13 @@ import numpy as np
 
 import argparse
 import sys
+
+import matplotlib.pyplot as plt
+
 if __name__ == '__main__':
     # Set default parameters
     params = {'day_length': 60. * 60 * 24,
-              'default_start_shift': 60 * 60 * 30,
+              'default_start_shift': 60 * 60 * 35,
               'config': 'config.ini',
               'verbosity': 1,
               'frequency': 100.,
@@ -24,7 +27,7 @@ if __name__ == '__main__':
               'start_date': None,
               'end_date': None,
               'verbose': 1,
-              'threshold': 0.8}
+              'threshold': 0.98}
 
     param_set = []
 
@@ -128,14 +131,14 @@ if __name__ == '__main__':
     except ModuleNotFoundError as e:
         print(f'Cannot find module \'{params["model_loader_module"]}\' specified as \'model_loader_module\' parameter!')
         sys.exit(1)
-    except AttributeError as e:
-        print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
-              f' as \'model_loader_name\' parameter: {e}')
-        sys.exit(1)
-    except Exception as e:
-        print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
-              f' as \'model_loader_name\' parameter: {e}')
-        raise
+    #except AttributeError as e:
+        #print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
+         #     f' as \'model_loader_name\' parameter: {e}')
+        #sys.exit(1)
+    # except Exception as e:
+        # print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
+              # f' as \'model_loader_name\' parameter: {e}')
+        # raise
 
     # Main loop
     current_dt = start_date
@@ -150,6 +153,8 @@ if __name__ == '__main__':
                         # params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHZ.2014.274']
 
     detected_peaks = []  # TODO: maybe print detected peaks for every trace, not for the whole dataset?
+
+    plot_n = 0
 
     while current_dt < end_date:
 
@@ -300,6 +305,19 @@ if __name__ == '__main__':
                         detected_peaks.append(prediction)
 
                 predict.print_results(detected_peaks, params['output_file'])
+
+                if len(detected_peaks) > 0:
+                    # plot_n += 1
+                    for x in detected_peaks:
+                         
+                        f_name = f'{x["datetime"].strftime("%d_%m__%H_%M_%S")}.jpeg'
+                        plot_n += 1
+                        traces[0].plot(outfile = f'0_{f_name}')
+                        traces[1].plot(outfile = f'1_{f_name}')
+                        traces[2].plot(outfile = f'2_{f_name}')
+                        # plt.savefig(f_name)
+                        # plt.clf()
+                    
 
                 # TODO: Print detected peaks after done with the archive. Append them to output file.
                 #   Open file only when needed.
