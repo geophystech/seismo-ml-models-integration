@@ -27,7 +27,8 @@ if __name__ == '__main__':
               'start_date': None,
               'end_date': None,
               'verbose': 1,
-              'threshold': 0.98}
+              'threshold': 0.95,
+              'plot_path': None}
 
     param_set = []
 
@@ -47,6 +48,7 @@ if __name__ == '__main__':
                    'seisan_path': 'path to SEISAN.DEF',
                    'model_path': 'path to model file, might be empty with in-code initialized models',
                    'weights_path': 'path to model weights file',
+                   'plot_path': 'path for plot saving (do not specify to disable plots)',
                    'start_date': 'start date in ISO 8601 format:\n'
                                  '{year}-{month}-{day}T{hour}:{minute}:{second}.{microsecond}\n'
                                  'or\n'
@@ -152,6 +154,8 @@ if __name__ == '__main__':
                         # params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHN.2014.274',
                         # params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHZ.2014.274']
 
+    # TODO: add option for plots path 
+
     detected_peaks = []  # TODO: maybe print detected peaks for every trace, not for the whole dataset?
 
     plot_n = 0
@@ -173,18 +177,22 @@ if __name__ == '__main__':
             # Data for detailed output
             streams_channels = {}  # .. channel type: [full channel, file name]
 
-            for ch in params['channel_order']:
+            try:
+                for ch in params['channel_order']:
 
-                if ch in archive_data:
+                    if ch in archive_data:
 
-                    # if archive_data[ch] in allowed_archives:  # TODO: remove this condition
-                    streams.append(read(archive_data[ch]))
+                        # if archive_data[ch] in allowed_archives:  # TODO: remove this condition
+                        streams.append(read(archive_data[ch]))
 
-                    channel = None
-                    if ch in archive_data['meta']['channels']:
-                        channel = archive_data['meta']['channels'][ch]
+                        channel = None
+                        if ch in archive_data['meta']['channels']:
+                            channel = archive_data['meta']['channels'][ch]
 
-                    streams_channels[ch] = [channel, archive_data[ch]]
+                        streams_channels[ch] = [channel, archive_data[ch]]
+            except FileNotFoundError as e:
+                # TODO: log this in warnings!
+                continue
 
             if len(streams) != len(params['channel_order']):
                 continue
@@ -306,17 +314,19 @@ if __name__ == '__main__':
 
                 predict.print_results(detected_peaks, params['output_file'])
 
-                if len(detected_peaks) > 0:
-                    # plot_n += 1
-                    for x in detected_peaks:
-                         
-                        f_name = f'{x["datetime"].strftime("%d_%m__%H_%M_%S")}.jpeg'
-                        plot_n += 1
-                        traces[0].plot(outfile = f'0_{f_name}')
-                        traces[1].plot(outfile = f'1_{f_name}')
-                        traces[2].plot(outfile = f'2_{f_name}')
-                        # plt.savefig(f_name)
-                        # plt.clf()
+
+                if params['plot_path']:
+                    if len(detected_peaks) > 0:
+                        # plot_n += 1
+                        for x in detected_peaks:
+                             
+                            f_name = f'{x["pseudo-probability"]}_{x["station"]}_{x["datetime"].strftime("%d_%m__%H_%M_%S")}'
+                            plot_n += 1
+                            traces[0].plot(outfile = f'{f_name}_0.jpeg')
+                            traces[1].plot(outfile = f'{f_name}_1.jpeg')
+                            traces[2].plot(outfile = f'{f_name}_2.jpeg')
+                            # plt.savefig(f_name)
+                            # plt.clf()
                     
 
                 # TODO: Print detected peaks after done with the archive. Append them to output file.
@@ -337,3 +347,7 @@ if __name__ == '__main__':
     # TODO: Sort detected peaks by datetime
     #  Or maybe they are already sorted by the design of how algorithm is working?
     # predict.print_results(detected_peaks, params['output_file'])
+
+    if params['verbose'] > 0:
+        print('\n', end = '')
+
