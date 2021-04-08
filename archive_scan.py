@@ -28,7 +28,8 @@ if __name__ == '__main__':
               'end_date': None,
               'verbose': 1,
               'threshold': 0.95,
-              'plot_path': None}
+              'plot_path': None,
+              'debug': 0}
 
     param_set = []
 
@@ -37,11 +38,13 @@ if __name__ == '__main__':
                    'model_labels': int,
                    'positive_labels': int,
                    'day_length': float,
-                   'verbose': int}
+                   'verbose': int,
+                   'debug': int}
 
     # Params help messages
     param_helps = {'config': 'path to the config file, default: "config.ini"',
-                   'verbose': '0 - non verbose, 1 - verbose',
+                   'verbose': '0 - non verbose, 1 - verbose, default: 1',
+                   'debug': '0 - do not print debug info, 1 - print debug info, defalut: 0',
                    'frequency': 'base stream frequency, default: 100 (Hz)',
                    'output_file': 'output text file name, default: "out.txt"',
                    'multplt_path': 'path to MULTPLT.DEF file',
@@ -133,14 +136,14 @@ if __name__ == '__main__':
     except ModuleNotFoundError as e:
         print(f'Cannot find module \'{params["model_loader_module"]}\' specified as \'model_loader_module\' parameter!')
         sys.exit(1)
-    #except AttributeError as e:
-        #print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
-         #     f' as \'model_loader_name\' parameter: {e}')
-        #sys.exit(1)
-    # except Exception as e:
-        # print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
-              # f' as \'model_loader_name\' parameter: {e}')
-        # raise
+    except AttributeError as e:
+        print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
+              f' as \'model_loader_name\' parameter: {e}')
+        sys.exit(1)
+    except Exception as e:
+        print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
+              f' as \'model_loader_name\' parameter: {e}')
+        raise
 
     # Main loop
     current_dt = start_date
@@ -154,7 +157,10 @@ if __name__ == '__main__':
                         # params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHN.2014.274',
                         # params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHZ.2014.274']
 
-    # TODO: add option for plots path 
+    # TODO: Add timestamp print if debug build
+    if params['debug'] > 0:
+        print(f'DEBUG: start_date = {start_date}',
+              f'DEBUG: end_date = {end_date}', sep = '\n')
 
     detected_peaks = []  # TODO: maybe print detected peaks for every trace, not for the whole dataset?
 
