@@ -2,6 +2,7 @@ import numpy as np
 import obspy.core as oc
 from scipy.signal import find_peaks
 import math
+import matplotlib.pyplot as plt
 
 
 def sliding_window(data, n_features, n_shift):
@@ -238,3 +239,81 @@ def print_results(detected_peaks, filename):
 
             # Write
             f.write(line)
+
+
+def plot_results(detected_peaks, traces, path, event_padding = 10., ignore_threshold = 4.):
+    """
+    Plots detected peaks on traces to specified path.
+    :param event_padding - float number of seconds before end after each event to plot.
+
+    TODO:
+        I want to plot every event and some padding around it, and i also want to make sure
+        that if there are multiple events on the same plot, this will be displayed as well
+        so i need:
+            1. Go through every event in detected_peaks:
+                then, for every trace:
+                    2. Find start and end time of the plot based on the event time
+                    3. Make sure that end time and start time are inside the trace based on the trace.stats.start_time
+                            and trace.stats.end_time
+                    4. Find all additional events which should be on this plot (between start time and end time)
+                    5. Using trace.stats.start_time/end_time get start and end sample positions.
+                    6. Plot every event and the waveform itself.
+                    7. Don't forget legend, colors (try to emulate ObsPy black-and-white style),
+                            axis, archive name, plot name.
+                    8. Do plot per trace, and then try to do one plot for everything.
+
+    TODO: also check event_padding for correctness.
+
+    """
+    ignore_idxs = []
+
+    for i, record in enumerate(detected_peaks):
+
+        # Get start and end plot times for each trace.
+        event_time = record['datetime']
+
+        start_time = event_time - event_padding
+        end_time = event_time + event_padding
+
+        t_starts = [trace.stats.starttime for trace in traces]
+        t_ends = [trace.stats.endtime for trace in traces]
+
+        starts = [max(x, start_time) for x in t_starts]
+        ends = [min(x, end_time) for x in t_ends]
+
+        # TODO: I might want to redo starts and ends to make it that way
+        #           that it will actually take same time range for every plot,
+        #           right now it's different range per every trace.
+
+        # Find all additional events which should be plotted.
+        additional_peaks = []
+
+        for k in range(len(traces)):
+
+            current_peaks = []
+
+            for j, j_record in enumerate(detected_peaks):
+
+                e_time = j_record['datetime']
+
+                if starts[k] <= e_time <= ends[k]:
+                    current_peaks.append(j_record)
+
+                    if j not in ignore_idxs and abs(e_time - event_time) < ignore_threshold:
+                        ignore_idxs.append(j)
+
+            additional_peaks.append(current_peaks)
+
+        # Plot event.
+        for j, trace in enumerate(traces):
+
+            file_name = f'{path}event_{i}_{j}.jpeg'
+
+            # Get start and end samples
+            freq = trace.stats.sampling_rate
+            start_sample = int((starts[j] - t_starts[j]) * freq)
+            end_sample = int((ends[j] - t_starts[j]) * freq)
+
+            plt.plot(trace[start_sample : end_sample])
+            plt.savefig(file_name)
+            plt.clf()

@@ -88,6 +88,10 @@ if __name__ == '__main__':
     params = parse_ini(params['config'], params, param_set = param_set)  # load config
     convert_params(params, param_types)  # and convert types
 
+    # TODO: improve plotting: limit to params defined amount of seconds around the peak, highlight peak
+    # TODO: check all path parameters for validity.
+    #           also add / to all directory path parameters if missing.
+
     # Set start and end date
     def parse_date_param(params_dict, p_name):
         """
@@ -306,8 +310,8 @@ if __name__ == '__main__':
 
                 # Prepare output data
                 for typ in predicted_timestamps:
-
                     for pred in predicted_timestamps[typ]:
+
                         prediction = {'type': typ,
                                       'datetime': pred[0],
                                       'pseudo-probability': pred[1],
@@ -321,20 +325,10 @@ if __name__ == '__main__':
                 predict.print_results(detected_peaks, params['output_file'])
 
 
+                # TODO: write function which plots results, it takes plot path, traces array and predicted_timestamps
                 if params['plot_path']:
-                    if len(detected_peaks) > 0:
-                        # plot_n += 1
-                        for x in detected_peaks:
-                             
-                            f_name = f'{x["pseudo-probability"]}_{x["station"]}_{x["datetime"].strftime("%d_%m__%H_%M_%S")}'
-                            plot_n += 1
-                            traces[0].plot(outfile = f'{f_name}_0.jpeg')
-                            traces[1].plot(outfile = f'{f_name}_1.jpeg')
-                            traces[2].plot(outfile = f'{f_name}_2.jpeg')
-                            # plt.savefig(f_name)
-                            # plt.clf()
+                    predict.plot_results(detected_peaks, traces, params['plot_path'])
                     
-
                 # TODO: Print detected peaks after done with the archive. Append them to output file.
                 #   Open file only when needed.
                 #   Catch file open exceptions, track exception on file occupied if this one even exists.
