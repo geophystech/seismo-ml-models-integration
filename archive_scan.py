@@ -15,6 +15,13 @@ import sys
 
 import matplotlib.pyplot as plt
 
+# TODO: Fix this:
+#      File "archive_scan.py", line 275, in <module>
+#        scores = predict.scan_traces(*traces, model=model)  # predict
+#      File "/opt/seisan/WOR/chernykh/dev/seismo-ml-models-integration/utils/predict.py", line 120, in scan_traces
+#        windows = np.zeros((w_length, n_features, len(l_windows)))
+#      MemoryError: Unable to allocate 7.72 GiB for an array with shape (863947, 400, 3) and data type float64
+
 if __name__ == '__main__':
     # Set default parameters
     params = {'day_length': 60. * 60 * 24,
@@ -22,6 +29,7 @@ if __name__ == '__main__':
               'config': 'config.ini',
               'verbosity': 1,
               'frequency': 100.,
+              'batch_size': 50000,
               'model_path': None,
               'weights_path': None,
               'start_date': None,
@@ -39,7 +47,8 @@ if __name__ == '__main__':
                    'positive_labels': int,
                    'day_length': float,
                    'verbose': int,
-                   'debug': int}
+                   'debug': int,
+                   'batch_size': int}
 
     # Params help messages
     param_helps = {'config': 'path to the config file, default: "config.ini"',
@@ -87,6 +96,8 @@ if __name__ == '__main__':
     # Parse config file
     params = parse_ini(params['config'], params, param_set = param_set)  # load config
     convert_params(params, param_types)  # and convert types
+
+    # TODO: add setup if no config specified. Some of it already stashed in git.
 
     # TODO: improve plotting: limit to params defined amount of seconds around the peak, highlight peak
     # TODO: check all path parameters for validity.
@@ -157,9 +168,10 @@ if __name__ == '__main__':
 
     # FOR TESTING ONLY
     # TODO: disable this when done with everything else.
-    # allowed_archives = [params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHE.2014.274',
-                        # params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHN.2014.274',
-                        # params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHZ.2014.274']
+    # 2014.10.01
+    allowed_archives = [params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHE.2014.274',
+                        params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHN.2014.274',
+                        params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHZ.2014.274']
 
     # TODO: Add timestamp print if debug build
     if params['debug'] > 0:
@@ -192,14 +204,14 @@ if __name__ == '__main__':
 
                     if ch in archive_data:
 
-                        # if archive_data[ch] in allowed_archives:  # TODO: remove this condition
-                        streams.append(read(archive_data[ch]))
+                        if archive_data[ch] in allowed_archives:  # TODO: remove this condition
+                            streams.append(read(archive_data[ch]))
 
-                        channel = None
-                        if ch in archive_data['meta']['channels']:
-                            channel = archive_data['meta']['channels'][ch]
+                            channel = None
+                            if ch in archive_data['meta']['channels']:
+                                channel = archive_data['meta']['channels'][ch]
 
-                        streams_channels[ch] = [channel, archive_data[ch]]
+                            streams_channels[ch] = [channel, archive_data[ch]]
             except FileNotFoundError as e:
                 # TODO: log this in warnings!
                 continue
@@ -272,67 +284,101 @@ if __name__ == '__main__':
                                  prefix = prefix, postfix = postfix)
 
                 traces = [stream[i] for stream in streams]  # get traces
-                scores = predict.scan_traces(*traces, model=model)  # predict
 
-                if scores is None:
-                    continue
+                # TODO: add trace data batching
+                # params['batch_size']
 
-                restored_scores = predict.restore_scores(scores, (len(traces[0]), len(params['model_labels'])), 10)
+                start_time = max([trace.stats.starttime for trace in traces])
+                end_time = min([trace.stats.endtime for trace in traces])
 
-                # Get indexes of predicted events
-                predicted_labels = {}
-                for label in params['positive_labels']:
+                # TODO: trim all traces
 
-                    other_labels = []
-                    for k in params['model_labels']:
-                        if k != label:
-                            other_labels.append(params['model_labels'][k])
+                for j in range(len(traces)):
+                    traces[j] = traces[j].slice(start_time, end_time)
 
-                    positives = predict.get_positives(restored_scores,
-                                                      params['positive_labels'][label],
-                                                      other_labels,
-                                                      min_threshold = params['threshold'])
+                # TODO: Move everything into another inner loop
+                trace_length = traces[0].data.shape[0]
+                last_batch = trace_length % params['batch_size']
+                batch_count = trace_length // params['batch_size'] + 1 \
+                    if last_batch \
+                    else trace_length // params['batch_size']
+                freq = traces[0].stats.sampling_rate
 
-                    predicted_labels[label] = positives
+                # TODO: Do this loop through and generator object that will return batch_size for every iteration
+                #       for b_size in batch_size_generator:
+                #       google how other generators work (range, etc.) and how to write new one.
+                for b in range(batch_count):
 
-                # Convert indexes to datetime
-                predicted_timestamps = {}
-                for label in predicted_labels:
+                    b_size = params['batch_size']
+                    if b == batch_count - 1 and last_batch:
+                        b_size = last_batch
 
-                    tmp_prediction_dates = []
-                    for prediction in predicted_labels[label]:
-                        starttime = traces[0].stats.starttime
+                    start_pos = b * batch_count
+                    end_pos = start_pos + b_size
+                    t_start = traces[0].stats.starttime
 
-                        # Get prediction UTCDateTime and model pseudo-probability
-                        tmp_prediction_dates.append([starttime + (prediction[0] / params['frequency']), prediction[1]])
+                    batches = [trace.slice(t_start + start_pos / freq, t_start + end_pos / freq) for trace in traces]
 
-                    predicted_timestamps[label] = tmp_prediction_dates
+                    scores = predict.scan_traces(*batches, model=model)  # predict
 
-                # Prepare output data
-                for typ in predicted_timestamps:
-                    for pred in predicted_timestamps[typ]:
+                    if scores is None:
+                        continue
 
-                        prediction = {'type': typ,
-                                      'datetime': pred[0],
-                                      'pseudo-probability': pred[1],
-                                      'channels': streams_channels,
-                                      'station': archive_data['meta']['station'],
-                                      'location_code': archive_data['meta']['location_code'],
-                                      'network_code': archive_data['meta']['network_code']}
+                    restored_scores = predict.restore_scores(scores, (len(batches[0]), len(params['model_labels'])), 10)
 
-                        detected_peaks.append(prediction)
+                    # Get indexes of predicted events
+                    predicted_labels = {}
+                    for label in params['positive_labels']:
 
-                predict.print_results(detected_peaks, params['output_file'])
+                        other_labels = []
+                        for k in params['model_labels']:
+                            if k != label:
+                                other_labels.append(params['model_labels'][k])
 
+                        positives = predict.get_positives(restored_scores,
+                                                          params['positive_labels'][label],
+                                                          other_labels,
+                                                          min_threshold = params['threshold'])
 
-                # TODO: write function which plots results, it takes plot path, traces array and predicted_timestamps
-                if params['plot_path']:
-                    predict.plot_results(detected_peaks, traces, params['plot_path'])
-                    
-                # TODO: Print detected peaks after done with the archive. Append them to output file.
-                #   Open file only when needed.
-                #   Catch file open exceptions, track exception on file occupied if this one even exists.
-                #   Create file with <file>.n (when n - first number available) and write into it.
+                        predicted_labels[label] = positives
+
+                    # Convert indexes to datetime
+                    predicted_timestamps = {}
+                    for label in predicted_labels:
+
+                        tmp_prediction_dates = []
+                        for prediction in predicted_labels[label]:
+                            starttime = traces[0].stats.starttime
+
+                            # Get prediction UTCDateTime and model pseudo-probability
+                            tmp_prediction_dates.append([starttime + (prediction[0] / params['frequency']), prediction[1]])
+
+                        predicted_timestamps[label] = tmp_prediction_dates
+
+                    # Prepare output data
+                    for typ in predicted_timestamps:
+                        for pred in predicted_timestamps[typ]:
+
+                            prediction = {'type': typ,
+                                          'datetime': pred[0],
+                                          'pseudo-probability': pred[1],
+                                          'channels': streams_channels,
+                                          'station': archive_data['meta']['station'],
+                                          'location_code': archive_data['meta']['location_code'],
+                                          'network_code': archive_data['meta']['network_code']}
+
+                            detected_peaks.append(prediction)
+
+                    predict.print_results(detected_peaks, params['output_file'])
+
+                    # TODO: write function which plots results, it takes plot path, traces array and predicted_timestamps
+                    if params['plot_path']:
+                        predict.plot_results(detected_peaks, traces, params['plot_path'])
+
+                    # TODO: Print detected peaks after done with the archive. Append them to output file.
+                    #   Open file only when needed.
+                    #   Catch file open exceptions, track exception on file occupied if this one even exists.
+                    #   Create file with <file>.n (when n - first number available) and write into it.
 
         # Get new dates
         current_dt += params['day_length']
@@ -350,4 +396,3 @@ if __name__ == '__main__':
 
     if params['verbose'] > 0:
         print('\n', end = '')
-
