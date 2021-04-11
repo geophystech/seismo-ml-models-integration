@@ -3,6 +3,7 @@ import obspy.core as oc
 from scipy.signal import find_peaks
 import math
 import matplotlib.pyplot as plt
+from utils.math_helper import normal_d, insert_np
 
 
 def sliding_window(data, n_features, n_shift):
@@ -241,10 +242,9 @@ def print_results(detected_peaks, filename):
             f.write(line)
 
 
-def plot_results(detected_peaks, traces, path, event_padding = 10., ignore_threshold = 4.):
+def plot_results(detected_peaks, traces, path, event_padding = 10., ignore_threshold = 4., event_length = 4.):
     """
     Plots detected peaks on traces to specified path.
-    :param event_padding - float number of seconds before end after each event to plot.
 
     TODO:
         I want to plot every event and some padding around it, and i also want to make sure
@@ -309,11 +309,42 @@ def plot_results(detected_peaks, traces, path, event_padding = 10., ignore_thres
 
             file_name = f'{path}event_{i}_{j}.jpeg'
 
+            # TODO: mark event, for example, by plotting some sort of normal distribution on top of event sample.
+
+            # TODO: scale event according to trace size
+
             # Get start and end samples
             freq = trace.stats.sampling_rate
             start_sample = int((starts[j] - t_starts[j]) * freq)
             end_sample = int((ends[j] - t_starts[j]) * freq)
+            length = end_sample - start_sample
 
+            # Plot trace
             plt.plot(trace[start_sample : end_sample])
+
+            # Plot main event
+            event_start_sample = int((event_time - event_length/2 - starts[j]) * freq)
+            event_end_sample = int((event_time + event_length/2 - ends[j]) * freq)
+            event_np_length = abs(event_end_sample - event_start_sample)
+
+            y = np.zeros(length)
+            insert_np(normal_d(event_np_length), y, event_start_sample)
+
+            plt.plot(y)
+
+            for e in additional_peaks[j]:
+
+                e_time = j_record['datetime']
+                e_sample = int((e_time - t_starts[j]) * freq)
+
+                e_start_sample = int((e_time - event_length/2 - starts[j]) * freq)
+                e_end_sample = int((e_time + event_length/2 - ends[j]) * freq)
+                e_np_length = abs(e_end_sample - e_start_sample)
+
+                e_y = np.zeros(length)
+                insert_np(normal_d(e_np_length), y, e_start_sample)
+
+                plt.plot(e_y)
+
             plt.savefig(file_name)
             plt.clf()
