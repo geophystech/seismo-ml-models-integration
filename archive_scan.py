@@ -204,14 +204,14 @@ if __name__ == '__main__':
 
                     if ch in archive_data:
 
-                        if archive_data[ch] in allowed_archives:  # TODO: remove this condition
-                            streams.append(read(archive_data[ch]))
+                        # if archive_data[ch] in allowed_archives:  # TODO: remove this condition
+                        streams.append(read(archive_data[ch]))
 
-                            channel = None
-                            if ch in archive_data['meta']['channels']:
-                                channel = archive_data['meta']['channels'][ch]
+                        channel = None
+                        if ch in archive_data['meta']['channels']:
+                            channel = archive_data['meta']['channels'][ch]
 
-                            streams_channels[ch] = [channel, archive_data[ch]]
+                        streams_channels[ch] = [channel, archive_data[ch]]
             except FileNotFoundError as e:
                 # TODO: log this in warnings!
                 continue
