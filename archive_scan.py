@@ -142,6 +142,9 @@ if __name__ == '__main__':
                                      allowed_channels = params['allowed_channel_types'])
 
     # Load model
+    # TODO: made parameters of the function through the array and unpack them to model loader.
+    # TODO: make 4 separate config files for each model/weights
+    # TODO: test them, fix bug, do PR
     try:
         model_loader = importlib.import_module(params['model_loader_module'])  # import loader module
         loader_call = getattr(model_loader, params['model_loader_name'])  # import loader function
