@@ -318,16 +318,6 @@ def load_model(model_path, weights_path):
                                num_classes = 3,
                                drop_out_rate = 0.1)
 
-    # model.load_weights('model.240K.V1.h5`')
-
-    # Fixate transformer wieghts
-    # for i in range(8, 16, 1):
-    # model.layers[i].trainable = False
-
-    # weights_path = 'WEIGHTS/model.240K.SAC.V3.h5'
-    # weights_path = 'WEIGHTS/model.240K.V1.h5'
-    # weights_path = 'WEIGHTS/model.sac_full.h5'
-
     model.load_weights(weights_path)
 
     lr = 0.001
