@@ -22,6 +22,13 @@ import matplotlib.pyplot as plt
 #        windows = np.zeros((w_length, n_features, len(l_windows)))
 #      MemoryError: Unable to allocate 7.72 GiB for an array with shape (863947, 400, 3) and data type float64
 
+# TODO: adding sesmo model requires `pip install scikit-learn`: i either should update requirements.txt or
+#       browse seismo_transformer.py and find where it is used and disable it, because it is probably
+#       used for some train/test splitting, not for an actual model initialization.
+#       Also requires: `pip install einops`
+
+# TODO: i now batch the traces to save memory, but i should try to overlap this batches maybe..
+
 if __name__ == '__main__':
     # Set default parameters
     params = {'day_length': 60. * 60 * 24,
@@ -43,6 +50,7 @@ if __name__ == '__main__':
 
     # Specify essential parameter types
     param_types = {'frequency': float,
+                   'threshold': float,
                    'model_labels': int,
                    'positive_labels': int,
                    'day_length': float,
