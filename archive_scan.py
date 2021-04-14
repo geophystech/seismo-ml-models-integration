@@ -36,7 +36,7 @@ if __name__ == '__main__':
               'config': 'config.ini',
               'verbosity': 1,
               'frequency': 100.,
-              'batch_size': 50000,
+              'batch_size': 5000000,
               'model_path': None,
               'weights_path': None,
               'start_date': None,
