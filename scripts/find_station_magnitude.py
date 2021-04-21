@@ -4,50 +4,7 @@ import argparse
 import re
 import sys
 
-# TODO: script should go through specified directory and return path to every s-file which has atleast
-#   one station from specified MULTPLT.DEF
-#   and magnitude >= specifiei\
 
-# Argument parsing 
-parser = argparse.ArgumentParser(formatter_class = argparse.RawTextHelpFormatter)
-
-parser.add_argument('s_dir',
-        help = 'S-files year directory or month directory path.')
-parser.add_argument('mulplt',
-        help = 'Path to MULPLT.DEF file with list of stations.')
-parser.add_argument('--magnitude', '--mag', '-m', default = 3., type = float,
-        help = 'Minimal event magnitude allowed')
-parser.add_argument('--out', '-o', default = 'stations.txt',
-        help = 'Output path for s-files picking.')
-
-args = parser.parse_args()
-args = vars(args)
-
-# Append '/' to path
-if args['s_dir'][-1] != '/':
-    args['s_dir'] += '/'
-
-# Read MULPLT.DEF
-stations = []
-try:
-    with open(args['mulplt'], 'r') as f:
-        lines = f.readlines()
-        tag = '#DEFAULT CHANNEL'
-
-        for line in lines:
-
-            if line[:len(tag)] == tag:
-                entry = line[len(tag):].split()
-                
-                if entry[0] not in stations:
-                    stations.append(entry[0])
-except FileNotFoundError:
-    print(f'MULPLT.DEF file: "{args["mulplt"]}" not found!')
-    sys.exit(0)
-
-# TODO: check if args['out'] exists and create if not.
-
-# Parse s-files directory
 def parse_s_file(f_name):
     """
     Parses s-file and returns dictionary with 'magnitude' and 'stations' list.
@@ -142,36 +99,80 @@ def is_s_dir(path):
 
     return True
 
-# Check if main s_dir is monthly or annual
-try:
-    files = os.listdir(args['s_dir'])
-except FileNotFoundError:
-    print(f'Connot find s_dir: "{args["s_dir"]}"!')
-    sys.exit(0)
-except NotADirectoryError:
-    print(f's_dir: "{args["s_dir"]}" is not a directory!')
-    sys.exit(0)
+if __name__ == '__main__':
 
-if not len(files):
-    print(f's_dir: "{args["s_dir"]}" is empty!')
-    sys.exit(0)
+    # Argument parsing 
+    parser = argparse.ArgumentParser(formatter_class = argparse.RawTextHelpFormatter)
 
-is_annual = True
-for f in files:
-    
-    path = args['s_dir'] + f + '/'
-    if not is_s_dir(path):
-        is_annual = False
-        break
+    parser.add_argument('s_dir',
+            help = 'S-files year directory or month directory path.')
+    parser.add_argument('mulplt',
+            help = 'Path to MULPLT.DEF file with list of stations.')
+    parser.add_argument('--magnitude', '--mag', '-m', default = 3., type = float,
+            help = 'Minimal event magnitude allowed')
+    parser.add_argument('--out', '-o', default = 'stations.txt',
+            help = 'Output path for s-files picking.')
 
-# If month catalog
-if not is_annual:
-    parse_s_dir(args['s_dir'], args['out'], stations, args['magnitude'])
-# If annual catalog
-else:
+    args = parser.parse_args()
+    args = vars(args)
+
+    # Append '/' to path
+    if args['s_dir'][-1] != '/':
+        args['s_dir'] += '/'
+
+    # Read MULPLT.DEF
+    stations = []
+    try:
+        with open(args['mulplt'], 'r') as f:
+            lines = f.readlines()
+            tag = '#DEFAULT CHANNEL'
+
+            for line in lines:
+
+                if line[:len(tag)] == tag:
+                    entry = line[len(tag):].split()
+                    
+                    if entry[0] not in stations:
+                        stations.append(entry[0])
+    except FileNotFoundError:
+        print(f'MULPLT.DEF file: "{args["mulplt"]}" not found!')
+        sys.exit(0)
+
+    # TODO: check if args['out'] exists and create if not.
+
+    # Parse s-files directory
+
+
+    # Check if main s_dir is monthly or annual
+    try:
+        files = os.listdir(args['s_dir'])
+    except FileNotFoundError:
+        print(f'Connot find s_dir: "{args["s_dir"]}"!')
+        sys.exit(0)
+    except NotADirectoryError:
+        print(f's_dir: "{args["s_dir"]}" is not a directory!')
+        sys.exit(0)
+
+    if not len(files):
+        print(f's_dir: "{args["s_dir"]}" is empty!')
+        sys.exit(0)
+
+    is_annual = True
     for f in files:
         
         path = args['s_dir'] + f + '/'
-        if is_s_dir(path):
-            parse_s_dir(path, args['out'], stations, args['magnitude'])
+        if not is_s_dir(path):
+            is_annual = False
+            break
+
+    # If month catalog
+    if not is_annual:
+        parse_s_dir(args['s_dir'], args['out'], stations, args['magnitude'])
+    # If annual catalog
+    else:
+        for f in files:
+            
+            path = args['s_dir'] + f + '/'
+            if is_s_dir(path):
+                parse_s_dir(path, args['out'], stations, args['magnitude'])
 
