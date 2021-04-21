@@ -36,7 +36,7 @@ if __name__ == '__main__':
               'config': 'config.ini',
               'verbosity': 1,
               'frequency': 100.,
-              'batch_size': 5000000,
+              'batch_size': 500000,
               'model_path': None,
               'weights_path': None,
               'start_date': None,
@@ -324,7 +324,7 @@ if __name__ == '__main__':
                     if b == batch_count - 1 and last_batch:
                         b_size = last_batch
 
-                    start_pos = b * batch_count
+                    start_pos = b * params['batch_size']
                     end_pos = start_pos + b_size
                     t_start = traces[0].stats.starttime
 
@@ -359,7 +359,7 @@ if __name__ == '__main__':
 
                         tmp_prediction_dates = []
                         for prediction in predicted_labels[label]:
-                            starttime = traces[0].stats.starttime
+                            starttime = batches[0].stats.starttime
 
                             # Get prediction UTCDateTime and model pseudo-probability
                             tmp_prediction_dates.append([starttime + (prediction[0] / params['frequency']), prediction[1]])
