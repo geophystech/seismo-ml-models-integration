@@ -85,11 +85,26 @@ if __name__ == '__main__':
                                'default: now',
                    'threshold': 'model prediction threshold'}
 
+    # Params aliases
+    param_aliases = {'config': ['--config', '-c'],
+                     'verbose': ['--verbose', '-v'],
+                     'debug': ['--debug', '-d'],
+                     'frequency': ['--frequency'],
+                     'output_file': ['--output_file', '-o'],
+                     'multplt_path': ['--multplt_path', '--mulplt'],
+                     'seisan_path': ['--seisan_path', '--seisan'],
+                     'model_path': ['--model_path'],
+                     'weights_path': ['--weights_path'],
+                     'plot_path': ['--plot_path'],
+                     'start_date': ['--start_date', '-s'],
+                     'end_date': ['--end_date', '-e'],
+                     'threshold': ['--threshold']}
+
     # Parse command line arguments
     parser = argparse.ArgumentParser(formatter_class = argparse.RawTextHelpFormatter)
     for k in param_helps:
 
-        parser.add_argument(f'--{k}',
+        parser.add_argument(*param_aliases[k],
                             help = param_helps[k])
 
     args = parser.parse_args()
@@ -177,13 +192,6 @@ if __name__ == '__main__':
     if end_date.year == current_dt.year and end_date.julday == current_dt.julday:
         current_end_dt = end_date
 
-    # FOR TESTING ONLY
-    # TODO: disable this when done with everything else.
-    # 2014.10.01
-    allowed_archives = [params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHE.2014.274',
-                        params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHN.2014.274',
-                        params['archives_path'] + '/IM/ARGI/ARGI.IM.00.SHZ.2014.274']
-
     # TODO: Add timestamp print if debug build
     if params['debug'] > 0:
         print(f'DEBUG: start_date = {start_date}',
@@ -199,6 +207,7 @@ if __name__ == '__main__':
 
         for archive_list in seisan_parsed:
 
+            # print(archive_list)
             stream_count += 1
 
             # Archives path and meta data
@@ -236,7 +245,6 @@ if __name__ == '__main__':
                 cut_streams.append(st.slice(current_dt, current_end_dt))
 
             streams = cut_streams
-            del cut_streams
 
             # Pre-process data
             for st in streams:
@@ -266,7 +274,6 @@ if __name__ == '__main__':
                 cut_streams.append(st.slice(max_start_time, min_end_time))
 
             streams = cut_streams
-            del cut_streams
 
             # Check if stream traces number is equal
             lengths = [len(x) for x in streams]
@@ -320,6 +327,8 @@ if __name__ == '__main__':
                 #       google how other generators work (range, etc.) and how to write new one.
                 for b in range(batch_count):
 
+                    detected_peaks = []
+
                     b_size = params['batch_size']
                     if b == batch_count - 1 and last_batch:
                         b_size = last_batch
@@ -335,6 +344,7 @@ if __name__ == '__main__':
                     if scores is None:
                         continue
 
+                    # TODO: window step 10 should be in params, including the one used in predict.scan_traces
                     restored_scores = predict.restore_scores(scores, (len(batches[0]), len(params['model_labels'])), 10)
 
                     # Get indexes of predicted events
@@ -362,6 +372,7 @@ if __name__ == '__main__':
                             starttime = batches[0].stats.starttime
 
                             # Get prediction UTCDateTime and model pseudo-probability
+                            # TODO: why params['frequency'] here but freq = traces[0].stats.frequency before?
                             tmp_prediction_dates.append([starttime + (prediction[0] / params['frequency']), prediction[1]])
 
                         predicted_timestamps[label] = tmp_prediction_dates
