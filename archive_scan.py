@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 
 # TODO: i now batch the traces to save memory, but i should try to overlap this batches maybe..
 
+
 if __name__ == '__main__':
     # Set default parameters
     params = {'day_length': 60. * 60 * 24,

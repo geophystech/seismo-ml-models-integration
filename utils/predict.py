@@ -28,6 +28,38 @@ def sliding_window(data, n_features, n_shift):
     return windows.copy()
 
 
+# TODO: come up with better names for both sliding_window functions (sliding_window_striped and .. ?)
+def sliding_window_memory_consuming(data, n_features, n_shift):
+    """
+    Return NumPy array of sliding windows. Which is basically a view into a copy of original data array.
+
+    Arguments:
+    data       -- numpy array to make a sliding windows on
+    n_features -- length in samples of the individual window
+    n_shift    -- shift between windows starting points
+    """
+    # Get sliding windows shape
+    win_count = np.floor(data.shape[0]/n_shift - n_features/n_shift + 1).astype(int)
+    shape = (win_count, n_features)
+
+    windows = np.zeros(shape)
+
+    for i in range(win_count):
+
+        start_pos = i * n_shift
+        end_pos = start_pos + n_features
+
+        windows[i][:] = data[start_pos : end_pos]
+
+    # Single window strides (byte_shift_per_window, byte_shift_per_element)
+    # strides = [data.strides[0]*n_shift, data.strides[0]]
+
+    # Get windows
+    # windows = np.lib.stride_tricks.as_strided(data, shape, strides)
+
+    return windows.copy()
+
+
 def cut_traces(*traces):
     """
     Cut traces to same timeframe (same start time and end time). Returns list of new traces.
@@ -79,6 +111,24 @@ def pre_process_stream(stream, frequency):
         stream.interpolate(frequency)
 
 
+def normalize_windows_per_trace(windows):
+    """
+    Normalizes sliding windows array. IMPORTANT: windows should have separate memory, striped windows would break.
+    :param windows:
+    :return:
+    """
+    # Shape (windows_number, n_features, channels_number)
+    n_win = windows.shape[0]
+    ch_num = windows.shape[2]
+
+    for i in range(n_win):
+
+        for j in range(ch_num):
+
+            win_max = np.max(np.abs(windows[i, :, j]))
+            windows[i, :, j] = windows[i, :, j] / win_max
+
+
 def scan_traces(*traces, model = None, n_features = 400, shift = 10, global_normalize = True, batch_size = 100):
     """
     Get predictions on the group of traces.
@@ -103,18 +153,19 @@ def scan_traces(*traces, model = None, n_features = 400, shift = 10, global_norm
     traces = cut_traces(*traces)
 
     # Normalize
-    normalize_traces(*traces, global_normalize = global_normalize)
+    # TODO: Change normalization to normalization per element
+    # normalize_traces(*traces, global_normalize = global_normalize)
 
     # Get sliding window arrays
     l_windows = []
-    #try:
     for x in traces:
-        l_windows.append(sliding_window(x.data, n_features = n_features, n_shift = shift))
-    #except Error as e:
-        #return None
+        l_windows.append(sliding_window_memory_consuming(x.data, n_features = n_features, n_shift = shift))
 
     # TODO: this is quick fix: remove later
     w_length = min([x.shape[0] for x in l_windows])
+
+    # TODO: make this less memory consuming by making sliding_window function working with all traces at once
+    #   and, therefore removing l_windows from memory
 
     # Prepare data
     windows = np.zeros((w_length, n_features, len(l_windows)))
@@ -123,6 +174,8 @@ def scan_traces(*traces, model = None, n_features = 400, shift = 10, global_norm
     for i in range(len(l_windows)):
         # print(f'{i}: {l_windows[i].shape}')
         windows[:, :, i] = l_windows[i][:w_length]
+
+    normalize_windows_per_trace(windows)
 
     # Predict
     # TODO: check if verbose can be numerical like .fit()
