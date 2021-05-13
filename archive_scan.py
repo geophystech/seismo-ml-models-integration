@@ -168,23 +168,10 @@ if __name__ == '__main__':
     # TODO: made parameters of the function through the array and unpack them to model loader.
     # TODO: make 4 separate config files for each model/weights
     # TODO: test them, fix bug, do PR
-    try:
-        model_loader = importlib.import_module(params['model_loader_module'])  # import loader module
-        loader_call = getattr(model_loader, params['model_loader_name'])  # import loader function
+    model_loader = importlib.import_module(params['model_loader_module'])  # import loader module
+    loader_call = getattr(model_loader, params['model_loader_name'])  # import loader function
 
-        model = loader_call(params['model_path'], params['weights_path'])  # load model
-
-    except ModuleNotFoundError as e:
-        print(f'Cannot find module \'{params["model_loader_module"]}\' specified as \'model_loader_module\' parameter!')
-        sys.exit(1)
-    except AttributeError as e:
-        print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
-              f' as \'model_loader_name\' parameter: {e}')
-        sys.exit(1)
-    except Exception as e:
-        print(f'Error while trying to access \'{params["model_loader_name"]}\' specified'
-              f' as \'model_loader_name\' parameter: {e}')
-        raise
+    model = loader_call(params['model_path'], params['weights_path'])  # load model
 
     # Main loop
     current_dt = start_date
@@ -202,6 +189,9 @@ if __name__ == '__main__':
     plot_n = 0
 
     while current_dt < end_date:
+
+        if params['debug'] > 0:
+            print(f'DEBUG: current_dt = {current_dt}')
 
         stream_count = 0  # .. for progress bar info
 
