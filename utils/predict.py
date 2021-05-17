@@ -129,7 +129,7 @@ def normalize_windows_per_trace(windows):
             windows[i, :, j] = windows[i, :, j] / win_max
 
 
-def scan_traces(*traces, model = None, n_features = 400, shift = 10, global_normalize = True, batch_size = 100):
+def scan_traces(*traces, model = None, n_features = 400, shift = 10, batch_size = 100, params = None, code = None):
     """
     Get predictions on the group of traces.
 
@@ -185,6 +185,34 @@ def scan_traces(*traces, model = None, n_features = 400, shift = 10, global_norm
     #  args and kwargs for predict pass as function arguments
     # TODO: or rather pass a method as a parameter, like predict(model, *args, **kwargs)
     scores = model.predict(windows, verbose = False, batch_size = batch_size)
+
+    if params and params['plot_positives']:
+
+        for i in range(len(scores)):
+
+            if scores[i][1] > params['threshold']:
+
+                fig, (ax1, ax2, ax3) = plt.subplots(3, sharex = True)
+
+                ax1.set_ylabel('N', rotation = 0.)
+                ax1.plot(windows[i, :, 0], 'r')
+
+                ax2.set_ylabel('E', rotation = 0.)
+                ax2.plot(windows[i, :, 1], 'g')
+
+                ax3.set_ylabel('Z', rotation = 0.)
+                ax3.plot(windows[i, :, 2], 'y')
+
+                plt.savefig(params['plot_path'] + code + '_' + str(i) + '_p' + '.jpg')
+                plt.clf()
+
+                np_s_array = np.zeros((400, 3))
+
+                np_s_array[:, 0] = windows[i, :, 0]
+                np_s_array[:, 1] = windows[i, :, 1]
+                np_s_array[:, 2] = windows[i, :, 2]
+
+                np.save(params['plot_path'] + code + '_' + str(i) + '_p' + '.npy', np_s_array)
 
     return scores
 

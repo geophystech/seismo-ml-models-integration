@@ -15,6 +15,23 @@ import sys
 
 import matplotlib.pyplot as plt
 
+# TODO: Shift all TODOs into github issues
+
+# TODO: Proper events plotting:
+#           POSITIVES PLOTTING:
+#               1. Ability to plot positives and aswell as save them as .npy or as hdf5 (chunked save append)
+#               2. Save .csv file with detailed info: archives, pick time, pick trace and sample numbers,
+#                   probability, label
+#               3. Mark pick position (yes, center) by a line.
+#               4. If real event is nearby, mark it aswell.
+#           WHOLE PLOTTING:
+#               1. Ability to do a long plot (may be as separate images or as a single one).
+#               2. Mark picks and theirs probability.
+#               3. Color code picks type with plot legend.
+#               4. Mark actual events (maybe as longer solid vertical lines, and make predictions as dashed lines?)
+#           Read real events data through s-file (path specified in config file), and/or in actual config:
+#               like an dictionary of timestamps and labels
+
 # TODO: Fix this:
 #      File "archive_scan.py", line 275, in <module>
 #        scores = predict.scan_traces(*traces, model=model)  # predict
@@ -45,7 +62,9 @@ if __name__ == '__main__':
               'verbose': 1,
               'threshold': 0.95,
               'plot_path': None,
-              'debug': 0}
+              'debug': 0,
+              'plot_positives': True,
+              'plot_events': ['2021-04-02T04.12.42.24', '2021-04-02T04.12.45.10']}
 
     param_set = []
 
@@ -210,7 +229,9 @@ if __name__ == '__main__':
             # Data for detailed output
             streams_channels = {}  # .. channel type: [full channel, file name]
 
+            current_name = ''
             try:
+                print('\n', '-' * 25)
                 for ch in params['channel_order']:
 
                     if ch in archive_data:
@@ -223,9 +244,13 @@ if __name__ == '__main__':
                             channel = archive_data['meta']['channels'][ch]
 
                         streams_channels[ch] = [channel, archive_data[ch]]
+
+                        current_name = archive_data[ch]
             except FileNotFoundError as e:
                 # TODO: log this in warnings!
                 continue
+
+            current_name = current_name.split('/')[-1]
 
             if len(streams) != len(params['channel_order']):
                 continue
@@ -330,7 +355,9 @@ if __name__ == '__main__':
 
                     batches = [trace.slice(t_start + start_pos / freq, t_start + end_pos / freq) for trace in traces]
 
-                    scores = predict.scan_traces(*batches, model=model)  # predict
+                    scores = predict.scan_traces(*batches,
+                                                 model = model, params = params,
+                                                 code = f'{current_name}_s{i}_b{b}')  # predict
 
                     if scores is None:
                         continue
@@ -385,7 +412,7 @@ if __name__ == '__main__':
                     predict.print_results(detected_peaks, params['output_file'])
 
                     # TODO: write function which plots results, it takes plot path, traces array and predicted_timestamps
-                    if params['plot_path']:
+                    if params['plot_path'] and False:
                         predict.plot_results(detected_peaks, traces, params['plot_path'])
 
                     # TODO: Print detected peaks after done with the archive. Append them to output file.

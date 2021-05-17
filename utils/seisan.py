@@ -172,7 +172,7 @@ def archive_to_path(arch, date, archives_path, allowed_channel_dims):
             net_code = x[2]
 
         # Path to archive
-        path = archives_path + '/{}/{}/{}.{}.{}.{}.{}.{}'.format(x[2], x[0], x[0], x[2], x[3], x[1], year, julday)
+        path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(x[2], x[0], x[0], x[2], x[3], x[1], year, julday)
 
         d_result[ch_type] = path
 
