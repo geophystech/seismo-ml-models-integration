@@ -23,10 +23,15 @@ def archive_scan_args():
     parser.add_argument('--threshold', help='Positive prediction threshold, default: 0.95', default=0.95)
     parser.add_argument('--batch-size', help='Model batch size, default: 150 slices '
                                              '(each slice is: 4 seconds by 3 channels)',
-                        default=150)
+                        default=150, type=int)
     parser.add_argument('--trace-size', '-b', help='Length of loaded and processed seismic data stream, '
-                                                   'default: 600 seconds', default=600)
-    parser.add_argument('--shift', help='Sliding windows shift, default: 40 samples (40 ms)', default=40)
+                                                   'default: 600 seconds',
+                        default=600, type=float)
+    parser.add_argument('--shift', help='Sliding windows shift, default: 40 samples (40 ms)',
+                        default=40, type=int)
+    parser.add_argument('--frequency', help='Model data required frequency, default: 100 Hz', default=100.)
+    parser.add_argument('--features-number', help='Model single channel input length, default: 400 samples',
+                        default=400)
     parser.add_argument('--no-filter', help='Do not filter input waveforms', action='store_true')
     parser.add_argument('--no-detrend', help='Do not detrend input waveforms', action='store_true')
     parser.add_argument('--plot-positives', help='Plot positives waveforms', action='store_true')
@@ -37,7 +42,7 @@ def archive_scan_args():
                                                ' in .npy files',
                         action='store_true')
     parser.add_argument('--print-precision', help='Floating point precision for results pseudo-probability output',
-                        default=4)
+                        default=4, type=int)
     parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
     parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
     parser.add_argument('--start', help='Earliest time stamp allowed for input waveforms,'
@@ -90,6 +95,9 @@ def archive_scan_args():
     args.end = parse_date_param(args, 'end')
     args.start = parse_date_param(args, 'start')
 
+    # Trace size from seconds to samples
+    args.trace_size = int(float(args.trace_size) * args.frequency)
+
     # Convert args to a dictionary
     d_args = {
         'model': {
@@ -97,7 +105,8 @@ def archive_scan_args():
             'cnn': args.cnn,
             'gpd': args.gpd,
             'model': args.model,
-            'loader_argv': args.loader_argv,
+            'loader-argv': args.loader_argv,
+            'features-number': args.features_number,
         },
         'scan': {
             'start': args.start,
@@ -109,6 +118,7 @@ def archive_scan_args():
             'no-filter': args.no_filter,
             'no-detrend': args.no_detrend,
             'trace-normalization': args.trace_normalization,
+            'frequency': args.frequency,
         },
         'info': {
             'plot-positives': args.plot_positives,

@@ -77,14 +77,7 @@ if __name__ == '__main__':
     params.config['scan', 'threshold'] = threshold_labels
 
     # Set values
-    frequency = 100.
-    n_features = 400
-    half_duration = (n_features * 0.5) / frequency
-
-    args.batch_size = int(args.batch_size)
-    args.trace_size = int(float(args.trace_size) * frequency)
-    args.shift = int(args.shift)
-    args.print_precision = int(args.print_precision)
+    half_duration = (params.config['model', 'features-number'] * 0.5) / params.config['scan', 'frequency']
 
     archives = stools.parse_archive_csv(args.input)  # parse archive names
 
