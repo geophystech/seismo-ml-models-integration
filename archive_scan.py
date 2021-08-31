@@ -106,7 +106,6 @@ if __name__ == '__main__':
                              f' positive_labels contents: {[k for k in positive_labels.keys()]}')
             sys.exit(2)
 
-
     # Set start and end date
     def parse_date_param(args, p_name):
         """
