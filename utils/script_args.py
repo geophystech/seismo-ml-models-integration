@@ -1,4 +1,6 @@
 import argparse
+from obspy import UTCDateTime
+import sys
 
 
 def archive_scan_args():
@@ -65,6 +67,28 @@ def archive_scan_args():
                        '/etc/opt/seismo-ml-models-integration/archive_scan_config.ini',
                        '~/.config/archive_scan_config.ini',
                        '~/.config/seismo-ml-models-integration/archive_scan_config.ini']
+
+    # Set start and end date
+    def parse_date_param(args, p_name):
+        """
+        Parse parameter from dictionary to UTCDateTime type.
+        """
+        if not getattr(args, p_name):
+            return None
+
+        try:
+            return UTCDateTime(getattr(args, p_name))
+        except TypeError as e:
+            print(f'Failed to parse "{p_name}" parameter (value: {getattr(args, p_name)}).'
+                  f' Use {__file__} -h for date format information.')
+            sys.exit(1)
+        except Exception as e:
+            print(f'Failed to parse "{p_name}" parameter (value: {getattr(args, p_name)}).'
+                  f' Use {__file__} -h for date format information.')
+            raise
+
+    args.end = parse_date_param(args, 'end')
+    args.start = parse_date_param(args, 'start')
 
     # Convert args to a dictionary
     d_args = {
