@@ -1,4 +1,3 @@
-import argparse
 import numpy as np
 from obspy import read
 import sys
@@ -27,7 +26,7 @@ if __name__ == '__main__':
         print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
         params = Params(path=None, config=args)
 
-    if args.cpu:
+    if params.config['info', 'cpu']:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
     # Set label variables
@@ -37,31 +36,30 @@ if __name__ == '__main__':
     # Parse and validate thresholds
     threshold_labels = {}
     global_threshold = False
-    if type(args.threshold) is str:
+    if type(params.config['scan', 'threshold']) is str:
 
-        split_thresholds = args.threshold.split(',')
+        split_thresholds = params.config['scan', 'threshold'].split(',')
 
         if len(split_thresholds) == 1:
-            args.threshold = float(args.threshold)
+            params.config['scan', 'threshold'] = float(params.config['scan', 'threshold'])
             global_threshold = True
         else:
             for split in split_thresholds:
 
                 label_threshold = split.split(':')
                 if len(label_threshold) != 2:
-                    parser.print_help()
-                    sys.stderr.write('ERROR: Wrong --threshold format. Hint:'
-                                     ' --threshold "p: 0.95, s: 0.9901"')
+                    print('ERROR: Wrong --threshold format. Hint:'
+                          ' --threshold "p: 0.95, s: 0.9901"', file=sys.stderr)
                     sys.exit(2)
 
                 threshold_labels[label_threshold[0].strip()] = float(label_threshold[1])
     else:
-        args.threshold = float(args.threshold)
+        params.config['scan', 'threshold'] = float(params.config['scan', 'threshold'])
         global_threshold = True
 
     if global_threshold:
         for label in positive_labels:
-            threshold_labels[label] = args.threshold
+            threshold_labels[label] = params.config['scan', 'threshold']
     else:
         positive_labels_error = False
         if len(positive_labels) != len(threshold_labels):
@@ -72,7 +70,6 @@ if __name__ == '__main__':
                 positive_labels_error = True
 
         if positive_labels_error:
-            parser.print_help()
             sys.stderr.write('ERROR: --threshold values do not match positive_labels.'
                              f' positive_labels contents: {[k for k in positive_labels.keys()]}')
             sys.exit(2)
