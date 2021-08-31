@@ -2,59 +2,30 @@ import argparse
 import numpy as np
 from obspy import read
 import sys
+from os.path import isfile
 from obspy.core.utcdatetime import UTCDateTime
+
+from utils.params import Params
+from utils.script_args import archive_scan_args
 
 # Silence tensorflow warnings
 import os
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 
 if __name__ == '__main__':
 
-    # Default weights for models
-    default_weights = {'favor': 'weights/w_model_performer_with_spec.hd5',
-                       'cnn': 'weights/weights_model_cnn_spec.hd5',
-                       'gpd': 'weights/w_gpd_scsn_2000_2017.h5'}
+    args = archive_scan_args()  # parse command line arguments
 
-    # Command line arguments parsing
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input', help='Path to file with archive names')
-    parser.add_argument('--weights', '-w', help='Path to model weights', default=None)
-    parser.add_argument('--cnn', help='Use simple CNN model on top of spectrogram', action='store_true')
-    parser.add_argument('--gpd', help='Use GPD model', action='store_true')
-    parser.add_argument('--model', help='Custom model loader import, default: None', default=None)
-    parser.add_argument('--loader_argv', help='Custom model loader arguments, default: None', default=None)
-    parser.add_argument('--out', '-o', help='Path to output file with predictions', default='predictions.txt')
-    parser.add_argument('--threshold', help='Positive prediction threshold, default: 0.95', default=0.95)
-    parser.add_argument('--batch-size', help='Model batch size, default: 150 slices '
-                                             '(each slice is: 4 seconds by 3 channels)',
-                        default=150)
-    parser.add_argument('--trace-size', '-b', help='Length of loaded and processed seismic data stream, '
-                                                   'default: 600 seconds', default=600)
-    parser.add_argument('--shift', help='Sliding windows shift, default: 40 samples (40 ms)', default=40)
-    parser.add_argument('--no-filter', help='Do not filter input waveforms', action='store_true')
-    parser.add_argument('--no-detrend', help='Do not detrend input waveforms', action='store_true')
-    parser.add_argument('--plot-positives', help='Plot positives waveforms', action='store_true')
-    parser.add_argument('--plot-positives-original', help='Plot positives original waveforms, before '
-                                                          'pre-processing',
-                        action='store_true')
-    parser.add_argument('--print-scores', help='Prints model prediction scores and according wave forms data'
-                                               ' in .npy files',
-                        action='store_true')
-    parser.add_argument('--print-precision', help='Floating point precision for results pseudo-probability output',
-                        default=4)
-    parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
-    parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
-    parser.add_argument('--start', help='Earliest time stamp allowed for input waveforms,'
-                                        ' format examples: "2021-04-01" or "2021-04-01T12:35:40"', default=None)
-    parser.add_argument('--end', help='Latest time stamp allowed for input waveforms'
-                                      ' format examples: "2021-04-01" or "2021-04-01T12:35:40"', default=None)
-    parser.add_argument('--trace-normalization', help='Normalize input data per trace, otherwise - per full trace.'
-                                                      ' Increases performance and reduces memory demand if set (at'
-                                                      ' a cost of potential accuracy loss).',
-                        action='store_true')
-
-    args = parser.parse_args()  # parse arguments
+    # Parse config files
+    params = None
+    for x in args['env']['config']:
+        if not isfile(x):
+            continue
+        params = Params(path=x, config=args)
+    if not params:
+        print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
+        params = Params(path=None, config=args)
 
     if args.cpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -105,6 +76,7 @@ if __name__ == '__main__':
             sys.stderr.write('ERROR: --threshold values do not match positive_labels.'
                              f' positive_labels contents: {[k for k in positive_labels.keys()]}')
             sys.exit(2)
+
 
     # Set start and end date
     def parse_date_param(args, p_name):
