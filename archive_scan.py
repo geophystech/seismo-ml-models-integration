@@ -2,10 +2,10 @@ import numpy as np
 from obspy import read
 import sys
 from os.path import isfile
-from obspy.core.utcdatetime import UTCDateTime
 
 from utils.params import Params
 from utils.script_args import archive_scan_args
+import utils.scan_tools as stools
 
 # Silence tensorflow warnings
 import os
@@ -85,8 +85,6 @@ if __name__ == '__main__':
     args.trace_size = int(float(args.trace_size) * frequency)
     args.shift = int(args.shift)
     args.print_precision = int(args.print_precision)
-
-    import utils.scan_tools as stools
 
     archives = stools.parse_archive_csv(args.input)  # parse archive names
 
