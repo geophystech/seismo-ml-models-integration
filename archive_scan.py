@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     params = archive_scan_params()  # parse command line arguments
 
-    if params.config['info', 'cpu']:
+    if params['info', 'cpu']:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
     # Set label variables
@@ -24,12 +24,12 @@ if __name__ == '__main__':
     # Parse and validate thresholds
     threshold_labels = {}
     global_threshold = False
-    if type(params.config['scan', 'threshold']) is str:
+    if type(params['scan', 'threshold']) is str:
 
-        split_thresholds = params.config['scan', 'threshold'].split(',')
+        split_thresholds = params['scan', 'threshold'].split(',')
 
         if len(split_thresholds) == 1:
-            params.config['scan', 'threshold'] = float(params.config['scan', 'threshold'])
+            params['scan', 'threshold'] = float(params['scan', 'threshold'])
             global_threshold = True
         else:
             for split in split_thresholds:
@@ -42,12 +42,12 @@ if __name__ == '__main__':
 
                 threshold_labels[label_threshold[0].strip()] = float(label_threshold[1])
     else:
-        params.config['scan', 'threshold'] = float(params.config['scan', 'threshold'])
+        params['scan', 'threshold'] = float(params['scan', 'threshold'])
         global_threshold = True
 
     if global_threshold:
         for label in positive_labels:
-            threshold_labels[label] = params.config['scan', 'threshold']
+            threshold_labels[label] = params['scan', 'threshold']
     else:
         positive_labels_error = False
         if len(positive_labels) != len(threshold_labels):
@@ -62,12 +62,12 @@ if __name__ == '__main__':
                              f' positive_labels contents: {[k for k in positive_labels.keys()]}')
             sys.exit(2)
 
-    params.config['scan', 'threshold'] = threshold_labels
+    params['scan', 'threshold'] = threshold_labels
 
     # Set values
-    half_duration = (params.config['model', 'features-number'] * 0.5) / params.config['scan', 'frequency']
+    half_duration = (params['model', 'features-number'] * 0.5) / params['scan', 'frequency']
 
-    archives = stools.parse_archive_csv(args.input)  # parse archive names
+    archives = stools.parse_archive_csv(params['env', 'input'])  # parse archive names
 
     # Load model
     if args.model:

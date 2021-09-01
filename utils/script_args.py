@@ -20,7 +20,6 @@ def parse_date_param(args, *p_name):
 
 
 def archive_scan_params():
-
     # Default weights for models
     default_weights = {'favor': 'weights/w_model_performer_with_spec.hd5',
                        'cnn': 'weights/weights_model_cnn_spec.hd5',
@@ -133,17 +132,16 @@ def archive_scan_params():
     for x in d_args['env']['config']:
         if not isfile(x):
             continue
-        params = Params(path=x, config=d_args)
+        params = Params(path=x, config=d_args, default_dictionary='config')
         break
     if not params:
         print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
         params = Params(path=None, config=d_args)
 
-    params.config['scan', 'end'] = parse_date_param(params.config, 'scan', 'end')
-    params.config['scan', 'start'] = parse_date_param(params.config, 'scan', 'start')
+    params['scan', 'end'] = parse_date_param(params, 'scan', 'end')
+    params['scan', 'start'] = parse_date_param(params, 'scan', 'start')
 
     # Trace size from seconds to samples
-    params.config['scan', 'trace-size'] = int(float(params.config['scan', 'trace-size']) *
-                                              params.config['scan', 'trace-size'])
+    params['scan', 'trace-size'] = int(float(params['scan', 'trace-size']) * params['scan', 'trace-size'])
 
     return params

@@ -105,12 +105,15 @@ def configparse_to_dict(parsed, ignore=None, depth=3):
 
 class Params:
 
-    def __init__(self, config=None, data=None, other=None, path=None, mode='config'):
+    def __init__(self, config=None, data=None, other=None, path=None, mode='config', default_dictionary=None):
         """
+        :param default_dictionary - string name of a dictionary inside params
+                                    or None ("config", "data", "other" or None)
         """
         self.config = ParamsDictionary(config)
         self.data = ParamsDictionary(data)
         self.other = ParamsDictionary(other)
+        self.default_dictionary = default_dictionary
 
         if path:
             self.read_config(path, mode)
@@ -184,6 +187,26 @@ class Params:
         arg = self.config['default', 'arg']
 
         return loader, arg
+
+    def __getitem__(self, key):
+        if self.default_dictionary == 'config':
+            return self.config.__getitem__(key)
+        elif self.default_dictionary == 'data':
+            return self.data.__getitem__(key)
+        elif self.default_dictionary == 'other':
+            return self.other.__getitem__(key)
+        else:
+            raise KeyError(f'No default dictionary specified for params to access key: {key}')
+
+    def __setitem__(self, key, value):
+        if self.default_dictionary == 'config':
+            return self.config.__setitem__(key, value)
+        elif self.default_dictionary == 'data':
+            return self.data.__setitem__(key, value)
+        elif self.default_dictionary == 'other':
+            return self.other.__setitem__(key, value)
+        else:
+            raise KeyError(f'No default dictionary specified for params to set key {key} with value {value}')
 
 
 def default(loader='', params=None, arg=None):
