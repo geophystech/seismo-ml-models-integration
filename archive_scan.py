@@ -204,7 +204,7 @@ if __name__ == '__main__':
 
                 scores, performance_time = stools.scan_traces(*batches,
                                                               model=model,
-                                                              args=params,
+                                                              params=params,
                                                               original_data=original_batches)  # predict
                 total_performance_time += performance_time
 

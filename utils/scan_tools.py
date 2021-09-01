@@ -7,7 +7,7 @@ from time import time
 from obspy.core.utcdatetime import UTCDateTime
 
 
-def pre_process_stream(stream, no_filter = False, no_detrend = False):
+def pre_process_stream(stream, no_filter=False, no_detrend=False):
     """
     Does preprocessing on the stream (changes it's frequency), does linear detrend and
     highpass filtering with frequency of 2 Hz.
@@ -19,7 +19,7 @@ def pre_process_stream(stream, no_filter = False, no_detrend = False):
     if not no_detrend:
         stream.detrend(type="linear")
     if not no_filter:
-        stream.filter(type="highpass", freq = 2)
+        stream.filter(type="highpass", freq=2)
 
     frequency = 100.
     required_dt = 1. / frequency
@@ -29,7 +29,7 @@ def pre_process_stream(stream, no_filter = False, no_detrend = False):
         stream.interpolate(frequency)
 
 
-def trim_streams(streams, start = None, end = None):
+def trim_streams(streams, start=None, end=None):
     """
     Trims streams to the same overall time span.
     :return: list of trimmed streams
@@ -77,11 +77,11 @@ def get_traces(streams, i):
     return traces
 
 
-def progress_bar(progress, characters_count = 20,
-                 erase_line = True,
-                 empty_bar = '.', filled_bar = '=', filled_edge = '>',
-                 prefix = '', postfix = '',
-                 add_space_around = True):
+def progress_bar(progress, characters_count=20,
+                 erase_line=True,
+                 empty_bar='.', filled_bar='=', filled_edge='>',
+                 prefix='', postfix='',
+                 add_space_around=True):
     """
     Prints progress bar.
     :param progress: percentage (0..1) of progress, or int number of characters filled in progress bar.
@@ -106,18 +106,18 @@ def progress_bar(progress, characters_count = 20,
             postfix = ' ' + postfix
 
     if erase_line:
-        print('\r', end = '')
+        print('\r', end='')
 
     progress_num = int(characters_count * progress)
     if filled_edge is None:
-        print(prefix + filled_bar * progress_num + empty_bar * (characters_count - progress_num) + postfix, end = '')
+        print(prefix + filled_bar * progress_num + empty_bar * (characters_count - progress_num) + postfix, end='')
     else:
         bar_str = prefix + filled_bar * progress_num
         bar_str += filled_edge * min(characters_count - progress_num, 1)
         bar_str += empty_bar * (characters_count - progress_num - 1)
         bar_str += postfix
 
-        print(bar_str, end = '')
+        print(bar_str, end='')
 
 
 def cut_traces(*_traces):
@@ -146,7 +146,7 @@ def sliding_window(data, n_features, n_shift):
     n_shift    -- shift between windows starting points
     """
     # Get sliding windows shape
-    win_count = np.floor(data.shape[0]/n_shift - n_features/n_shift + 1).astype(int)
+    win_count = np.floor(data.shape[0] / n_shift - n_features / n_shift + 1).astype(int)
     shape = (win_count, n_features)
 
     try:
@@ -157,16 +157,15 @@ def sliding_window(data, n_features, n_shift):
         raise
 
     for _i in range(win_count):
-
         _start_pos = _i * n_shift
         _end_pos = _start_pos + n_features
 
-        windows[_i][:] = data[_start_pos : _end_pos]
+        windows[_i][:] = data[_start_pos: _end_pos]
 
     return windows.copy()
 
 
-def sliding_window_strided(data, n_features, n_shift, copy = False):
+def sliding_window_strided(data, n_features, n_shift, copy=False):
     """
     Return NumPy array of sliding windows. Which is basically a view into a copy of original data array.
 
@@ -182,7 +181,7 @@ def sliding_window_strided(data, n_features, n_shift, copy = False):
     stride_shape = (data.shape[0] - n_features + n_shift) // n_shift
     stride_shape = [stride_shape, n_features, data.shape[-1]]
 
-    strides = [data.strides[0]*n_shift, *data.strides]
+    strides = [data.strides[0] * n_shift, *data.strides]
 
     windows = as_strided(data, stride_shape, strides)
 
@@ -203,7 +202,6 @@ def normalize_windows_global(windows):
     ch_num = windows.shape[2]
 
     for _i in range(n_win):
-
         win_max = np.max(np.abs(windows[_i, :, :]))
         windows[_i, :, :] = windows[_i, :, :] / win_max
 
@@ -220,7 +218,6 @@ def normalize_global(data):
 
 
 def plot_positives(scores, windows, threshold):
-
     idx = 0
     save_name = 'positive_' + str(idx) + '.jpg'
     while os.path.exists(save_name):
@@ -230,16 +227,15 @@ def plot_positives(scores, windows, threshold):
     for i in range(len(scores)):
 
         if scores[i][1] > threshold:
+            fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
 
-            fig, (ax1, ax2, ax3) = plt.subplots(3, sharex = True)
-
-            ax1.set_ylabel('N', rotation = 0.)
+            ax1.set_ylabel('N', rotation=0.)
             ax1.plot(windows[i, :, 0], 'r')
 
-            ax2.set_ylabel('E', rotation = 0.)
+            ax2.set_ylabel('E', rotation=0.)
             ax2.plot(windows[i, :, 1], 'g')
 
-            ax3.set_ylabel('Z', rotation = 0.)
+            ax3.set_ylabel('Z', rotation=0.)
             ax3.plot(windows[i, :, 2], 'y')
 
             plt.savefig(save_name)
@@ -256,8 +252,7 @@ def plot_positives(scores, windows, threshold):
             """
 
 
-def plot_oririnal_positives(scores, original_windows, threshold, original_scores = None):
-
+def plot_oririnal_positives(scores, original_windows, threshold, original_scores=None):
     idx = 0
     save_name = 'original_positive_' + str(idx) + '.jpg'
     while os.path.exists(save_name):
@@ -267,23 +262,22 @@ def plot_oririnal_positives(scores, original_windows, threshold, original_scores
     for i in range(len(scores)):
 
         if scores[i][1] > threshold:
+            fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
 
-            fig, (ax1, ax2, ax3) = plt.subplots(3, sharex = True)
-
-            ax1.set_ylabel('N', rotation = 0.)
+            ax1.set_ylabel('N', rotation=0.)
             ax1.plot(original_windows[i, :, 0], 'r')
 
-            ax2.set_ylabel('E', rotation = 0.)
+            ax2.set_ylabel('E', rotation=0.)
             ax2.plot(original_windows[i, :, 1], 'g')
 
-            ax3.set_ylabel('Z', rotation = 0.)
+            ax3.set_ylabel('Z', rotation=0.)
             ax3.plot(original_windows[i, :, 2], 'y')
 
             plt.savefig(save_name)
             plt.clf()
 
 
-def scan_traces(*_traces, model = None, args = None, n_features = 400, shift = 10, original_data = None):
+def scan_traces(*_traces, model=None, params=None, n_features=400, shift=10, original_data=None):
     """
     Get predictions on the group of traces.
 
@@ -298,12 +292,7 @@ def scan_traces(*_traces, model = None, args = None, n_features = 400, shift = 1
     global_normalize -- normalize globaly all traces if True or locally if False
     batch_size       -- model.fit batch size
     """
-    # Check args
-    import argparse
-    if not args and type(args) != argparse.Namespace:
-        raise AttributeError('args should have an argparse.Namespace type')
-
-    batch_size = args.batch_size
+    batch_size = params['scan', 'batch_size']
 
     # Check input types
     for x in _traces:
@@ -315,16 +304,16 @@ def scan_traces(*_traces, model = None, args = None, n_features = 400, shift = 1
 
     # normalize_traces(*traces, global_normalize = global_normalize)
 
-    if not args.trace_normalization:
+    if not params['scan', 'trace_normalization']:
         # Get sliding window arrays
         l_windows = []
         for x in _traces:
-            l_windows.append(sliding_window(x.data, n_features = n_features, n_shift = args.shift))
+            l_windows.append(sliding_window(x.data, n_features=n_features, n_shift=params['scan', 'shift']))
 
-        if args.plot_positives_original:
+        if params['scan', 'plot_positives_original']:
             original_l_windows = []
             for x in original_data:
-                original_l_windows.append(sliding_window(x.data, n_features = n_features, n_shift = args.shift))
+                original_l_windows.append(sliding_window(x.data, n_features=n_features, n_shift=params['scan', 'shift']))
 
         w_length = min([x.shape[0] for x in l_windows])
 
@@ -333,14 +322,14 @@ def scan_traces(*_traces, model = None, args = None, n_features = 400, shift = 1
         for _i in range(len(l_windows)):
             windows[:, :, _i] = l_windows[_i][:w_length]
 
-        if args.plot_positives_original:
+        if params['info', 'plot-positives-original']:
             original_windows = np.zeros((w_length, n_features, len(original_l_windows)))
             for _i in range(len(original_l_windows)):
                 original_windows[:, :, _i] = original_l_windows[_i][:w_length]
 
         # Global max normalization:
         normalize_windows_global(windows)
-        if args.plot_positives_original:
+        if params['info', 'plot-positives-original']:
             normalize_windows_global(original_windows)
 
     else:
@@ -353,33 +342,24 @@ def scan_traces(*_traces, model = None, args = None, n_features = 400, shift = 1
 
         normalize_global(data)
 
-        windows = sliding_window_strided(data, 400, args.shift, False)
+        windows = sliding_window_strided(data, 400, params['scan', 'shift'], False)
 
-        if args.plot_positives_original:
+        if params['scan', 'plot-positives-original']:
             original_windows = windows.copy()
 
     # Predict
     start_time = time()
-    _scores = model.predict(windows, verbose = False, batch_size = batch_size)
+    _scores = model.predict(windows, verbose=False, batch_size=batch_size)
     performance_time = time() - start_time
     # TODO: create another flag for this, e.g. --culculate-original-probs or something
-    if args.plot_positives_original:
-        original_scores = model.predict(original_windows, verbose = False, batch_size = batch_size)
-
-    # Plot
-    # if args and args.plot_positives:
-    #     plot_threshold_scores(scores, windows, params['threshold'], file_name, params['plot_labels'])
-
-    # Save scores
-    # if args and args.save_positives:
-    #     save_threshold_scores(scores, windows, params['threshold'],
-    #                           params['positives_h5_path'], params['save_h5_labels'])
+    if params['scan', 'plot-positives-original']:
+        original_scores = model.predict(original_windows, verbose=False, batch_size=batch_size)
 
     # Positives plotting
-    if args.plot_positives:
-        plot_positives(_scores, windows, args.threshold)
-    if args.plot_positives_original:
-        plot_oririnal_positives(_scores, original_windows, args.threshold, original_scores)
+    if params['info', 'plot_positives']:
+        plot_positives(_scores, windows, params['scan', 'threshold'])
+    if params['info', 'plot_positives_original']:
+        plot_oririnal_positives(_scores, original_windows, params['scan', 'threshold'], original_scores)
 
     return _scores, performance_time
 
@@ -403,12 +383,12 @@ def restore_scores(_scores, shape, shift):
             if end_i >= shape[0]:
                 end_i = shape[0] - 1
 
-            new_scores[start_i : end_i, j] = np.linspace(_scores[i - 1, j], _scores[i, j], shift + 1)[:end_i - start_i]
+            new_scores[start_i: end_i, j] = np.linspace(_scores[i - 1, j], _scores[i, j], shift + 1)[:end_i - start_i]
 
     return new_scores
 
 
-def get_positives(_scores, peak_idx, other_idxs, peak_dist = 10000, avg_window_half_size = 100, threshold = 0.8):
+def get_positives(_scores, peak_idx, other_idxs, peak_dist=10000, avg_window_half_size=100, threshold=0.8):
     """
     Returns positive prediction list in format: [[sample, pseudo-probability], ...]
     """
@@ -416,7 +396,7 @@ def get_positives(_scores, peak_idx, other_idxs, peak_dist = 10000, avg_window_h
 
     x = _scores[:, peak_idx]
 
-    peaks = find_peaks(x, distance = peak_dist, height=[threshold, 1.])
+    peaks = find_peaks(x, distance=peak_dist, height=[threshold, 1.])
 
     for _i in range(len(peaks[0])):
 
@@ -424,17 +404,17 @@ def get_positives(_scores, peak_idx, other_idxs, peak_dist = 10000, avg_window_h
         if start_id < 0:
             start_id = 0
 
-        end_id = start_id + avg_window_half_size*2
+        end_id = start_id + avg_window_half_size * 2
         if end_id > len(x):
             end_id = len(x) - 1
-            start_id = end_id - avg_window_half_size*2
+            start_id = end_id - avg_window_half_size * 2
 
         # Get mean values
-        peak_mean = x[start_id : end_id].mean()
+        peak_mean = x[start_id: end_id].mean()
 
         means = []
         for idx in other_idxs:
-            means.append(_scores[:, idx][start_id : end_id].mean())
+            means.append(_scores[:, idx][start_id: end_id].mean())
 
         is_max = True
         for m in means:
@@ -456,7 +436,7 @@ def truncate(f, n):
     return math.floor(f * 10 ** n) / 10 ** n
 
 
-def print_results(_detected_peaks, filename, precision = 2, upper_case = True, station = None):
+def print_results(_detected_peaks, filename, precision=2, upper_case=True, station=None):
     """
     Prints out peaks in the file.
     """
@@ -501,9 +481,9 @@ def parse_archive_csv(path):
 
 
 def plot_wave_scores(file_token, wave, scores,
-                     start_time, predictions, right_shift = 0,
-                     channel_names = ['N', 'E', 'Z'],
-                     score_names = ['P', 'S', 'N']):
+                     start_time, predictions, right_shift=0,
+                     channel_names=['N', 'E', 'Z'],
+                     score_names=['P', 'S', 'N']):
     """
     Plots waveform and prediction scores as an image
     """
@@ -512,14 +492,13 @@ def plot_wave_scores(file_token, wave, scores,
     scores_length = scores.shape[0]
 
     # TODO: Make figure size dynamically chosen, based on the input length
-    fig = plt.figure(figsize = (9.8, 7.), dpi = 160)
-    axes = fig.subplots(channels_num + classes_num, 1, sharex = True)
+    fig = plt.figure(figsize=(9.8, 7.), dpi=160)
+    axes = fig.subplots(channels_num + classes_num, 1, sharex=True)
 
     # Plot wave
     for i in range(channels_num):
-
-        axes[i].plot(wave[:, i], color = '#000000', linewidth = 1.)
-        axes[i].locator_params(axis = 'both', nbins = 4)
+        axes[i].plot(wave[:, i], color='#000000', linewidth=1.)
+        axes[i].locator_params(axis='both', nbins=4)
         axes[i].set_ylabel(channel_names[i])
 
     # Process events and ticks
@@ -533,7 +512,6 @@ def plot_wave_scores(file_token, wave, scores,
 
         label_events = []
         for pos, _ in predictions[label]:
-
             pos += right_shift
             label_events.append(pos)
             ticks.append(pos)
@@ -543,11 +521,11 @@ def plot_wave_scores(file_token, wave, scores,
     # Plot scores
     for i in range(classes_num):
 
-        axes[channels_num + i].plot(scores[:, i], color = '#0022cc', linewidth = 1.)
+        axes[channels_num + i].plot(scores[:, i], color='#0022cc', linewidth=1.)
 
         if i in events:
             for pos in events[i]:
-                axes[channels_num + i].plot([pos], scores[:, i][pos], 'r*', markersize = 7)
+                axes[channels_num + i].plot([pos], scores[:, i][pos], 'r*', markersize=7)
 
         axes[channels_num + i].set_ylabel(score_names[i])
 
@@ -558,8 +536,7 @@ def plot_wave_scores(file_token, wave, scores,
     # Configure ticks labels
     xlabels = []
     for pos in axes[-1].get_xticks():
-
-        c_time = start_time + pos/freq
+        c_time = start_time + pos / freq
         micro = c_time.strftime('%f')[:2]
         xlabels.append(c_time.strftime('%H:%M:%S') + f'.{micro}')
 
@@ -567,7 +544,7 @@ def plot_wave_scores(file_token, wave, scores,
 
     # Add date text
     date = start_time.strftime('%Y-%m-%d')
-    fig.text(0.095, 1., date, va = 'center')
+    fig.text(0.095, 1., date, va='center')
 
     # Finalize and save
     fig.tight_layout()
@@ -575,7 +552,7 @@ def plot_wave_scores(file_token, wave, scores,
     fig.clear()
 
 
-def print_scores(data, scores, predictions, file_token, window_length = 400):
+def print_scores(data, scores, predictions, file_token, window_length=400):
     """
     Prints scores and waveforms.
     """
@@ -598,7 +575,7 @@ def print_scores(data, scores, predictions, file_token, window_length = 400):
     shifted_scores[right_shift:] = scores[:-right_shift]
 
     plot_wave_scores(file_token, waveforms, shifted_scores, data[0].stats.starttime, predictions,
-                     right_shift = right_shift)
+                     right_shift=right_shift)
 
     # TODO: Save predictions samples in .csv ?
 
