@@ -70,15 +70,15 @@ if __name__ == '__main__':
     archives = stools.parse_archive_csv(params['env', 'input'])  # parse archive names
 
     # Load model
-    if args.model:
+    if params['model', 'model']:
 
         import importlib
 
-        model_loader = importlib.import_module(args.model)  # import loader module
+        model_loader = importlib.import_module(params['model', 'model'])  # import loader module
         loader_call = getattr(model_loader, 'load_model')  # import loader function
 
         # Parse loader arguments
-        loader_argv = args.loader_argv
+        loader_argv = params['model', 'loader-argv']
 
         argv_split = loader_argv.strip().split()
         argv_dict = {}
@@ -92,21 +92,15 @@ if __name__ == '__main__':
         model = loader_call(**argv_dict)
     else:
 
-        if args.cnn:
+        if params['model', 'cnn']:
             import utils.seismo_load as seismo_load
-
-            if not args.weights: args.weights = default_weights['cnn']
-            model = seismo_load.load_cnn(args.weights)
-        elif args.gpd:
+            model = seismo_load.load_cnn(params['model', 'weights'])
+        elif params['model', 'gpd']:
             from utils.gpd_loader import load_model as load_gpd
-
-            if not args.weights: args.weights = default_weights['gpd']
-            model = load_gpd(args.weights)
+            model = load_gpd(params['model', 'weights'])
         else:
             import utils.seismo_load as seismo_load
-
-            if not args.weights: args.weights = default_weights['favor']
-            model = seismo_load.load_performer(args.weights)
+            model = seismo_load.load_performer(params['model', 'weights'])
 
     # Main loop
     total_performance_time = 0.
@@ -119,19 +113,19 @@ if __name__ == '__main__':
 
         # If --plot-positives-original, save original streams
         original_streams = None
-        if args.plot_positives_original:
+        if params['info', 'plot-positives-original']:
             original_streams = []
             for path in l_archives:
                 original_streams.append(read(path))
 
         # Pre-process data
         for st in streams:
-            stools.pre_process_stream(st, args.no_filter, args.no_detrend)
+            stools.pre_process_stream(st, params['scan', 'no-filter'], params['scan', 'no-detrend'])
 
         # Cut archives to the same length
-        streams = stools.trim_streams(streams, args.start, args.end)
+        streams = stools.trim_streams(streams, params['scan', 'start'], params['model', 'end'])
         if original_streams:
-            original_streams = stools.trim_streams(original_streams, args.start, args.end)
+            original_streams = stools.trim_streams(original_streams, params['scan', 'start'], params['scan', 'end'])
 
         # Check if stream traces number is equal
         lengths = [len(st) for st in streams]
@@ -146,10 +140,10 @@ if __name__ == '__main__':
             traces = [st[i] for st in streams]
 
             l_trace = traces[0].data.shape[0]
-            last_batch = l_trace % args.trace_size
-            batch_count = l_trace // args.trace_size + 1 \
+            last_batch = l_trace % params['scan', 'trace-size']
+            batch_count = l_trace // params['scan', 'trace-size'] + 1 \
                 if last_batch \
-                else l_trace // args.trace_size
+                else l_trace // params['scan', 'trace-size']
 
             total_batch_count += batch_count
 
@@ -167,10 +161,10 @@ if __name__ == '__main__':
 
             # Determine batch count
             l_trace = traces[0].data.shape[0]
-            last_batch = l_trace % args.trace_size
-            batch_count = l_trace // args.trace_size + 1 \
+            last_batch = l_trace % params['scan', 'trace-size']
+            batch_count = l_trace // params['scan', 'trace-size'] + 1 \
                 if last_batch \
-                else l_trace // args.trace_size
+                else l_trace // params['scan', 'trace-size']
 
             freq = traces[0].stats.sampling_rate
             station = traces[0].stats.station
@@ -179,11 +173,11 @@ if __name__ == '__main__':
 
                 detected_peaks = []
 
-                b_size = args.trace_size
+                b_size = params['scan', 'trace-size']
                 if b == batch_count - 1 and last_batch:
                     b_size = last_batch
 
-                start_pos = b * args.trace_size
+                start_pos = b * params['scan', 'trace-size']
                 end_pos = start_pos + b_size
                 t_start = traces[0].stats.starttime
 
@@ -195,7 +189,7 @@ if __name__ == '__main__':
 
                 # Progress bar
 
-                if args.time:
+                if params['info', 'time']:
                     stools.progress_bar(current_batch_global / total_batch_count, 40, add_space_around=False,
                                         prefix=f'Group {n_archive + 1} out of {len(archives)} [',
                                         postfix=f'] - Batch: {batches[0].stats.starttime} '
@@ -210,14 +204,16 @@ if __name__ == '__main__':
 
                 scores, performance_time = stools.scan_traces(*batches,
                                                               model=model,
-                                                              args=args,
+                                                              args=params,
                                                               original_data=original_batches)  # predict
                 total_performance_time += performance_time
 
                 if scores is None:
                     continue
 
-                restored_scores = stools.restore_scores(scores, (len(batches[0]), len(model_labels)), args.shift)
+                restored_scores = stools.restore_scores(scores,
+                                                        (len(batches[0]), len(model_labels)),
+                                                        params['scan', 'shift'])
 
                 # Get indexes of predicted events
                 predicted_labels = {}
@@ -244,7 +240,9 @@ if __name__ == '__main__':
                         starttime = batches[0].stats.starttime
 
                         # Get prediction UTCDateTime and model pseudo-probability
-                        tmp_prediction_dates.append([starttime + (prediction[0] / frequency) + half_duration,
+                        tmp_prediction_dates.append([starttime +
+                                                     (prediction[0] / params['scan', 'frequency'])
+                                                     + half_duration,
                                                      prediction[1]])
 
                     predicted_timestamps[label] = tmp_prediction_dates
@@ -258,12 +256,13 @@ if __name__ == '__main__':
 
                         detected_peaks.append(prediction)
 
-                if args.print_scores:
+                if params['info', 'print-scores']:
                     stools.print_scores(batches, restored_scores, predicted_labels, f't{i}_b{b}')
 
-                stools.print_results(detected_peaks, args.out, precision=args.print_precision, station=station)
+                stools.print_results(detected_peaks, params['env', 'out'],
+                                     precision=params['info', 'print-precision'], station=station)
 
             print('')
 
-    if args.time:
+    if params['info', 'time']:
         print(f'Total model prediction time: {total_performance_time:.6} seconds')
