@@ -61,10 +61,12 @@ def archive_scan_params():
                         default=4, type=int)
     parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
     parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
-    parser.add_argument('--start', help='Earliest time stamp allowed for input waveforms,'
-                                        ' format examples: "2021-04-01" or "2021-04-01T12:35:40"', default=None)
-    parser.add_argument('--end', help='Latest time stamp allowed for input waveforms'
-                                      ' format examples: "2021-04-01" or "2021-04-01T12:35:40"', default=None)
+    parser.add_argument('--start', '-s', help='Earliest time stamp allowed for input waveforms,'
+                                              ' format examples: "2021-04-01" or "2021-04-01T12:35:40"',
+                        default=None)
+    parser.add_argument('--end', '-e', help='Latest time stamp allowed for input waveforms'
+                                            ' format examples: "2021-04-01" or "2021-04-01T12:35:40"',
+                        default=None)
     parser.add_argument('--trace-normalization', help='Normalize input data per trace, otherwise - per full trace.'
                                                       ' Increases performance and reduces memory demand if set (at'
                                                       ' a cost of potential accuracy loss).',
