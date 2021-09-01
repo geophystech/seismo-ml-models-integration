@@ -1,10 +1,8 @@
 import numpy as np
 from obspy import read
 import sys
-from os.path import isfile
 
-from utils.params import Params
-from utils.script_args import archive_scan_args
+from utils.script_args import archive_scan_params
 import utils.scan_tools as stools
 
 # Silence tensorflow warnings
@@ -14,17 +12,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 if __name__ == '__main__':
 
-    args = archive_scan_args()  # parse command line arguments
-
-    # Parse config files
-    params = None
-    for x in args['env']['config']:
-        if not isfile(x):
-            continue
-        params = Params(path=x, config=args)
-    if not params:
-        print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
-        params = Params(path=None, config=args)
+    params = archive_scan_params()  # parse command line arguments
 
     if params.config['info', 'cpu']:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"

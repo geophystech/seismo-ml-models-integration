@@ -1,9 +1,25 @@
 import argparse
 from obspy import UTCDateTime
 import sys
+from os.path import isfile
+
+from utils.params import Params
 
 
-def archive_scan_args():
+# Set start and end date
+def parse_date_param(args, *p_name):
+    """
+    Parse parameter from dictionary to UTCDateTime type.
+    """
+    if not args.__getitem__(p_name):
+        return None
+    try:
+        return UTCDateTime(args.__getitem__(p_name))
+    except Exception as e:
+        pass
+
+
+def archive_scan_params():
 
     # Default weights for models
     default_weights = {'favor': 'weights/w_model_performer_with_spec.hd5',
@@ -73,31 +89,6 @@ def archive_scan_args():
                        '~/.config/archive_scan_config.ini',
                        '~/.config/seismo-ml-models-integration/archive_scan_config.ini']
 
-    # Set start and end date
-    def parse_date_param(args, p_name):
-        """
-        Parse parameter from dictionary to UTCDateTime type.
-        """
-        if not getattr(args, p_name):
-            return None
-
-        try:
-            return UTCDateTime(getattr(args, p_name))
-        except TypeError as e:
-            print(f'Failed to parse "{p_name}" parameter (value: {getattr(args, p_name)}).'
-                  f' Use {__file__} -h for date format information.')
-            sys.exit(1)
-        except Exception as e:
-            print(f'Failed to parse "{p_name}" parameter (value: {getattr(args, p_name)}).'
-                  f' Use {__file__} -h for date format information.')
-            raise
-
-    args.end = parse_date_param(args, 'end')
-    args.start = parse_date_param(args, 'start')
-
-    # Trace size from seconds to samples
-    args.trace_size = int(float(args.trace_size) * args.frequency)
-
     # Convert args to a dictionary
     d_args = {
         'model': {
@@ -135,4 +126,22 @@ def archive_scan_args():
         },
     }
 
-    return d_args
+    # Parse config files
+    params = None
+    for x in d_args['env']['config']:
+        if not isfile(x):
+            continue
+        params = Params(path=x, config=d_args)
+        break
+    if not params:
+        print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
+        params = Params(path=None, config=d_args)
+
+    params.config['scan', 'end'] = parse_date_param(params.config, 'scan', 'end')
+    params.config['scan', 'start'] = parse_date_param(params.config, 'scan', 'start')
+
+    # Trace size from seconds to samples
+    params.config['scan', 'trace-size'] = int(float(params.config['scan', 'trace-size']) *
+                                              params.config['scan', 'trace-size'])
+
+    return params
