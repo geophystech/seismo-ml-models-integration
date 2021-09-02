@@ -69,6 +69,11 @@ def archive_scan_params():
                                                       ' Increases performance and reduces memory demand if set (at'
                                                       ' a cost of potential accuracy loss).',
                         action='store_true')
+    parser.add_argument('--channel-order',
+                        help='Order of channels, specify with comma separation,'
+                             ' without whitespaces. It is possible to specify multiple'
+                             ' configurations using semicolon as a group separator: N,E,Z;1,2,Z',
+                        default='N,E,Z')
 
     args = parser.parse_args()  # parse arguments
 
@@ -117,7 +122,8 @@ def archive_scan_params():
             'out': args.out,
             'seisan': args.seisan,
             'mulplt': args.mulplt,
-            'archives': args.archives
+            'archives': args.archives,
+            'channel-order': args.channel_order,
         },
     }
 
@@ -183,7 +189,18 @@ def archive_scan_params():
     params['scan', 'end'] = parse_date_param(params, 'scan', 'end')
     params['scan', 'start'] = parse_date_param(params, 'scan', 'start')
 
+    # Check if start and end dates are set
+    date = UTCDateTime()
+    if params['scan', 'start'] is None:
+        params['scan', 'start'] = UTCDateTime(f'{date.year}-{date.month}-{date.day}')
+    if params['scan', 'end'] is None:
+        params['scan', 'end'] = params['scan', 'start'] + 24 * 60 * 60 - 0.000001
+
     # Trace size from seconds to samples
     params['scan', 'trace-size'] = int(float(params['scan', 'trace-size']) * params['scan', 'trace-size'])
+
+    # Process channel order
+    if type(params['env', 'channel-order']) is str:
+        params['env', 'channel-order'] = [x.split(',') for x in params['env', 'channel-order'].strip(',;').split(';')]
 
     return params

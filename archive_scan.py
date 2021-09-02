@@ -21,6 +21,7 @@ if __name__ == '__main__':
         archives = get_archives(seisan=params['env', 'seisan'],
                                 mulplt=params['env', 'mulplt'],
                                 archives=params['env', 'archives'],
+                                channel_order=params['env', 'channel-order'],
                                 start=params['scan', 'start'], end=params['scan', 'end'])
 
     if params['info', 'cpu']:
@@ -114,9 +115,12 @@ if __name__ == '__main__':
     for n_archive, l_archives in enumerate(archives):
 
         # Read data
-        streams = []
-        for path in l_archives:
-            streams.append(read(path))
+        try:
+            streams = []
+            for path in l_archives:
+                streams.append(read(path))
+        except FileNotFoundError:
+            continue
 
         # If --plot-positives-original, save original streams
         original_streams = None

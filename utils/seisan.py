@@ -1,12 +1,43 @@
 from obspy.core.utcdatetime import UTCDateTime
 
 
-def get_archives(seisan, mulplt, archives, start, end):
+def order_group(group, channel_order):
+    # Determine correct channel order group
+    order = None
+    for channels in channel_order:
+        if set(group.keys()) == set(channels):
+            order = channels
+            break
+
+    if not order:
+        return None
+
+    return [group[x] for x in order]
+
+
+def get_archives(seisan, mulplt, archives, channel_order, start, end):
     """
     Returns lists of lists of archive file names to predict on.
     :return:
     """
-    return None
+    mulplt_parsed = parse_multplt(mulplt)
+    seisan_parsed = parse_seisan_def(seisan, multplt_data=mulplt_parsed)
+
+    c_date = start
+    paths = []
+    while c_date < end:
+        paths.extend([archive_to_path(group, c_date, archives) for group in seisan_parsed])
+        c_date += 24*60*60
+
+    # Order channels and convert them into nested lists
+    archives_paths = []
+    for group in paths:
+        l_ordered = order_group(group, channel_order)
+        if not l_ordered:
+            continue
+        archives_paths.append(l_ordered)
+
+    return archives_paths
 
 
 def parse_multplt(path):
@@ -26,7 +57,7 @@ def parse_multplt(path):
     return data
 
 
-def group_by(l, column, comp_margin = None):
+def group_by(l, column, comp_margin=None):
     """
     Groups list entities by column values.
     """
@@ -71,7 +102,7 @@ def process_archives_list(l):
     return result
 
 
-def parse_seisan_def(path, multplt_data = None, allowed_channels = None):
+def parse_seisan_def(path, multplt_data=None):
     """
     Parses seisan.def file and returns grouped lists like:
     [station, channel, network_code, location_code, archive start date, archive end date (or None)].
@@ -100,18 +131,12 @@ def parse_seisan_def(path, multplt_data = None, allowed_channels = None):
                         continue
 
                 parsed_line = [station, channel, code, location, start_date, end_date]
-                is_channel_allowed = False
-                for ch in allowed_channels:
-                    if ch == channel[:len(ch)]:
-                        is_channel_allowed = True
-
-                if is_channel_allowed:
-                    data.append(parsed_line)
+                data.append(parsed_line)
 
     return process_archives_list(data)
 
 
-def date_str(year, month, day, hour=0, minute=0, second=0., microsecond = None):
+def date_str(year, month, day, hour=0, minute=0, second=0., microsecond=None):
     """
     Creates an ISO 8601 string.
     """
@@ -138,13 +163,17 @@ def date_str(year, month, day, hour=0, minute=0, second=0., microsecond = None):
                       hour=hour, minute=minute, second=second, microsecond=microsecond)
 
 
-def archive_to_path(arch, date, archives_path, allowed_channel_dims):
+def archive_to_path(arch, date, archives_path):
     """
     Converts archive entry (array of elements: [[station, channel, code, location, start_date, end_date],]
     to dictionary of this format: {"N": "data/20160610AZTRO/20160610000000.AZ.TRO.HHN.mseed",}
     Path example: /seismo/archive/IM/LNSK/LNSK.IM.00.EHE.2016.100
                   <archive_dir>/<location>/<station>/<station>.<location>.<code>.<channel>.<year>.<julday>
     """
+    # Fix path
+    if archives_path[-1] != '/':
+        archives_path += '/'
+
     # Get julian day and year
     julday = date.julday
     year = date.year
@@ -166,9 +195,6 @@ def archive_to_path(arch, date, archives_path, allowed_channel_dims):
         # Find channel type
         ch_type = x[1][-1]
 
-        if ch_type not in allowed_channel_dims:
-            continue
-
         chans[ch_type] = x[1]
 
         # Get metadata
@@ -180,13 +206,8 @@ def archive_to_path(arch, date, archives_path, allowed_channel_dims):
             net_code = x[2]
 
         # Path to archive
-        path = archives_path + '/{}/{}/{}.{}.{}.{}.{}.{}'.format(x[2], x[0], x[0], x[2], x[3], x[1], year, julday)
+        path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(x[2], x[0], x[0], x[2], x[3], x[1], year, julday)
 
         d_result[ch_type] = path
-
-    d_result['meta'] = {'channels': chans,
-                        'station': station,
-                        'location_code': loc_code,
-                        'network_code': net_code}
 
     return d_result
