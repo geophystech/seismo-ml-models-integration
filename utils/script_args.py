@@ -20,10 +20,6 @@ def parse_date_param(args, *p_name):
 
 
 def archive_scan_params():
-    # Default weights for models
-    default_weights = {'favor': 'weights/w_model_performer_with_spec.hd5',
-                       'cnn': 'weights/weights_model_cnn_spec.hd5',
-                       'gpd': 'weights/w_gpd_scsn_2000_2017.h5'}
 
     # Command line arguments parsing
     parser = argparse.ArgumentParser()
@@ -75,14 +71,6 @@ def archive_scan_params():
                         action='store_true')
 
     args = parser.parse_args()  # parse arguments
-
-    # Set default weights paths
-    if args.cnn and not args.weights:
-        args.weights = default_weights['cnn']
-    elif args.gpd and not args.weights:
-        args.weights = default_weights['gpd']
-    elif not args.model and not args.weights:
-        args.weights = default_weights['favor']
 
     # Default config file path
     if not args.config:
@@ -144,11 +132,23 @@ def archive_scan_params():
         print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
         params = Params(path=None, config=d_args)
 
+    # Default weights for models
+    default_weights = {'favor': 'weights/w_model_performer_with_spec.hd5',
+                       'cnn': 'weights/weights_model_cnn_spec.hd5',
+                       'gpd': 'weights/w_gpd_scsn_2000_2017.h5'}
 
     # Default env values
     default_seisan = ['data/SEISAN.DEF', '/seismo/seisan/DAT/SEISAN.DEF', '/opt/seisan/DAT/SEISAN.DEF']
     default_mulplt = ['data/MULPLT.DEF', '/seismo/seisan/DAT/MULPLT.DEF', '/opt/seisan/DAT/MULPLT.DEF']
     default_archives = ['data/archives/', '/seismo/archives/', '/opt/archive/']
+
+    # Set default weights paths
+    if params['model', 'cnn'] and not params['model', 'weights']:
+        params['model', 'weights'] = default_weights['cnn']
+    elif args.gpd and not args.weights:
+        params['model', 'weights'] = default_weights['gpd']
+    elif not args.model and not args.weights:
+        params['model', 'weights'] = default_weights['favor']
 
     # Set default env
     if not params['env', 'input']:
