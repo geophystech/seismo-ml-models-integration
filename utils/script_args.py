@@ -136,7 +136,7 @@ def archive_scan_params():
         break
     if not params:
         print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
-        params = Params(path=None, config=d_args)
+        params = Params(path=None, config=d_args, default_dictionary='config')
 
     # Default weights for models
     default_weights = {'favor': 'weights/w_model_performer_with_spec.hd5',
