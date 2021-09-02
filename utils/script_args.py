@@ -1,7 +1,7 @@
 import argparse
 from obspy import UTCDateTime
 import sys
-from os.path import isfile
+from os.path import isfile, isdir
 
 from utils.params import Params
 
@@ -27,7 +27,10 @@ def archive_scan_params():
 
     # Command line arguments parsing
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', help='Path to file with archive names')
+    parser.add_argument('--seisan', help='Path to SEISAN.DEF', default=None)
+    parser.add_argument('--mulplt', help='Path to MULPLT.DEF', default=None)
+    parser.add_argument('--archives', help='Path to archives directory', default=None)
+    parser.add_argument('--input', help='Path to file with archive names', default=None)
     parser.add_argument('--config', '-c', help='Path to config file', default=None)
     parser.add_argument('--weights', '-w', help='Path to model weights', default=None)
     parser.add_argument('--cnn', help='Use simple CNN model on top of spectrogram', action='store_true')
@@ -124,6 +127,9 @@ def archive_scan_params():
             'config': args.config,
             'input': args.input,
             'out': args.out,
+            'seisan': args.seisan,
+            'mulplt': args.mulplt,
+            'archives': args.archives
         },
     }
 
@@ -137,6 +143,42 @@ def archive_scan_params():
     if not params:
         print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
         params = Params(path=None, config=d_args)
+
+
+    # Default env values
+    default_seisan = ['data/SEISAN.DEF', '/seismo/seisan/DAT/SEISAN.DEF', '/opt/seisan/DAT/SEISAN.DEF']
+    default_mulplt = ['data/MULPLT.DEF', '/seismo/seisan/DAT/MULPLT.DEF', '/opt/seisan/DAT/MULPLT.DEF']
+    default_archives = ['data/archives/', '/seismo/archives/', '/opt/archive/']
+
+    # Set default env
+    if not params['env', 'input']:
+        if not params['env', 'seisan']:
+            for x in default_seisan:
+                if not isfile(x):
+                    continue
+                params['env', 'seisan'] = x
+                break
+        if not params['env', 'seisan']:
+            raise AttributeError('Either "input" or "seisan" attribute should be set with correct values '
+                                 '(through config file or command line arguments)')
+        if not params['env', 'mulplt']:
+            for x in default_mulplt:
+                if not isfile(x):
+                    continue
+                params['env', 'mulplt'] = x
+                break
+        if not params['env', 'mulplt']:
+            raise AttributeError('Either "input" or "mulplt" attribute should be set with correct values '
+                                 '(through config file or command line arguments)')
+        if not params['env', 'archives']:
+            for x in default_archives:
+                if not isdir(x):
+                    continue
+                params['env', 'archives'] = x
+                break
+        if not params['env', 'archives']:
+            raise AttributeError('Either "input" or "archives" attribute should be set with correct values '
+                                 '(through config file or command line arguments)')
 
     params['scan', 'end'] = parse_date_param(params, 'scan', 'end')
     params['scan', 'start'] = parse_date_param(params, 'scan', 'start')

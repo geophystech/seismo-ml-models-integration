@@ -1,6 +1,14 @@
 from obspy.core.utcdatetime import UTCDateTime
 
 
+def get_archives(seisan, mulplt, archives, start, end):
+    """
+    Returns lists of lists of archive file names to predict on.
+    :return:
+    """
+    return None
+
+
 def parse_multplt(path):
     """
     Parses multplt.def file and returns list of lists like: [station, channel type (e.g. SH), channel (E, N or Z)].

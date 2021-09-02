@@ -4,6 +4,7 @@ import sys
 
 from utils.script_args import archive_scan_params
 import utils.scan_tools as stools
+from utils.seisan import get_archives
 
 # Silence tensorflow warnings
 import os
@@ -13,6 +14,14 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 if __name__ == '__main__':
 
     params = archive_scan_params()  # parse command line arguments
+
+    if params['env', 'input']:
+        archives = stools.parse_archive_csv(params['env', 'input'])  # parse archive names
+    else:
+        archives = get_archives(seisan=params['env', 'seisan'],
+                                mulplt=params['env', 'mulplt'],
+                                archives=params['env', 'archives'],
+                                start=params['scan', 'start'], end=params['scan', 'end'])
 
     if params['info', 'cpu']:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -66,8 +75,6 @@ if __name__ == '__main__':
 
     # Set values
     half_duration = (params['model', 'features-number'] * 0.5) / params['scan', 'frequency']
-
-    archives = stools.parse_archive_csv(params['env', 'input'])  # parse archive names
 
     # Load model
     if params['model', 'model']:
