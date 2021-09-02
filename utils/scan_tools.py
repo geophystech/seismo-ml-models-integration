@@ -367,7 +367,6 @@ def scan_traces(*_traces, model=None, params=None, n_features=400, shift=10, ori
 def restore_scores(_scores, shape, shift):
     """
     Restores scores to original size using linear interpolation.
-
     Arguments:
     scores -- original 'compressed' scores
     shape  -- shape of the restored scores
@@ -576,8 +575,6 @@ def print_scores(data, scores, predictions, file_token, window_length=400):
 
     plot_wave_scores(file_token, waveforms, shifted_scores, data[0].stats.starttime, predictions,
                      right_shift=right_shift)
-
-    # TODO: Save predictions samples in .csv ?
 
     np.save(f'{file_token}_wave.npy', waveforms)
     np.save(f'{file_token}_scores.npy', shifted_scores)
