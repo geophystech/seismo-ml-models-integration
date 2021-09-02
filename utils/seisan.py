@@ -1,6 +1,3 @@
-from obspy.core.utcdatetime import UTCDateTime
-
-
 def order_group(group, channel_order):
     # Determine correct channel order group
     order = None
