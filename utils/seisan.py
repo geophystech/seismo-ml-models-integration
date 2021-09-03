@@ -1,3 +1,6 @@
+from os.path import isfile
+
+
 def order_group(group, channel_order):
     # Determine correct channel order group
     order = None
@@ -9,7 +12,12 @@ def order_group(group, channel_order):
     if not order:
         return None
 
-    return [group[x] for x in order]
+    paths = [group[x] for x in order]
+    # Check if all archives actually exist
+    for x in paths:
+        if not isfile(x):
+            return None
+    return paths
 
 
 def get_archives(seisan, mulplt, archives, channel_order, start, end):
