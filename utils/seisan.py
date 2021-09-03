@@ -5,7 +5,7 @@ def order_group(group, channel_order):
     # Determine correct channel order group
     order = None
     for channels in channel_order:
-        if set(group.keys()) == set(channels):
+        if all(x in group.keys() for x in channels):
             order = channels
             break
 
