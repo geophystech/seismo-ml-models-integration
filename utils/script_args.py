@@ -88,15 +88,13 @@ def archive_scan_params():
 
     # Convert args to a dictionary
     d_args = {
-        'model': {
+        'main': {
             'weights': args.weights,
             'cnn': args.cnn,
             'gpd': args.gpd,
             'model': args.model,
             'loader-argv': args.loader_argv,
             'features-number': args.features_number,
-        },
-        'scan': {
             'start': args.start,
             'end': args.end,
             'threshold': args.threshold,
@@ -107,16 +105,12 @@ def archive_scan_params():
             'no-detrend': args.no_detrend,
             'trace-normalization': args.trace_normalization,
             'frequency': args.frequency,
-        },
-        'info': {
             'plot-positives': args.plot_positives,
             'plot-positives-original': args.plot_positives_original,
             'print-scores': args.print_scores,
             'print-precision': args.print_precision,
             'time': args.time,
             'cpu': args.cpu,
-        },
-        'env': {
             'config': args.config,
             'input': args.input,
             'out': args.out,
@@ -129,7 +123,7 @@ def archive_scan_params():
 
     # Parse config files
     params = None
-    for x in d_args['env']['config']:
+    for x in d_args['main']['config']:
         if not isfile(x):
             continue
         params = Params(path=x, config=d_args, default_dictionary='config')
