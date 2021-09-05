@@ -54,6 +54,9 @@ class ParamsDictionary(dict):
     def __repr__(self):
         return self._dict.__repr__()
 
+    def __len__(self):
+        return len(self._dict)
+
     def __contains__(self, item):
         return item in self._dict
 
@@ -181,6 +184,23 @@ class Params:
 
     def __repr__(self):
         return self.__str__()
+
+    def __bool__(self):
+        params_dict = None
+        if self.default_dictionary == 'config':
+            params_dict = self.config
+        elif self.default_dictionary == 'data':
+            params_dict = self.data
+        elif self.default_dictionary == 'other':
+            params_dict = self.other
+
+        if params_dict:
+            return True
+
+        for x in [self.config, self.data, self.other]:
+            if x:
+                return True
+        return False
 
     def default(self):
         """
