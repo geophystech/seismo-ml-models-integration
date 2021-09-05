@@ -289,6 +289,34 @@ class Params:
                 params_dict.__setitem__((x, *key), result)
 
 
+def applied_function(**kwargs):
+    """
+    This is a Python @decorator for converting function to be able to work with Params.apply_function by replacing
+    keyword arguments by **kwargs (basically, constants).
+
+    Usage examples:
+
+    @applied_function(v_type = float, name = 'some_name')
+    def foo(value, params, v_type, name):
+        ...
+    params.apply_function('some_key', foo)
+
+    OR
+
+    def foo(value, params, v_type, name):
+        ...
+    params.apply_function('some_key_1', applied_function(v_type = float, name = 'float_var')(foo))
+    params.apply_function('some_key_2', applied_function(v_type = int, name = 'int_var')(foo))
+
+    etc.
+    """
+    def decorator(f):
+        def decorate(value, params):
+            return f(value, params, **kwargs)
+        return decorate
+    return decorator
+
+
 def default(loader='', params=None, arg=None):
     """
     Returns a default parameters object for a requested module or script.
