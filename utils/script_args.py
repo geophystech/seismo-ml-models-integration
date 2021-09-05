@@ -19,6 +19,78 @@ def parse_date_param(args, *p_name):
         pass
 
 
+def get_args_dictionaries(args):
+    """
+    Returns converted to a dictionary arguments and a dictionary of arguments type
+    :return: (dict, dict)
+    """
+    d_args = {
+        'main': {
+            'weights': args.weights,
+            'cnn': args.cnn,
+            'gpd': args.gpd,
+            'model': args.model,
+            'loader-argv': args.loader_argv,
+            'features-number': args.features_number,
+            'start': args.start,
+            'end': args.end,
+            'threshold': args.threshold,
+            'batch-size': args.batch_size,
+            'trace-size': args.trace_size,
+            'shift': args.shift,
+            'no-filter': args.no_filter,
+            'no-detrend': args.no_detrend,
+            'trace-normalization': args.trace_normalization,
+            'frequency': args.frequency,
+            'plot-positives': args.plot_positives,
+            'plot-positives-original': args.plot_positives_original,
+            'print-scores': args.print_scores,
+            'print-precision': args.print_precision,
+            'time': args.time,
+            'cpu': args.cpu,
+            'config': args.config,
+            'input': args.input,
+            'out': args.out,
+            'seisan': args.seisan,
+            'mulplt': args.mulplt,
+            'archives': args.archives,
+            'channel-order': args.channel_order,
+        },
+    }
+    d_types = {
+        'weights': 'anything',
+        'cnn': 'bool',
+        'gpd': 'bool',
+        'model': 'str',
+        'loader-argv': 'anything',
+        'features-number': 'int',
+        'start': 'string',
+        'end': 'string',
+        'threshold': 'anything',
+        'batch-size': args.batch_size,
+        'trace-size': args.trace_size,
+        'shift': args.shift,
+        'no-filter': args.no_filter,
+        'no-detrend': args.no_detrend,
+        'trace-normalization': args.trace_normalization,
+        'frequency': args.frequency,
+        'plot-positives': args.plot_positives,
+        'plot-positives-original': args.plot_positives_original,
+        'print-scores': args.print_scores,
+        'print-precision': args.print_precision,
+        'time': args.time,
+        'cpu': args.cpu,
+        'config': args.config,
+        'input': args.input,
+        'out': args.out,
+        'seisan': args.seisan,
+        'mulplt': args.mulplt,
+        'archives': args.archives,
+        'channel-order': args.channel_order,
+    }
+    return d_args, d_types
+
+
 def archive_scan_params():
 
     # Command line arguments parsing
@@ -87,39 +159,7 @@ def archive_scan_params():
                        '~/.config/seismo-ml-models-integration/archive_scan_config.ini']
 
     # Convert args to a dictionary
-    d_args = {
-        'main': {
-            'weights': args.weights,
-            'cnn': args.cnn,
-            'gpd': args.gpd,
-            'model': args.model,
-            'loader-argv': args.loader_argv,
-            'features-number': args.features_number,
-            'start': args.start,
-            'end': args.end,
-            'threshold': args.threshold,
-            'batch-size': args.batch_size,
-            'trace-size': args.trace_size,
-            'shift': args.shift,
-            'no-filter': args.no_filter,
-            'no-detrend': args.no_detrend,
-            'trace-normalization': args.trace_normalization,
-            'frequency': args.frequency,
-            'plot-positives': args.plot_positives,
-            'plot-positives-original': args.plot_positives_original,
-            'print-scores': args.print_scores,
-            'print-precision': args.print_precision,
-            'time': args.time,
-            'cpu': args.cpu,
-            'config': args.config,
-            'input': args.input,
-            'out': args.out,
-            'seisan': args.seisan,
-            'mulplt': args.mulplt,
-            'archives': args.archives,
-            'channel-order': args.channel_order,
-        },
-    }
+    d_args, _ = get_args_dictionaries(args)
 
     # Parse config files
     params = None
@@ -149,6 +189,10 @@ def archive_scan_params():
         params['model', 'weights'] = default_weights['gpd']
     elif not args.model and not args.weights:
         params['model', 'weights'] = default_weights['favor']
+
+    print('params')
+    print(params)
+    sys.exit(0)
 
     # Set default env
     if not params['env', 'input']:

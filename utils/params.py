@@ -60,6 +60,10 @@ class ParamsDictionary(dict):
     def items(self):
         return self._dict.items()
 
+    def __iter__(self):
+        for key in self._dict:
+            yield key
+
 
 def merge_dictionaries(to_dict, from_dict, depth=3, replace=True):
     """
@@ -189,24 +193,72 @@ class Params:
         return loader, arg
 
     def __getitem__(self, key):
+        """
+        Returns an item from default dictionary: if first key is found in first level of dictionary: returns entry from
+            this dictionary if present.
+        If first key is not found in first level, searches "main" dictionary.
+        If nothing is found in first level dictionary, returns entry from the "main" dictionary, or None.
+        """
+        params_dict = None
         if self.default_dictionary == 'config':
-            return self.config.__getitem__(key)
+            params_dict = self.config
         elif self.default_dictionary == 'data':
-            return self.data.__getitem__(key)
+            params_dict = self.data
         elif self.default_dictionary == 'other':
-            return self.other.__getitem__(key)
-        else:
+            params_dict = self.other
+
+        if not params_dict:
             raise KeyError(f'No default dictionary specified for params to access key: {key}')
 
+        if key[0] in params_dict:
+            result = params_dict.__getitem__(key)
+            if not result:
+                return params_dict.__getitem__(('main', *key[1:]))
+            return result
+        return params_dict.__getitem__(('main', *key))
+
     def __setitem__(self, key, value):
+        """
+        Sets value to a default dictionary key.
+        """
         if self.default_dictionary == 'config':
-            return self.config.__setitem__(key, value)
+            params_dict = self.config
         elif self.default_dictionary == 'data':
-            return self.data.__setitem__(key, value)
+            params_dict = self.data
         elif self.default_dictionary == 'other':
-            return self.other.__setitem__(key, value)
+            params_dict = self.other
         else:
             raise KeyError(f'No default dictionary specified for params to set key {key} with value {value}')
+
+        params_dict.__setitem__(key, value)
+
+    def apply_function(self, key, function):
+        """
+        Applies function to a parameter. If first level dictionary is not specified in key, than applies
+        function for all parameter entries in every first level dictionary.
+        Applied function should take two positional arguments: parameter value, dictionary (ParamsDictionary to be
+        specific) of the same level as the parameter. This function should returns new value for the parameter.
+        """
+        params_dict = None
+        if self.default_dictionary == 'config':
+            params_dict = self.config
+        elif self.default_dictionary == 'data':
+            params_dict = self.data
+        elif self.default_dictionary == 'other':
+            params_dict = self.other
+
+        if not params_dict:
+            raise KeyError(f'No default dictionary specified for params to apply function to key: {key}')
+
+        if key[0] in params_dict:
+            result = params_dict.__getitem__(key)
+            result = function(result, params_dict.__getitem__(key[0]))
+            params_dict.__setitem__(key, result)
+        else:
+            for x in params_dict:
+                result = params_dict.__getitem__((x, *key))
+                result = function(result, params_dict.__getitem__(x))
+                params_dict.__setitem__((x, *key), result)
 
 
 def default(loader='', params=None, arg=None):
