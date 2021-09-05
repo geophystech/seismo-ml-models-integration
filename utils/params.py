@@ -210,6 +210,10 @@ class Params:
         if not params_dict:
             raise KeyError(f'No default dictionary specified for params to access key: {key}')
 
+        # Convert key to iterable if str
+        if type(key) is str:
+            key = tuple([key])
+
         if key[0] in params_dict:
             result = params_dict.__getitem__(key)
             if not result:
