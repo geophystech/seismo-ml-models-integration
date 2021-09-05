@@ -271,6 +271,10 @@ class Params:
         elif self.default_dictionary == 'other':
             params_dict = self.other
 
+        # Convert key to iterable if str
+        if type(key) is str:
+            key = tuple([key])
+
         if not params_dict:
             raise KeyError(f'No default dictionary specified for params to apply function to key: {key}')
 
