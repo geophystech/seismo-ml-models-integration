@@ -7,7 +7,7 @@ from time import time
 from obspy.core.utcdatetime import UTCDateTime
 
 
-def pre_process_stream(stream, no_filter=False, no_detrend=False):
+def pre_process_stream(stream, params, station):
     """
     Does preprocessing on the stream (changes it's frequency), does linear detrend and
     highpass filtering with frequency of 2 Hz.
@@ -16,12 +16,15 @@ def pre_process_stream(stream, no_filter=False, no_detrend=False):
     stream      -- obspy.core.stream object to pre process
     frequency   -- required frequency
     """
+    no_filter = params[station, 'no-filter']
+    no_detrend = params[station, 'no-detrend']
+
     if not no_detrend:
         stream.detrend(type="linear")
     if not no_filter:
         stream.filter(type="highpass", freq=2)
 
-    frequency = 100.
+    frequency = params[station, 'frequency']
     required_dt = 1. / frequency
     dt = stream[0].stats.delta
 
@@ -277,7 +280,7 @@ def plot_oririnal_positives(scores, original_windows, threshold, original_scores
             plt.clf()
 
 
-def scan_traces(*_traces, model=None, params=None, n_features=400, shift=10, original_data=None):
+def scan_traces(*_traces, model=None, params=None, n_features=400, shift=10, original_data=None, station='main'):
     """
     Get predictions on the group of traces.
 
@@ -292,28 +295,28 @@ def scan_traces(*_traces, model=None, params=None, n_features=400, shift=10, ori
     global_normalize -- normalize globaly all traces if True or locally if False
     batch_size       -- model.fit batch size
     """
-    batch_size = params['scan', 'batch_size']
+    batch_size = params['main', 'batch_size']
 
     # Check input types
     for x in _traces:
         if type(x) != oc.trace.Trace:
             raise TypeError('traces should be a list or containing obspy.core.trace.Trace objects')
-    # plot-positives-original
+
     # Cut all traces to a same timeframe
     _traces = cut_traces(*_traces)
 
-    # normalize_traces(*traces, global_normalize = global_normalize)
-
-    if not params['scan', 'trace_normalization']:
+    if not params[station, 'trace-normalization']:
         # Get sliding window arrays
         l_windows = []
         for x in _traces:
-            l_windows.append(sliding_window(x.data, n_features=n_features, n_shift=params['scan', 'shift']))
+            l_windows.append(sliding_window(x.data, n_features=n_features, n_shift=params[station, 'shift']))
 
-        if params['scan', 'plot_positives_original']:
+        if params[station, 'plot-positives-original']:
             original_l_windows = []
             for x in original_data:
-                original_l_windows.append(sliding_window(x.data, n_features=n_features, n_shift=params['scan', 'shift']))
+                original_l_windows.append(sliding_window(x.data,
+                                                         n_features=n_features,
+                                                         n_shift=params[station, 'shift']))
 
         w_length = min([x.shape[0] for x in l_windows])
 
@@ -322,14 +325,14 @@ def scan_traces(*_traces, model=None, params=None, n_features=400, shift=10, ori
         for _i in range(len(l_windows)):
             windows[:, :, _i] = l_windows[_i][:w_length]
 
-        if params['info', 'plot-positives-original']:
+        if params[station, 'plot-positives-original']:
             original_windows = np.zeros((w_length, n_features, len(original_l_windows)))
             for _i in range(len(original_l_windows)):
                 original_windows[:, :, _i] = original_l_windows[_i][:w_length]
 
         # Global max normalization:
         normalize_windows_global(windows)
-        if params['info', 'plot-positives-original']:
+        if params[station, 'plot-positives-original']:
             normalize_windows_global(original_windows)
 
     else:
@@ -342,9 +345,9 @@ def scan_traces(*_traces, model=None, params=None, n_features=400, shift=10, ori
 
         normalize_global(data)
 
-        windows = sliding_window_strided(data, 400, params['scan', 'shift'], False)
+        windows = sliding_window_strided(data, 400, params[station, 'shift'], False)
 
-        if params['scan', 'plot-positives-original']:
+        if params[station, 'plot-positives-original']:
             original_windows = windows.copy()
 
     # Predict
@@ -352,14 +355,15 @@ def scan_traces(*_traces, model=None, params=None, n_features=400, shift=10, ori
     _scores = model.predict(windows, verbose=False, batch_size=batch_size)
     performance_time = time() - start_time
     # TODO: create another flag for this, e.g. --culculate-original-probs or something
-    if params['scan', 'plot-positives-original']:
+    if params[station, 'plot-positives-original']:
         original_scores = model.predict(original_windows, verbose=False, batch_size=batch_size)
 
     # Positives plotting
-    if params['info', 'plot_positives']:
-        plot_positives(_scores, windows, params['scan', 'threshold'])
-    if params['info', 'plot_positives_original']:
-        plot_oririnal_positives(_scores, original_windows, params['scan', 'threshold'], original_scores)
+    threshold = 0.95
+    if params[station, 'plot-positives']:
+        plot_positives(_scores, windows, threshold)
+    if params[station, 'plot-positives-original']:
+        plot_oririnal_positives(_scores, original_windows, threshold, original_scores)
 
     return _scores, performance_time
 
