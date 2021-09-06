@@ -153,12 +153,22 @@ class Params:
         if loader:
             default(loader=loader, arg=arg, params=self)
 
+    def _default_dictionary(self):
+        """
+        Returns default dictionary reference if set, None otherwise.
+        """
+        params_dict = None
+        if self.default_dictionary == 'config':
+            params_dict = self.config
+        elif self.default_dictionary == 'data':
+            params_dict = self.data
+        elif self.default_dictionary == 'other':
+            params_dict = self.other
+        return params_dict
+
     def parse_ini(self, path, mode):
         """
-
-        :param path:
         :param mode: 'config', 'data', 'other'
-        :return:
         """
         import configparser
         config = configparser.ConfigParser()
@@ -173,12 +183,6 @@ class Params:
             merge_dictionaries(self.other, data)
 
     def read_config(self, path, mode):
-        """
-
-        :param path:
-        :param mode:
-        :return:
-        """
         from os.path import splitext
         _, extension = splitext(path)
         if extension == '.ini':
@@ -209,13 +213,7 @@ class Params:
         return self.__str__()
 
     def __bool__(self):
-        params_dict = None
-        if self.default_dictionary == 'config':
-            params_dict = self.config
-        elif self.default_dictionary == 'data':
-            params_dict = self.data
-        elif self.default_dictionary == 'other':
-            params_dict = self.other
+        params_dict = self._default_dictionary()
 
         if params_dict:
             return True
@@ -242,13 +240,7 @@ class Params:
         If first key is not found in first level, searches "main" dictionary.
         If nothing is found in first level dictionary, returns entry from the "main" dictionary, or None.
         """
-        params_dict = None
-        if self.default_dictionary == 'config':
-            params_dict = self.config
-        elif self.default_dictionary == 'data':
-            params_dict = self.data
-        elif self.default_dictionary == 'other':
-            params_dict = self.other
+        params_dict = self._default_dictionary()
 
         if not params_dict:
             raise KeyError(f'No default dictionary specified for params to access key: {key}')
@@ -268,13 +260,8 @@ class Params:
         """
         Sets value to a default dictionary key.
         """
-        if self.default_dictionary == 'config':
-            params_dict = self.config
-        elif self.default_dictionary == 'data':
-            params_dict = self.data
-        elif self.default_dictionary == 'other':
-            params_dict = self.other
-        else:
+        params_dict = self._default_dictionary()
+        if not params_dict:
             raise KeyError(f'No default dictionary specified for params to set key {key} with value {value}')
 
         params_dict.__setitem__(key, value)
@@ -286,20 +273,14 @@ class Params:
         Applied function should take two positional arguments: parameter value, dictionary (ParamsDictionary to be
         specific) of the same level as the parameter. This function should returns new value for the parameter.
         """
-        params_dict = None
-        if self.default_dictionary == 'config':
-            params_dict = self.config
-        elif self.default_dictionary == 'data':
-            params_dict = self.data
-        elif self.default_dictionary == 'other':
-            params_dict = self.other
+        params_dict = self._default_dictionary()
+
+        if not params_dict:
+            raise KeyError(f'No default dictionary specified for params to apply function to key: {key}')
 
         # Convert key to iterable if str
         if type(key) is str:
             key = tuple([key])
-
-        if not params_dict:
-            raise KeyError(f'No default dictionary specified for params to apply function to key: {key}')
 
         if key[0] in params_dict:
             result = params_dict.__getitem__(key)
@@ -310,6 +291,23 @@ class Params:
                 result = params_dict.__getitem__((x, *key))
                 result = function(result, params_dict.__getitem__(x))
                 params_dict.__setitem__((x, *key), result)
+
+    def check_unsupported_station_parameter(self, key):
+        """
+        If key is set in any of the station dictionaries, this function will raise a NotImplementedError.
+        """
+        params_dict = self._default_dictionary()
+        if not params_dict:
+            raise KeyError(f'No default dictionary specified for params to check key {key}')
+
+        # Convert key to iterable if str
+        if type(key) is str:
+            key = tuple([key])
+
+        station_keys = [x for x in params_dict if x != 'main']
+        for station in station_keys:
+            if params_dict.__getitem__((station, *key)) is not None:
+                raise KeyError(f'Unsupported station parameter {key} in station {station}')
 
 
 def applied_function(**kwargs):

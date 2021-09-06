@@ -6,6 +6,23 @@ from os.path import isfile, isdir
 from utils.params import Params, applied_function
 
 
+def get_unsupported_station_parameters_list():
+    # Not currently supported parameters:
+    return [
+        # Customizable models
+        'favor', 'cnn', 'gpd', 'model', 'weights',
+        'loader-argv', 'features-number',
+        # Custom dates
+        'start', 'end',
+        # Model input and batches customization
+        'features-number', 'batch-size', 'trace-size', 'shift', 'frequency',
+        # Info output and computation restriction
+        'time', 'cpu',
+        # Environment
+        'input', 'seisan', 'mulplt', 'archives'
+    ]
+
+
 def get_args_dictionaries(args):
     """
     Returns converted to a dictionary arguments and a dictionary of arguments type
@@ -339,5 +356,9 @@ def archive_scan_params():
     for key, functions in d_applied_functions.items():
         for f in functions:
             params.apply_function(key, f)
+
+    l_not_supported = get_unsupported_station_parameters_list()
+    for x in l_not_supported:
+        params.check_unsupported_station_parameter(x)
 
     return params
