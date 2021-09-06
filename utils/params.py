@@ -262,7 +262,7 @@ class Params:
             if result is None:
                 return params_dict.__getitem__(('main', *key[1:]))
             return result
-        return params_dict.__getitem__(('main', *key))
+        return params_dict.__getitem__(('main', *key[1:]))
 
     def __setitem__(self, key, value):
         """
