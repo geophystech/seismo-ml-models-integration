@@ -27,54 +27,9 @@ if __name__ == '__main__':
     if params['info', 'cpu']:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-    # Set label variables
+    # Set values
     model_labels = {'p': 0, 's': 1, 'n': 2}
     positive_labels = {'p': 0, 's': 1}
-
-    # Parse and validate thresholds
-    threshold_labels = {}
-    global_threshold = False
-    if type(params['scan', 'threshold']) is str:
-
-        split_thresholds = params['scan', 'threshold'].split(',')
-
-        if len(split_thresholds) == 1:
-            params['scan', 'threshold'] = float(params['scan', 'threshold'])
-            global_threshold = True
-        else:
-            for split in split_thresholds:
-
-                label_threshold = split.split(':')
-                if len(label_threshold) != 2:
-                    print('ERROR: Wrong --threshold format. Hint:'
-                          ' --threshold "p: 0.95, s: 0.9901"', file=sys.stderr)
-                    sys.exit(2)
-
-                threshold_labels[label_threshold[0].strip()] = float(label_threshold[1])
-    else:
-        params['scan', 'threshold'] = float(params['scan', 'threshold'])
-        global_threshold = True
-
-    if global_threshold:
-        for label in positive_labels:
-            threshold_labels[label] = params['scan', 'threshold']
-    else:
-        positive_labels_error = False
-        if len(positive_labels) != len(threshold_labels):
-            positive_labels_error = True
-
-        for label in positive_labels:
-            if label not in threshold_labels:
-                positive_labels_error = True
-
-        if positive_labels_error:
-            sys.stderr.write('ERROR: --threshold values do not match positive_labels.'
-                             f' positive_labels contents: {[k for k in positive_labels.keys()]}')
-            sys.exit(2)
-
-    params['scan', 'threshold'] = threshold_labels
-
-    # Set values
     half_duration = (params['model', 'features-number'] * 0.5) / params['scan', 'frequency']
 
     # Load model
@@ -238,7 +193,7 @@ if __name__ == '__main__':
                     positives = stools.get_positives(restored_scores,
                                                      positive_labels[label],
                                                      other_labels,
-                                                     threshold=threshold_labels[label])
+                                                     threshold=params['threshold'][label])
 
                     predicted_labels[label] = positives
 
