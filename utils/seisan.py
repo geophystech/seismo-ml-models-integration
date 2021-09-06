@@ -20,13 +20,16 @@ def order_group(group, channel_order):
     return paths
 
 
-def get_archives(seisan, mulplt, archives, channel_order, start, end):
+def get_archives(seisan, mulplt, archives, params):
     """
     Returns lists of lists of archive file names to predict on.
     :return:
     """
     mulplt_parsed = parse_multplt(mulplt)
     seisan_parsed = parse_seisan_def(seisan, multplt_data=mulplt_parsed)
+
+    start = params['main', 'start']
+    end = params['main', 'end']
 
     c_date = start
     paths = []
@@ -37,10 +40,13 @@ def get_archives(seisan, mulplt, archives, channel_order, start, end):
     # Order channels and convert them into nested lists
     archives_paths = []
     for group in paths:
-        l_ordered = order_group(group, channel_order)
+        l_ordered = order_group(group['paths'], params[group['station'], 'channel-order'])
         if not l_ordered:
             continue
-        archives_paths.append(l_ordered)
+        archives_paths.append({
+            'paths': l_ordered,
+            'station': group['station']
+        })
 
     return archives_paths
 
@@ -215,4 +221,7 @@ def archive_to_path(arch, date, archives_path):
 
         d_result[ch_type] = path
 
-    return d_result
+    return {
+        'paths': d_result,
+        'station': station
+    }
