@@ -17,7 +17,7 @@ To specify path to specific use `--mulplt PATH` option.
 
 Only lines read from the *MULPLT.DEF* file are entries like this:
 
-```aidl
+```
 #DEFAULT CHANNEL NYSH EN Z
 ```
 
@@ -27,7 +27,7 @@ One line represents one channel (or one daily archive file) for a seismic statio
 
 Note, that station also must be described in *SEISAN.DEF*.
 
-```aidl
+```
 #DEFAULT CHANNEL NYSH   EN Z
 #DEFAULT CHANNEL NYSH   EN N
 #DEFAULT CHANNEL NYSH   EN E
@@ -44,7 +44,7 @@ station-specific options (eg filtering, output, channel order, ...) might be wri
 In order to configure individual station, simply write a new section with station name.
 Example of station section can be found in `data/config.ini`:
 
-```aidl
+```
 [ARGI]
 no-filter = true
 out = predictions_argi.txt
