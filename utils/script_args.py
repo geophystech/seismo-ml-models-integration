@@ -65,7 +65,7 @@ def get_args_dictionaries(args):
 
     # Default weights for models
     default_weights = {'favor': 'weights/w_model_performer_with_spec.hd5',
-                       'cnn': 'weights/weights_model_cnn_spec.hd5',
+                       'cnn': 'weights/w_model_cnn_spec.hd5',
                        'gpd': 'weights/w_gpd_scsn_2000_2017.h5'}
 
     @applied_function(defaults=default_weights)
