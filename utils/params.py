@@ -42,8 +42,12 @@ class ParamsDictionary(dict):
             item = self
             for i in range(len(key) - 1):
                 if key[i] not in item:
+                    if value is None:
+                        return
                     item[key[i]] = ParamsDictionary()
                 item = item[key[i]]
+            if key[-1] not in item and value is None:
+                return
             item[key[-1]] = value
         else:
             self._dict[key] = value
