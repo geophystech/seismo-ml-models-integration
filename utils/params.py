@@ -23,6 +23,25 @@ class ParamsDictionary(dict):
         else:
             self._dict = dict()
 
+    def _exception_getitem(self, key):
+        """
+        __getitem__, but trows exceptions on key errors and type errors!
+        """
+        if type(key) is tuple:
+            item = self
+            for x in key:
+                item = item[x]
+            return item
+        else:
+            return self._dict[key]
+
+    def key_exists(self, key):
+        try:
+            self._exception_getitem(key)
+        except KeyError:
+            return False
+        return True
+
     def __getitem__(self, key):
         try:
             if type(key) is tuple:
