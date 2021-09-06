@@ -134,7 +134,7 @@ def get_args_dictionaries(args):
             return value
         if not params['frequency']:
             raise AttributeError('No frequency specified for trace-size argument!')
-        return int(float(value)) * params['frequency']
+        return int(float(value) * params['frequency'])
 
     def threshold_converter(value, _):
         if value is None:
@@ -307,32 +307,32 @@ def archive_scan_params():
     default_mulplt = ['data/MULPLT.DEF', '/seismo/seisan/DAT/MULPLT.DEF', '/opt/seisan/DAT/MULPLT.DEF']
     default_archives = ['data/archives/', '/seismo/archives/', '/opt/archive/']
 
-    if not params['input']:
-        if not params['seisan']:
+    if not params['main', 'input']:
+        if not params['main', 'seisan']:
             for x in default_seisan:
                 if not isfile(x):
                     continue
                 params['main', 'seisan'] = x
                 break
-        if not params['seisan']:
+        if not params['main', 'seisan']:
             raise AttributeError('Either "input" or "seisan" attribute should be set with correct values '
                                  '(through config file or command line arguments)')
-        if not params['mulplt']:
+        if not params['main', 'mulplt']:
             for x in default_mulplt:
                 if not isfile(x):
                     continue
                 params['main', 'mulplt'] = x
                 break
-        if not params['mulplt']:
+        if not params['main', 'mulplt']:
             raise AttributeError('Either "input" or "mulplt" attribute should be set with correct values '
                                  '(through config file or command line arguments)')
-        if not params['archives']:
+        if not params['main', 'archives']:
             for x in default_archives:
                 if not isdir(x):
                     continue
                 params['main', 'archives'] = x
                 break
-        if not params['archives']:
+        if not params['main', 'archives']:
             raise AttributeError('Either "input" or "archives" attribute should be set with correct values '
                                  '(through config file or command line arguments)')
 
