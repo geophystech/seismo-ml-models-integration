@@ -236,7 +236,7 @@ class Params:
 
         if key[0] in params_dict:
             result = params_dict.__getitem__(key)
-            if not result:
+            if result is None:
                 return params_dict.__getitem__(('main', *key[1:]))
             return result
         return params_dict.__getitem__(('main', *key))
