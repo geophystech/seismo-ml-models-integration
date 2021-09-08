@@ -10,8 +10,7 @@ def get_unsupported_station_parameters_list():
     # Not currently supported parameters:
     return [
         # Customizable models
-        'favor', 'cnn', 'gpd', 'model', 'weights',
-        'loader-argv', 'features-number',
+        'model', 'loader-argv', 'features-number',
         # Custom dates
         'start', 'end',
         # Model input and batches customization

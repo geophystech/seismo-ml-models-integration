@@ -309,6 +309,18 @@ class Params:
             if params_dict.__getitem__((station, *key)) is not None:
                 raise KeyError(f'Unsupported station parameter {key} in station {station}')
 
+    def get_station_keys(self, main=False):
+        """
+        Returns list of all first-level (station) keywords
+        :param main: Include 'main' keyword?
+        :return: list
+        """
+        params_dict = self._default_dictionary()
+
+        if not main:
+            return [x for x in params_dict if x != 'main']
+        return [x for x in params_dict]
+
 
 def applied_function(**kwargs):
     """

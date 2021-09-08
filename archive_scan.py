@@ -32,37 +32,41 @@ if __name__ == '__main__':
     half_duration = (params['main', 'features-number'] * 0.5) / params['main', 'frequency']
 
     # Load model
-    if params['main', 'model']:
+    for x in params.get_station_keys():
 
-        import importlib
+        if params[x, 'model']:
 
-        model_loader = importlib.import_module(params['main', 'model'])  # import loader module
-        loader_call = getattr(model_loader, 'load_model')  # import loader function
+            import importlib
 
-        # Parse loader arguments
-        loader_argv = params['main', 'loader-argv']
+            model_loader = importlib.import_module(params[x, 'model'])  # import loader module
+            loader_call = getattr(model_loader, 'load_model')  # import loader function
 
-        argv_split = loader_argv.strip().split()
-        argv_dict = {}
+            # Parse loader arguments
+            loader_argv = params[x, 'loader-argv']
 
-        for pair in argv_split:
+            argv_split = loader_argv.strip().split()
+            argv_dict = {}
 
-            spl = pair.split('=')
-            if len(spl) == 2:
-                argv_dict[spl[0]] = spl[1]
+            for pair in argv_split:
 
-        model = loader_call(**argv_dict)
-    else:
+                spl = pair.split('=')
+                if len(spl) == 2:
+                    argv_dict[spl[0]] = spl[1]
 
-        if params['main', 'cnn']:
-            import utils.seismo_load as seismo_load
-            model = seismo_load.load_cnn(params['main', 'weights'])
-        elif params['main', 'gpd']:
-            from utils.gpd_loader import load_model as load_gpd
-            model = load_gpd(params['main', 'weights'])
+            model = loader_call(**argv_dict)
         else:
-            import utils.seismo_load as seismo_load
-            model = seismo_load.load_performer(params['main', 'weights'])
+
+            if params[x, 'cnn']:
+                import utils.seismo_load as seismo_load
+                model = seismo_load.load_cnn(params[x, 'weights'])
+            elif params[x, 'gpd']:
+                from utils.gpd_loader import load_model as load_gpd
+                model = load_gpd(params[x, 'weights'])
+            else:
+                import utils.seismo_load as seismo_load
+                model = seismo_load.load_performer(params[x, 'weights'])
+
+        params.data[x, 'model'] = model
 
     # Main loop
     total_performance_time = 0.
