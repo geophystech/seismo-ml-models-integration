@@ -27,12 +27,14 @@ def get_args_dictionaries(args):
     Returns converted to a dictionary arguments and a dictionary of arguments type
     :return: (dict, dict)
     """
+    # Convert args namespace to a final nested dictionary-like structure of config file
     d_args = {
         'main': {
             'favor': args.favor,
             'cnn': args.cnn,
             'gpd': args.gpd,
             'model': args.model,
+            'model-name': None,
             'weights': args.weights,
             'loader-argv': args.loader_argv,
             'features-number': args.features_number,
@@ -67,15 +69,28 @@ def get_args_dictionaries(args):
                        'cnn': 'weights/w_model_cnn_spec.hd5',
                        'gpd': 'weights/w_gpd_scsn_2000_2017.h5'}
 
+    # Following functions will be applied to parameters to set default values, convert data types, etc.
+    def apply_default_model_name(model_name, params, base_params):
+        if params['favor']:
+            return 'favor'
+        if params['cnn']:
+            return 'cnn'
+        if params['gpd']:
+            return 'gpd'
+        if params['model']:
+            return 'custom-model'
+        raise AttributeError('Model is not specified, and default model did not apply! If you see this message, '
+                             'this is a bug!')
+
     @applied_function(defaults=default_weights)
     def apply_default_weights(weight, params, defaults):
-        if params['favor'] and not weight:
-            return defaults['favor']
-        if params['cnn'] and not weight:
-            return defaults['cnn']
-        if params['gpd'] and not weight:
-            return defaults['gpd']
-        return weight
+        if weight:
+            return weight
+        if params['model-name'] is None:
+            return None
+        if params['model-name'] not in defaults:
+            return None
+        return defaults[params['model-name']]
 
     # Type converters
     def type_converter(value, _, f_type):
@@ -212,6 +227,7 @@ def get_args_dictionaries(args):
         'favor': [bool_converter, favor_default],
         'cnn': [bool_converter],
         'gpd': [bool_converter],
+        'model-name': [apply_default_model_name],
         'weights': [apply_default_weights],
         'features-number': [int_converter],
         'start': [utc_datetime_converter, start_date_default],
@@ -232,6 +248,7 @@ def get_args_dictionaries(args):
         'cpu': [bool_converter],
         'channel-order': [channel_order_converter],
     }
+
     return d_args, d_applied_functions
 
 

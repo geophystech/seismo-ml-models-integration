@@ -32,9 +32,9 @@ if __name__ == '__main__':
     half_duration = (params['main', 'features-number'] * 0.5) / params['main', 'frequency']
 
     # Load model
-    for x in params.get_station_keys():
+    for x in params.get_station_keys(main=True):
 
-        if params[x, 'model']:
+        if params[x, 'model-name'] == 'custom-model':
 
             import importlib
 
@@ -56,15 +56,17 @@ if __name__ == '__main__':
             model = loader_call(**argv_dict)
         else:
 
-            if params[x, 'cnn']:
+            if params[x, 'model-name'] == 'cnn':
                 import utils.seismo_load as seismo_load
                 model = seismo_load.load_cnn(params[x, 'weights'])
-            elif params[x, 'gpd']:
+            elif params[x, 'model-name'] == 'gpd':
                 from utils.gpd_loader import load_model as load_gpd
                 model = load_gpd(params[x, 'weights'])
-            else:
+            elif params[x, 'model-name'] == 'favor':
                 import utils.seismo_load as seismo_load
                 model = seismo_load.load_performer(params[x, 'weights'])
+            else:
+                raise AttributeError('"model-name" is not specified correctly! If you see this message this is a bug!')
 
         params.data[x, 'model'] = model
 
