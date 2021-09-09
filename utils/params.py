@@ -284,12 +284,12 @@ class Params:
 
         if key[0] in params_dict:
             result = params_dict.__getitem__(key)
-            result = function(result, params_dict.__getitem__(key[0]))
+            result = function(result, self, key[0])
             params_dict.__setitem__(key, result)
         else:
             for x in params_dict:
                 result = params_dict.__getitem__((x, *key))
-                result = function(result, params_dict.__getitem__(x))
+                result = function(result, self, x)
                 params_dict.__setitem__((x, *key), result)
 
     def check_unsupported_station_parameter(self, key):
@@ -330,13 +330,13 @@ def applied_function(**kwargs):
     Usage examples:
 
     @applied_function(v_type = float, name = 'some_name')
-    def foo(value, params, v_type, name):
+    def foo(value, base_params, key, v_type, name):
         ...
     params.apply_function('some_key', foo)
 
     OR
 
-    def foo(value, params, v_type, name):
+    def foo(value, base_params, key, v_type, name):
         ...
     params.apply_function('some_key_1', applied_function(v_type = float, name = 'float_var')(foo))
     params.apply_function('some_key_2', applied_function(v_type = int, name = 'int_var')(foo))
@@ -344,8 +344,8 @@ def applied_function(**kwargs):
     etc.
     """
     def decorator(f):
-        def decorate(value, params):
-            return f(value, params, **kwargs)
+        def decorate(value, base_params, key):
+            return f(value, base_params, key, **kwargs)
         return decorate
     return decorator
 

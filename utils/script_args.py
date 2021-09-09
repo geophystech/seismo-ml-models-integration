@@ -83,7 +83,8 @@ def get_args_dictionaries(args):
                              'this is a bug!')
 
     @applied_function(defaults=default_weights)
-    def apply_default_weights(weight, params, defaults):
+    def apply_default_weights(weight, params, key, defaults):
+        params = params[key]
         if weight:
             return weight
         if params['model-name'] is None:
@@ -93,7 +94,7 @@ def get_args_dictionaries(args):
         return defaults[params['model-name']]
 
     # Type converters
-    def type_converter(value, _, f_type):
+    def type_converter(value, _, __, f_type):
         if value is None:
             return None
         if type(value) is f_type:
@@ -103,7 +104,7 @@ def get_args_dictionaries(args):
     int_converter = applied_function(f_type=int)(type_converter)
     float_converter = applied_function(f_type=float)(type_converter)
 
-    def bool_converter(value, _):
+    def bool_converter(value, _, __):
         if value is None:
             return None
         if type(value) is bool:
@@ -123,7 +124,7 @@ def get_args_dictionaries(args):
         if not params['cnn'] and not params['gpd'] and not params['model']:
             return True
 
-    def utc_datetime_converter(date, _):
+    def utc_datetime_converter(date, _, __):
         """
         Parse parameter from dictionary to UTCDateTime type.
         """
@@ -136,7 +137,7 @@ def get_args_dictionaries(args):
         except Exception as e:
             return None
 
-    def start_date_default(value, _):
+    def start_date_default(value, _, __):
         if value is None:
             return None
         if not value:
@@ -144,7 +145,8 @@ def get_args_dictionaries(args):
             return UTCDateTime(f'{date.year}-{date.month}-{date.day}')
         return value
 
-    def end_date_default(value, params):
+    def end_date_default(value, params, key):
+        params = params[key]
         if value is None:
             return None
         if not value:
@@ -155,10 +157,11 @@ def get_args_dictionaries(args):
             return date + 24 * 60 * 60 - 0.000001
         return value
 
-    def trace_size_converter(value, params):
+    def trace_size_converter(value, params, key):
         """
         Converts trace size from seconds to samples
         """
+        params = params[key]
         if value is None:
             return None
         if not value:
@@ -167,7 +170,7 @@ def get_args_dictionaries(args):
             raise AttributeError('No frequency specified for trace-size argument!')
         return int(float(value) * params['frequency'])
 
-    def threshold_converter(value, _):
+    def threshold_converter(value, _, __):
         if value is None:
             return None
 
@@ -217,7 +220,7 @@ def get_args_dictionaries(args):
 
         return threshold_labels
 
-    def channel_order_converter(value, _):
+    def channel_order_converter(value, _, __):
         if value is None:
             return value
         return [x.split(',') for x in value.strip(',;').split(';')]
