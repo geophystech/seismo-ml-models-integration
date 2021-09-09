@@ -11,6 +11,17 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
+def get_model_ref(data, name_weights):
+    """
+    Returns model reference if found by model name and model weights pair. Returns None otherwise.
+    data - list of tuples (model_name, model_weights_path, model_ref)
+    """
+    for x in data:
+        if name_weights == x[:2]:
+            return x[2]
+    return None
+
+
 if __name__ == '__main__':
 
     params = archive_scan_params()  # parse command line arguments
@@ -31,8 +42,14 @@ if __name__ == '__main__':
     positive_labels = {'p': 0, 's': 1}
     half_duration = (params['main', 'features-number'] * 0.5) / params['main', 'frequency']
 
-    # Load model
+    # Load model(s)
+    models_data = []
     for x in params.get_station_keys(main=True):
+
+        model = get_model_ref(models_data, (params[x, 'model-name'], params[x, 'weights']))
+        if model:
+            params[x, 'model-object'] = model
+            continue
 
         if params[x, 'model-name'] == 'custom-model':
 
@@ -68,7 +85,8 @@ if __name__ == '__main__':
             else:
                 raise AttributeError('"model-name" is not specified correctly! If you see this message this is a bug!')
 
-        params.data[x, 'model'] = model
+        params[x, 'model-object'] = model
+        models_data.append((params[x, 'model-name'], params[x, 'weights'], model))
 
     # Main loop
     total_performance_time = 0.
