@@ -70,15 +70,17 @@ def get_args_dictionaries(args):
                        'gpd': 'weights/w_gpd_scsn_2000_2017.h5'}
 
     # Following functions will be applied to parameters to set default values, convert data types, etc.
-    def apply_default_model_name(model_name, params, base_params):
-        if params['favor']:
+    def apply_default_model_name(model_name, params, key):
+        if params.exact_getitem((key, 'favor')):
             return 'favor'
-        if params['cnn']:
+        if params.exact_getitem((key, 'cnn')):
             return 'cnn'
-        if params['gpd']:
+        if params.exact_getitem((key, 'gpd')):
             return 'gpd'
-        if params['model']:
+        if params.exact_getitem((key, 'model')):
             return 'custom-model'
+        if params['main', 'model-name']:
+            return None
         raise AttributeError('Model is not specified, and default model did not apply! If you see this message, '
                              'this is a bug!')
 
