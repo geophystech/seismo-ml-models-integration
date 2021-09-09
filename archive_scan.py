@@ -5,10 +5,29 @@ import sys
 from utils.script_args import archive_scan_params
 import utils.scan_tools as stools
 from utils.seisan import get_archives
+from utils.progress_bar import ProgressBar
 
 # Silence tensorflow warnings
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+
+def init_progress_bar(char_length=60, char_empty='.', char_fill='=', char_point='>'):
+
+    progress_bar = ProgressBar()
+
+    progress_bar.set_length(char_length)
+
+    progress_bar.set_empty_character(char_empty)
+    progress_bar.set_progress_character(char_fill)
+    progress_bar.set_current_progress_char(char_point)
+
+    progress_bar.set_prefix_expression('{archive} out of {total_archives} ({station}) [')
+    progress_bar.set_postfix_expression('] - Batch: {start} - {end}')
+
+    progress_bar.set_max(archives=len(archives), traces=1., batches=1., inter=1.)
+
+    return progress_bar
 
 
 def get_model_ref(data, name_weights):
@@ -89,12 +108,22 @@ if __name__ == '__main__':
         models_data.append((params[x, 'model-name'], params[x, 'weights'], model))
 
     # Main loop
+    progress_bar = init_progress_bar()
+    progress_bar.set_prefix_arg('total_archives', len(archives))
     total_performance_time = 0.
     for n_archive, d_archives in enumerate(archives):
 
         # Unpack
         station = d_archives['station']
         l_archives = d_archives['paths']
+
+        # Update progress bar parameters
+        progress_bar.set_progress(n_archive, level='archives')
+        progress_bar.set_prefix_arg('archive', n_archive + 1)
+        if station:
+            progress_bar.set_prefix_arg('station', station)
+        else:
+            progress_bar.set_prefix_arg('station', 'none')
 
         # Read data
         try:
@@ -127,9 +156,14 @@ if __name__ == '__main__':
 
         n_traces = len(streams[0])
 
+        # Update progress bar params
+        progress_bar.change_max('traces', n_traces)
+        progress_bar.set_progress(0, level='traces')
         # Progress bar preparations
         total_batch_count = 0
         for i in range(n_traces):
+
+            progress_bar.set_progress(i, level='traces')
             traces = [st[i] for st in streams]
 
             l_trace = traces[0].data.shape[0]
@@ -141,7 +175,6 @@ if __name__ == '__main__':
             total_batch_count += batch_count
 
         # Predict
-        current_batch_global = 0
         for i in range(n_traces):
 
             traces = stools.get_traces(streams, i)
@@ -161,7 +194,14 @@ if __name__ == '__main__':
 
             freq = traces[0].stats.sampling_rate
 
+            # Update progress bar parameters
+            progress_bar.change_max('batches', batch_count)
+            progress_bar.set_progress(0, level='batches')
+
             for b in range(batch_count):
+
+                progress_bar.set_progress(b, level='batches')
+
                 detected_peaks = []
 
                 b_size = params['main', 'trace-size']
@@ -179,19 +219,9 @@ if __name__ == '__main__':
                                         for trace in original_traces]
 
                 # Progress bar
-
-                if params['main', 'time']:
-                    stools.progress_bar(current_batch_global / total_batch_count, 40, add_space_around=False,
-                                        prefix=f'Group {n_archive + 1} out of {len(archives)} [',
-                                        postfix=f'] - Batch: {batches[0].stats.starttime} '
-                                                f'- {batches[0].stats.endtime} '
-                                                f'Time: {total_performance_time:.6} seconds')
-                else:
-                    stools.progress_bar(current_batch_global / total_batch_count, 40, add_space_around=False,
-                                        prefix=f'Group {n_archive + 1} out of {len(archives)} [',
-                                        postfix=f'] - Batch: {batches[0].stats.starttime}'
-                                                f' - {batches[0].stats.endtime}')
-                current_batch_global += 1
+                progress_bar.set_postfix_arg('start', batches[0].stats.starttime)
+                progress_bar.set_postfix_arg('end', batches[0].stats.endtime)
+                progress_bar.print()
 
                 scores, performance_time = stools.scan_traces(*batches,
                                                               params=params,
@@ -252,8 +282,6 @@ if __name__ == '__main__':
 
                 stools.print_results(detected_peaks, params[station, 'out'],
                                      precision=params[station, 'print-precision'], station=station)
-
-            print('')
 
     if params['main', 'time']:
         print(f'Total model prediction time: {total_performance_time:.6} seconds')
