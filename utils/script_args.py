@@ -71,13 +71,14 @@ def get_args_dictionaries(args):
 
     # Following functions will be applied to parameters to set default values, convert data types, etc.
     def apply_default_model_name(model_name, params, key):
-        if params.exact_getitem((key, 'favor')):
+        station_params = params[key]
+        if station_params['favor']:
             return 'favor'
-        if params.exact_getitem((key, 'cnn')):
+        if station_params['cnn']:
             return 'cnn'
-        if params.exact_getitem((key, 'gpd')):
+        if station_params['gpd']:
             return 'gpd'
-        if params.exact_getitem((key, 'model')):
+        if station_params['model']:
             return 'custom-model'
         if params['main', 'model-name']:
             return None
