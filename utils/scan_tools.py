@@ -280,7 +280,7 @@ def plot_oririnal_positives(scores, original_windows, threshold, original_scores
             plt.clf()
 
 
-def scan_traces(*_traces, model=None, params=None, n_features=400, shift=10, original_data=None, station='main'):
+def scan_traces(*_traces, params=None, n_features=400, shift=10, original_data=None, station='main'):
     """
     Get predictions on the group of traces.
 
@@ -296,6 +296,7 @@ def scan_traces(*_traces, model=None, params=None, n_features=400, shift=10, ori
     batch_size       -- model.fit batch size
     """
     batch_size = params['main', 'batch_size']
+    model = params[station, 'model-object']
 
     # Check input types
     for x in _traces:

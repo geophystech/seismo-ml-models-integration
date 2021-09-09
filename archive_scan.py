@@ -194,7 +194,6 @@ if __name__ == '__main__':
                 current_batch_global += 1
 
                 scores, performance_time = stools.scan_traces(*batches,
-                                                              model=model,
                                                               params=params,
                                                               station=station,
                                                               original_data=original_batches)  # predict
