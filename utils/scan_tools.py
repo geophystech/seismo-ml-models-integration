@@ -479,7 +479,12 @@ def parse_archive_csv(path):
 
     _archives = []
     for line in lines:
-        _archives.append([x for x in line.split()])
+        _archives.append(
+            {
+                'paths': [x for x in line.split()],
+                'station': None
+            }
+        )
 
     return _archives
 
