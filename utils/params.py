@@ -256,26 +256,6 @@ class Params:
             return result
         return params_dict.__getitem__(('main', *key[1:]))
 
-    def exact_getitem(self, key):
-        """
-        Returns an item from a default dictionary, returns None, if value not found or set to None.
-        If first key is not found in first level, searches "main" dictionary.
-        If nothing is found in first level dictionary, DOES NOT perform a search in "main" dictionary.
-        More of what you would expect from normal __getitem__ behaviour.
-        """
-        params_dict = self._default_dictionary()
-
-        if not params_dict:
-            raise KeyError(f'No default dictionary specified for params to access key: {key}')
-
-        # Convert key to iterable if str
-        if type(key) is str:
-            key = tuple([key])
-
-        if key[0] in params_dict:
-            return params_dict.__getitem__(key)
-        return params_dict.__getitem__(('main', *key[1:]))
-
     def __setitem__(self, key, value):
         """
         Sets value to a default dictionary key.
