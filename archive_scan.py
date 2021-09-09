@@ -282,6 +282,6 @@ if __name__ == '__main__':
 
                 stools.print_results(detected_peaks, params[station, 'out'],
                                      precision=params[station, 'print-precision'], station=station)
-
+    print('')
     if params['main', 'time']:
         print(f'Total model prediction time: {total_performance_time:.6} seconds')
