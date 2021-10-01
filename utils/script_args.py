@@ -280,8 +280,8 @@ def archive_scan_params():
     parser.add_argument('--batch-size', help='Model batch size, default: 150 slices '
                                              '(each slice is: 4 seconds by 3 channels)',
                         default=150, type=int)
-    parser.add_argument('--trace-size', '-b', help='Length of loaded and processed seismic data stream, '
-                                                   'default: 600 seconds',
+    parser.add_argument('--trace-size', help='Length of loaded and processed seismic data stream, '
+                                             'default: 600 seconds',
                         default=600, type=float)
     parser.add_argument('--shift', help='Sliding windows shift, default: 40 samples (40 ms)',
                         default=40, type=int)
