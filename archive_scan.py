@@ -25,7 +25,7 @@ def init_progress_bar(char_length=60, char_empty='.', char_fill='=', char_point=
     progress_bar.set_prefix_expression('{archive} out of {total_archives} ({station}) [')
     progress_bar.set_postfix_expression('] - Batch: {start} - {end}')
 
-    progress_bar.set_max(archives=len(archives), traces=1., batches=1., inter=1.)
+    progress_bar.set_max(traces=1., batches=1., inter=1.)
 
     return progress_bar
 
@@ -118,7 +118,6 @@ if __name__ == '__main__':
         l_archives = d_archives['paths']
 
         # Update progress bar parameters
-        progress_bar.set_progress(n_archive, level='archives')
         progress_bar.set_prefix_arg('archive', n_archive + 1)
         if station:
             progress_bar.set_prefix_arg('station', station)
