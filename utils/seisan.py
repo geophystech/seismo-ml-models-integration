@@ -58,7 +58,7 @@ def parse_multplt(path):
     data = []
     with open(path, "r") as f:
         lines = f.readlines()
-        tag = "#DEFAULT CHANNEL"
+        tag = "DEFAULT CHANNEL"
 
         for line in lines:
             if line[:len(tag)] == tag:
