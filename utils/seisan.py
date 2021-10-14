@@ -8,7 +8,6 @@ def order_group(group, channel_order):
         if all(x in group.keys() for x in channels):
             order = channels
             break
-
     if not order:
         return None
 
@@ -108,8 +107,7 @@ def process_archives_list(l):
             location_group = group_by(y, 3)
 
             for z in location_group:
-                if len(z) == 3:
-                    result.append(z)
+                result.append(z)
     return result
 
 
