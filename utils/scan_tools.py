@@ -22,6 +22,7 @@ def pre_process_stream(stream, params, station):
     if not no_detrend:
         stream.detrend(type="linear")
     if not no_filter:
+        # stream.filter('bandpass', freqmin=2, freqmax=5)
         stream.filter(type="highpass", freq=2)
 
     frequency = params[station, 'frequency']
@@ -155,8 +156,6 @@ def sliding_window(data, n_features, n_shift):
     try:
         windows = np.zeros(shape)
     except ValueError:
-        print(f'\ndata.shape: {data.shape}')
-        print('shape: ', shape)
         raise
 
     for _i in range(win_count):

@@ -223,10 +223,14 @@ if __name__ == '__main__':
                 progress_bar.set_postfix_arg('end', batches[0].stats.endtime)
                 progress_bar.print()
 
-                scores, performance_time = stools.scan_traces(*batches,
-                                                              params=params,
-                                                              station=station,
-                                                              original_data=original_batches)  # predict
+                try:
+                    scores, performance_time = stools.scan_traces(*batches,
+                                                                  params=params,
+                                                                  station=station,
+                                                                  original_data=original_batches)
+                except ValueError:
+                    scores, performance_time = None, 0
+                    
                 total_performance_time += performance_time
 
                 if scores is None:
