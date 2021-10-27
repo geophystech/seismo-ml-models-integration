@@ -183,13 +183,21 @@ if __name__ == '__main__':
         # Predict
         for i in range(n_traces):
 
-            traces = stools.get_traces(streams, i)
+            try:
+                traces = stools.get_traces(streams, i)
+            except ValueError:
+                continue
+
             original_traces = None
             if original_streams:
-                original_traces = stools.get_traces(original_streams, i)
+                try:
+                    original_traces = stools.get_traces(original_streams, i)
+                except ValueError:
+                    continue
                 if traces[0].data.shape[0] != original_traces[0].data.shape[0]:
-                    raise AttributeError('WARNING: Traces and original_traces have different sizes, '
-                                         'check if preprocessing changes stream length!')
+                    continue
+                    # raise AttributeError('WARNING: Traces and original_traces have different sizes, '
+                    #                      'check if preprocessing changes stream length!')
 
             # Determine batch count
             l_trace = traces[0].data.shape[0]
