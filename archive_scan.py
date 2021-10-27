@@ -111,6 +111,12 @@ if __name__ == '__main__':
     progress_bar = init_progress_bar()
     progress_bar.set_prefix_arg('total_archives', len(archives))
     total_performance_time = 0.
+
+    if params['main', 'print-files']:
+        for n_archive, d_archives in enumerate(archives):
+            print(f'{n_archive}: {d_archives["paths"]}')
+        print()
+
     for n_archive, d_archives in enumerate(archives):
 
         # Unpack
@@ -230,7 +236,7 @@ if __name__ == '__main__':
                                                                   original_data=original_batches)
                 except ValueError:
                     scores, performance_time = None, 0
-                    
+
                 total_performance_time += performance_time
 
                 if scores is None:

@@ -16,7 +16,7 @@ def get_unsupported_station_parameters_list():
         # Model input and batches customization
         'features-number', 'batch-size', 'trace-size', 'shift', 'frequency',
         # Info output and computation restriction
-        'time', 'cpu',
+        'time', 'cpu', 'print-files',
         # Environment
         'input', 'seisan', 'mulplt', 'archives'
     ]
@@ -54,6 +54,7 @@ def get_args_dictionaries(args):
             'print-precision': args.print_precision,
             'time': args.time,
             'cpu': args.cpu,
+            'print-files': args.print_files,
             'config': args.config,
             'input': args.input,
             'out': args.out,
@@ -253,6 +254,7 @@ def get_args_dictionaries(args):
         'print-precision': [int_converter],
         'time': [bool_converter],
         'cpu': [bool_converter],
+        'print-files': [bool_converter],
         'channel-order': [channel_order_converter],
     }
 
@@ -301,6 +303,8 @@ def archive_scan_params():
                         default=4, type=int)
     parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
     parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
+    parser.add_argument('--print-files', help='Print out all archive file names before scan',
+                        action='store_true')
     parser.add_argument('--start', '-s', help='Earliest time stamp allowed for input waveforms,'
                                               ' format examples: "2021-04-01" or "2021-04-01T12:35:40"',
                         default='')
