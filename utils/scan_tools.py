@@ -243,16 +243,6 @@ def plot_positives(scores, windows, threshold):
             plt.savefig(save_name)
             plt.clf()
 
-            """
-            np_s_array = np.zeros((400, 3))
-
-            np_s_array[:, 0] = windows[i, :, 0]
-            np_s_array[:, 1] = windows[i, :, 1]
-            np_s_array[:, 2] = windows[i, :, 2]
-
-            np.save(params['plot_path'] + code + '_' + str(i) + '_p' + '.npy', np_s_array)
-            """
-
 
 def plot_oririnal_positives(scores, original_windows, threshold, original_scores=None):
     idx = 0
