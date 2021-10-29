@@ -8,7 +8,6 @@ def order_group(group, channel_order):
         if all(x in group.keys() for x in channels):
             order = channels
             break
-
     if not order:
         return None
 
@@ -58,7 +57,7 @@ def parse_multplt(path):
     data = []
     with open(path, "r") as f:
         lines = f.readlines()
-        tag = "#DEFAULT CHANNEL"
+        tag = "DEFAULT CHANNEL"
 
         for line in lines:
             if line[:len(tag)] == tag:
@@ -108,8 +107,7 @@ def process_archives_list(l):
             location_group = group_by(y, 3)
 
             for z in location_group:
-                if len(z) == 3:
-                    result.append(z)
+                result.append(z)
     return result
 
 

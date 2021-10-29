@@ -16,7 +16,7 @@ def get_unsupported_station_parameters_list():
         # Model input and batches customization
         'features-number', 'batch-size', 'trace-size', 'shift', 'frequency',
         # Info output and computation restriction
-        'time', 'cpu',
+        'time', 'cpu', 'print-files',
         # Environment
         'input', 'seisan', 'mulplt', 'archives'
     ]
@@ -52,8 +52,10 @@ def get_args_dictionaries(args):
             'plot-positives-original': args.plot_positives_original,
             'print-scores': args.print_scores,
             'print-precision': args.print_precision,
+            'combine-events-range': args.combine_events_range,
             'time': args.time,
             'cpu': args.cpu,
+            'print-files': args.print_files,
             'config': args.config,
             'input': args.input,
             'out': args.out,
@@ -251,8 +253,10 @@ def get_args_dictionaries(args):
         'plot-positives-original': [bool_converter],
         'print-scores': [bool_converter],
         'print-precision': [int_converter],
+        'combine-events-range': [float_converter],
         'time': [bool_converter],
         'cpu': [bool_converter],
+        'print-files': [bool_converter],
         'channel-order': [channel_order_converter],
     }
 
@@ -299,8 +303,13 @@ def archive_scan_params():
                         action='store_true')
     parser.add_argument('--print-precision', help='Floating point precision for results pseudo-probability output',
                         default=4, type=int)
+    parser.add_argument('--combine-events-range', help='Maximum range (in seconds) inside which '
+                                                       'positives are visually combined as a single event,'
+                                                       ' default: 30 seconds', default=30., type=float)
     parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
     parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
+    parser.add_argument('--print-files', help='Print out all archive file names before scan',
+                        action='store_true')
     parser.add_argument('--start', '-s', help='Earliest time stamp allowed for input waveforms,'
                                               ' format examples: "2021-04-01" or "2021-04-01T12:35:40"',
                         default='')
@@ -333,6 +342,8 @@ def archive_scan_params():
 
     # Parse config files
     params = None
+    if type(d_args['main']['config']) is str:
+        d_args['main']['config'] = [d_args['main']['config']]
     for x in d_args['main']['config']:
         if not isfile(x):
             continue

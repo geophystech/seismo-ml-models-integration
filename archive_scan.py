@@ -111,6 +111,13 @@ if __name__ == '__main__':
     progress_bar = init_progress_bar()
     progress_bar.set_prefix_arg('total_archives', len(archives))
     total_performance_time = 0.
+
+    if params['main', 'print-files']:
+        for n_archive, d_archives in enumerate(archives):
+            print(f'{n_archive}: {d_archives["paths"]}')
+        print()
+
+    all_positives = {}
     for n_archive, d_archives in enumerate(archives):
 
         # Unpack
@@ -173,16 +180,26 @@ if __name__ == '__main__':
 
             total_batch_count += batch_count
 
+        last_saved_station = None
+
         # Predict
         for i in range(n_traces):
 
-            traces = stools.get_traces(streams, i)
+            try:
+                traces = stools.get_traces(streams, i)
+            except ValueError:
+                continue
+
             original_traces = None
             if original_streams:
-                original_traces = stools.get_traces(original_streams, i)
+                try:
+                    original_traces = stools.get_traces(original_streams, i)
+                except ValueError:
+                    continue
                 if traces[0].data.shape[0] != original_traces[0].data.shape[0]:
-                    raise AttributeError('WARNING: Traces and original_traces have different sizes, '
-                                         'check if preprocessing changes stream length!')
+                    continue
+                    # raise AttributeError('WARNING: Traces and original_traces have different sizes, '
+                    #                      'check if preprocessing changes stream length!')
 
             # Determine batch count
             l_trace = traces[0].data.shape[0]
@@ -222,10 +239,14 @@ if __name__ == '__main__':
                 progress_bar.set_postfix_arg('end', batches[0].stats.endtime)
                 progress_bar.print()
 
-                scores, performance_time = stools.scan_traces(*batches,
-                                                              params=params,
-                                                              station=station,
-                                                              original_data=original_batches)  # predict
+                try:
+                    scores, performance_time = stools.scan_traces(*batches,
+                                                                  params=params,
+                                                                  station=station,
+                                                                  original_data=original_batches)
+                except ValueError:
+                    scores, performance_time = None, 0
+
                 total_performance_time += performance_time
 
                 if scores is None:
@@ -279,8 +300,15 @@ if __name__ == '__main__':
                 if params['main', 'print-scores']:
                     stools.print_scores(batches, restored_scores, predicted_labels, f't{i}_b{b}')
 
-                stools.print_results(detected_peaks, params[station, 'out'],
-                                     precision=params[station, 'print-precision'], station=station)
+                stools.print_results(detected_peaks, params, station, last_station=last_saved_station)
+                last_saved_station = station
+                if station not in all_positives:
+                    all_positives[station] = []
+                all_positives[station].extend(detected_peaks)
+
+    # Re-write predictions files
+    stools.print_final_predictions(all_positives, params)
+
     print('')
     if params['main', 'time']:
         print(f'Total model prediction time: {total_performance_time:.6} seconds')

@@ -22,6 +22,7 @@ def pre_process_stream(stream, params, station):
     if not no_detrend:
         stream.detrend(type="linear")
     if not no_filter:
+        # stream.filter('bandpass', freqmin=2, freqmax=5)
         stream.filter(type="highpass", freq=2)
 
     frequency = params[station, 'frequency']
@@ -155,8 +156,6 @@ def sliding_window(data, n_features, n_shift):
     try:
         windows = np.zeros(shape)
     except ValueError:
-        print(f'\ndata.shape: {data.shape}')
-        print('shape: ', shape)
         raise
 
     for _i in range(win_count):
@@ -440,11 +439,18 @@ def truncate(f, n):
     return math.floor(f * 10 ** n) / 10 ** n
 
 
-def print_results(_detected_peaks, filename, precision=2, upper_case=True, station=None):
+def print_results(_detected_peaks, params, station, upper_case=True, last_station=None):
     """
     Prints out peaks in the file.
     """
+    precision = params[station, 'print-precision']
+    filename = params[station, 'out']
+
     with open(filename, 'a') as f:
+
+        if station != last_station:
+            f.write('\n')
+            f.write(f'[{station}]\n')
 
         for record in _detected_peaks:
 
@@ -466,6 +472,13 @@ def print_results(_detected_peaks, filename, precision=2, upper_case=True, stati
 
             # Write
             f.write(line)
+
+
+def print_final_predictions(detections, params, upper_case=True):
+    """
+    Prints out all predictions with additional visual enhancements.
+    """
+    pass
 
 
 def parse_archive_csv(path):
