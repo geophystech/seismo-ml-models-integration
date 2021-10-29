@@ -478,7 +478,92 @@ def print_final_predictions(detections, params, upper_case=True):
     """
     Prints out all predictions with additional visual enhancements.
     """
-    pass
+    combined_by_filename = {}
+    for station, items in detections.items():
+
+        filename = params[station, 'out']
+
+        # Convert relative filename to absolute
+
+        # Combine
+        if filename not in combined_by_filename:
+            combined_by_filename[filename] = []
+
+        for x in items:
+            x['station'] = station
+
+        combined_by_filename[filename].extend(items)
+
+    # Sort by datetime
+    def datetime_getter(x):
+        return x['datetime']
+    for _, items in combined_by_filename.items():
+        items.sort(key = datetime_getter)
+
+    # Combine data
+    for filename, items in combined_by_filename.items():
+
+        points_in_cluster = []
+        for i, x in enumerate(items):
+
+            range = params[x['station'], 'combine-events-range']
+            x_time = x['datetime']
+            n_points = 1
+            c_point_in_cluster = []
+
+            j = i - 1
+            while j >= 0:
+                y = items[j]
+                dt = abs(x_time - y['datetime'])
+                if dt > range:
+                    break
+                c_point_in_cluster.append(j)
+
+
+
+
+    print('\n', '---' * 30)
+    for filename, items in combined_by_filename.items():
+
+        print('*** ' * 3, filename, '*** ' * 3)
+        for x in items:
+            print(x)
+
+    """
+    for filename, data in combined_by_filename.items():
+
+        precision = params[station, 'print-precision']
+
+    for station, items in detections.items():
+
+        precision = params[station, 'print-precision']
+        filename = params[station, 'out']
+
+        with open(filename, 'a') as f:
+
+            f.write(f'[{station}]\n')
+
+            for record in items:
+
+                line = ''
+                # Print station if provided
+                if station:
+                    line += f'{station} '
+
+                # Print wave type
+                tp = record['type'].upper() if upper_case else record['type']
+                line += f'{tp} '
+
+                # Print pseudo-probability
+                line += f'{truncate(record["pseudo-probability"], precision):1.{precision}f} '
+
+                # Print time
+                dt_str = record["datetime"].strftime("%d.%m.%Y %H:%M:%S.%f").rstrip('0')
+                line += f'{dt_str}\n'
+
+                # Write
+                f.write(line)
+    """
 
 
 def parse_archive_csv(path):
