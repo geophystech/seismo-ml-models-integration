@@ -342,6 +342,8 @@ def archive_scan_params():
 
     # Parse config files
     params = None
+    if type(d_args['main']['config']) is str:
+        d_args['main']['config'] = [d_args['main']['config']]
     for x in d_args['main']['config']:
         if not isfile(x):
             continue
