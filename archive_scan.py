@@ -117,6 +117,7 @@ if __name__ == '__main__':
             print(f'{n_archive}: {d_archives["paths"]}')
         print()
 
+    all_positives = {}
     for n_archive, d_archives in enumerate(archives):
 
         # Unpack
@@ -179,6 +180,8 @@ if __name__ == '__main__':
                 else l_trace // params['main', 'trace-size']
 
             total_batch_count += batch_count
+
+        last_saved_station = None
 
         # Predict
         for i in range(n_traces):
@@ -298,8 +301,15 @@ if __name__ == '__main__':
                 if params['main', 'print-scores']:
                     stools.print_scores(batches, restored_scores, predicted_labels, f't{i}_b{b}')
 
-                stools.print_results(detected_peaks, params[station, 'out'],
-                                     precision=params[station, 'print-precision'], station=station)
+                stools.print_results(detected_peaks, params, station, last_station=last_saved_station)
+                last_saved_station = station
+                if station not in all_positives:
+                    all_positives[station] = []
+                all_positives[station].extend(detected_peaks)
+
+    # Re-write predictions files
+    stools.print_final_predictions(all_positives, params)
+
     print('')
     if params['main', 'time']:
         print(f'Total model prediction time: {total_performance_time:.6} seconds')

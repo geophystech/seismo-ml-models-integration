@@ -439,11 +439,18 @@ def truncate(f, n):
     return math.floor(f * 10 ** n) / 10 ** n
 
 
-def print_results(_detected_peaks, filename, precision=2, upper_case=True, station=None):
+def print_results(_detected_peaks, params, station, upper_case=True, last_station=None):
     """
     Prints out peaks in the file.
     """
+    precision = params[station, 'print-precision']
+    filename = params[station, 'out']
+
     with open(filename, 'a') as f:
+
+        if station != last_station:
+            f.write('\n')
+            f.write(f'[{station}]\n')
 
         for record in _detected_peaks:
 
@@ -465,6 +472,13 @@ def print_results(_detected_peaks, filename, precision=2, upper_case=True, stati
 
             # Write
             f.write(line)
+
+
+def print_final_predictions(detections, params, upper_case=True):
+    """
+    Prints out all predictions with additional visual enhancements.
+    """
+    pass
 
 
 def parse_archive_csv(path):
