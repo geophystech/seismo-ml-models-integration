@@ -29,7 +29,7 @@ def parse_s_file(path):
             pass  # parse the date and store it as current date
         elif detection_match:
             pass  # parse the detection line and add it to events list
-        
+
     return events
 
 
