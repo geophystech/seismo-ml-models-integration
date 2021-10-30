@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import os
 from time import time
 from obspy.core.utcdatetime import UTCDateTime
+from collections import deque
 
 
 def pre_process_stream(stream, params, station):
@@ -464,9 +465,10 @@ def print_results(_detected_peaks, params, station, upper_case=True, last_statio
             f.write(line)
 
 
-def print_final_predictions(detections, params, upper_case=True):
+def combine_by_filename(detections, params):
     """
-    Prints out all predictions with additional visual enhancements.
+    Combines detections (represented as lists, indexed by stations) by filenames. Also adds a station key to
+        every item to preserve station information.
     """
     combined_by_filename = {}
     for station, items in detections.items():
@@ -487,73 +489,130 @@ def print_final_predictions(detections, params, upper_case=True):
     # Sort by datetime
     def datetime_getter(x):
         return x['datetime']
+
     for _, items in combined_by_filename.items():
-        items.sort(key = datetime_getter)
+        items.sort(key=datetime_getter)
 
-    # Combine data
-    for filename, items in combined_by_filename.items():
+    return combined_by_filename
 
-        points_in_cluster = []
+
+def combine_detections(detections, params):
+
+    detections = combine_by_filename(detections, params)
+
+    file_groups = {}
+    for filename, items in detections.items():
+
+        # Add true flag to every event
+        for x in items:
+            x['avaliable'] = True
+
+        # Build three lists:
+        # All nodes within that node range
+        nodes_in_range = [deque([i]) for i in range(len(items))]
+        # All nodes which include this node in their range
+        nodes_including = [[] for _ in range(len(items))]
+        # Amount of connections node has, paired with id
+        nodes_connections_count = [[i, 1] for i in range(len(items))]
+
         for i, x in enumerate(items):
 
-            range = params[x['station'], 'combine-events-range']
+            dt_range = params[x['station'], 'combine-events-range']
             x_time = x['datetime']
             n_points = 1
-            c_point_in_cluster = []
 
             j = i - 1
             while j >= 0:
                 y = items[j]
                 dt = abs(x_time - y['datetime'])
-                if dt > range:
+                if dt > dt_range:
                     break
-                c_point_in_cluster.append(j)
+                nodes_in_range[i].appendleft(j)
+                nodes_including[j].append(i)
+                nodes_connections_count[i][1] += 1
+                j -= 1
+
+            for j in range(i + 1, len(items)):
+                y = items[j]
+                dt = abs(x_time - y['datetime'])
+                if dt > dt_range:
+                    break
+                nodes_in_range[i].append(j)
+                nodes_including[j].append(i)
+                nodes_connections_count[i][1] += 1
+
+        # Sorting by second item
+        def connections_getter(x):
+            return x[1]
+
+        groups = []
+        for i in range(len(nodes_connections_count)):
+
+            group = []
+            # Sort from most to least connections
+            nodes_connections_count.sort(key = connections_getter, reverse=True)
+
+            idx = nodes_connections_count[i][0]
+
+            for in_idx in nodes_in_range[idx]:
+
+                x = items[in_idx]
+                if not x['avaliable']:
+                    continue
+
+                group.append(x)
+                # Remove positive from other groups
+                for j in range(i + 1, len(nodes_connections_count)):
+                    if nodes_connections_count[j][0] in nodes_including[idx]:
+                        nodes_connections_count[j][1] -= 1
+                x['avaliable'] = False
+
+            if len(group):
+                groups.append([group, items[idx]['datetime']])
+
+        file_groups[filename] = groups
+
+    return file_groups
 
 
-
-
-    print('\n', '---' * 30)
-    for filename, items in combined_by_filename.items():
-
-        print('*** ' * 3, filename, '*** ' * 3)
-        for x in items:
-            print(x)
-
+def print_final_predictions(detections, params, upper_case=True):
     """
-    for filename, data in combined_by_filename.items():
-
-        precision = params[station, 'print-precision']
-
-    for station, items in detections.items():
-
-        precision = params[station, 'print-precision']
-        filename = params[station, 'out']
-
-        with open(filename, 'a') as f:
-
-            f.write(f'[{station}]\n')
-
-            for record in items:
-
-                line = ''
-                # Print station if provided
-                if station:
-                    line += f'{station} '
-
-                # Print wave type
-                tp = record['type'].upper() if upper_case else record['type']
-                line += f'{tp} '
-
-                # Print pseudo-probability
-                line += f'{truncate(record["pseudo-probability"], precision):1.{precision}f} '
-
-                # Print time
-                dt_str = record["datetime"].strftime("%d.%m.%Y %H:%M:%S.%f").rstrip('0')
-                line += f'{dt_str}\n'
-
-                # Write
-                f.write(line)
+    Prints out all predictions with additional visual enhancements.
     """
+    detections = combine_detections(detections, params)
+
+    for filename, groups in detections.items():
+        with open(filename, 'w') as f:
+            for group, datetime in groups:
+
+                s_datetime = datetime.strftime("%Y-%m-%d %H:%M:%S.%f").rstrip('0')
+                f.write(f'[{s_datetime}]\n')
+
+                for record in group:
+
+                    station = record['station']
+                    precision = params[station, 'print-precision']
+
+                    line = ''
+                    # Print station if provided
+                    if station:
+                        line += f'{station} '
+
+                    # Print wave type
+                    tp = record['type'].upper() if upper_case else record['type']
+                    line += f'{tp} '
+
+                    # Print pseudo-probability
+                    line += f'{truncate(record["pseudo-probability"], precision):1.{precision}f} '
+
+                    # Print time
+                    dt_str = record["datetime"].strftime("%Y-%m-%d %H:%M:%S.%f").rstrip('0')
+                    line += f'{dt_str}\n'
+
+                    # Write
+                    f.write(line)
+
+                f.write('\n')
 
 
 def parse_archive_csv(path):
