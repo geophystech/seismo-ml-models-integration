@@ -12,7 +12,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
-def init_progress_bar(char_length=60, char_empty='.', char_fill='=', char_point='>'):
+def init_progress_bar(char_length=30, char_empty='.', char_fill='=', char_point='>'):
 
     progress_bar = ProgressBar()
 
@@ -235,8 +235,10 @@ if __name__ == '__main__':
                                         for trace in original_traces]
 
                 # Progress bar
-                progress_bar.set_postfix_arg('start', batches[0].stats.starttime)
-                progress_bar.set_postfix_arg('end', batches[0].stats.endtime)
+                progress_bar.set_postfix_arg('start',
+                                             batches[0].stats.starttime.strftime("%Y-%m-%d %H:%M:%S"))
+                progress_bar.set_postfix_arg('end',
+                                             batches[0].stats.endtime.strftime("%Y-%m-%d %H:%M:%S"))
                 progress_bar.print()
 
                 try:
