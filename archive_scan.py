@@ -307,7 +307,7 @@ if __name__ == '__main__':
                 all_positives[station].extend(detected_peaks)
 
     # Re-write predictions files
-    stools.print_final_predictions(all_positives, params)
+    stools.finalize_predictions(all_positives, params)
 
     print('')
     if params['main', 'time']:

@@ -6,6 +6,7 @@ import os
 from time import time
 from obspy.core.utcdatetime import UTCDateTime
 from collections import deque
+from seisan import generate_events
 
 
 def pre_process_stream(stream, params, station):
@@ -575,12 +576,14 @@ def combine_detections(detections, params):
     return file_groups
 
 
-def print_final_predictions(detections, params, upper_case=True):
+def print_final_predictions(detections, params, upper_case=True, open_mode='w'):
     """
-    Prints out all predictions with additional visual enhancements.
+    Prints final predictions into a file. As an input takes predictions, sturcuted
+    as dictionary, indexed by output file name, where each element is a pair:
+    (group of positives, datetime).
+    Group of positives is a list of positive predictions. Each prediction is a dictionary of fields,
+    describing the prediction (datetime, station, etc.).
     """
-    detections = combine_detections(detections, params)
-
     for filename, groups in detections.items():
         with open(filename, 'w') as f:
             for group, datetime in groups:
@@ -613,6 +616,18 @@ def print_final_predictions(detections, params, upper_case=True):
                     f.write(line)
 
                 f.write('\n')
+
+
+def finalize_predictions(detections, params, upper_case=True):
+    """
+    Prints out all predictions with additional visual enhancements.
+    """
+    detections = combine_detections(detections, params)
+
+    print_final_predictions(detections, params, upper_case=True)
+
+    generate_events(detections, params)
+
 
 
 def parse_archive_csv(path):

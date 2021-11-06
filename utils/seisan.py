@@ -223,3 +223,24 @@ def archive_to_path(arch, date, archives_path):
         'paths': d_result,
         'station': station
     }
+
+
+def generate_events(events):
+    """
+    Generates s-files for detections.
+    :param events:
+    :return:
+    """
+    groups_counter = 0
+    for filename, groups in detections.items():
+        groups_counter += len(groups)
+
+    # TODO: print message (this many groups found)
+    # TODO: unless save-s-files == 'always' or 'never', (if save-s-files == 'ask' or None)
+    #       ask for premission to save found events as s-files
+
+    print(f'Events detected: {groups_counter}')
+
+    for filename, groups in detections.items():
+        for group, datetime in groups:
+            print(datetime)
