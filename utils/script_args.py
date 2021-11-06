@@ -14,7 +14,7 @@ def get_unsupported_station_parameters_list():
         # Custom dates
         'start', 'end',
         # Model input and batches customization
-        'features-number', 'batch-size', 'trace-size', 'shift', 'frequency',
+        'features-number', 'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
         'time', 'cpu', 'print-files',
         # Environment
@@ -44,6 +44,7 @@ def get_args_dictionaries(args):
             'batch-size': args.batch_size,
             'trace-size': args.trace_size,
             'shift': args.shift,
+            'detections-for-event': args.detections_for_event,
             'no-filter': args.no_filter,
             'no-detrend': args.no_detrend,
             'trace-normalization': args.trace_normalization,
@@ -246,6 +247,7 @@ def get_args_dictionaries(args):
         'frequency': [float_converter],
         'trace-size': [float_converter, trace_size_converter],
         'shift': [int_converter],
+        'detections-for-event': [int_converter],
         'no-filter': [bool_converter],
         'no-detrend': [bool_converter],
         'trace-normalization': [bool_converter],
@@ -306,6 +308,8 @@ def archive_scan_params():
     parser.add_argument('--combine-events-range', help='Maximum range (in seconds) inside which '
                                                        'positives are visually combined as a single event,'
                                                        ' default: 30 seconds', default=30., type=float)
+    parser.add_argument('--detections-for-event', help='Amount of detections in a group, to be considered as '
+                                                       'event, default: 2', default=2, type=int)
     parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
     parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
     parser.add_argument('--print-files', help='Print out all archive file names before scan',
