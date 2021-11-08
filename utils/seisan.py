@@ -363,7 +363,7 @@ def write_phase_table(f, group, datetime, params, location):
     Generates and writes Nordic file detections table.
     """
     # Write title line
-    f.write(' STAT COM NTLO IPHASE W HHMM SS.SSS PAR1 PAR2 AGA OPE AIN RES W DIS CAZ7\n')
+    f.write(' STAT SP IPHASW D HRMM SECON CODA AMPLIT PERI AZIMU VELO AIN AR TRES W  DIS CAZ7\n')
 
 
 def generate_event(group, datetime, params):
