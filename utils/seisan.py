@@ -363,12 +363,92 @@ def write_nordic_head(f, group, datetime, params, location):
     f.write(waveform_line(group, datetime, params, location))
 
 
+def detection_line(detection, datetime, params):
+    """
+    Generates a line for detections table entry.
+    """
+    line = ' '
+    station = detection['station']
+    line += stretch_right(station, 5)
+
+    instrument = 'E'  # instrument Type S = SP, I = IP, L = LP, etc.
+    line += instrument
+
+    component = 'Z'  # component Z, N, E ,T, R, 1, 2
+    line += component
+    line += ' '
+
+    quality = 'I'  # quality Indicator I, E, etc.
+    line += quality
+
+    phase = detection['type']  # phase ID: PN, PG, LG, P, S, etc.
+    line += stretch_right(phase, 4)
+
+    weight_indicator = ' '
+    line += weight_indicator
+
+    automatic = 'A'
+    line += automatic
+
+    first_motion = ' '  # first motion C, D
+    line += first_motion
+    line += ' '
+
+    if datetime.day < detection['datetime'].day:
+        hour = str(detection['datetime'].hour + 24)
+    else:
+        hour = detection['datetime'].strftime('%H')
+    line += stretch_left(hour, 2, '0')
+    line += stretch_left(detection['datetime'].strftime('%M'), 2, '0')
+    line += ' '
+
+    line += stretch_right(detection['datetime'].strftime('%S.%f')[:5], 5, ' ')
+    line += ' '*5
+
+    amplitude = ''
+    line += stretch_right(amplitude, 7)
+    line += ' '
+
+    period_seconds = ''
+    line += stretch_right(period_seconds, 4)
+    line += ' '
+
+    azimuth = ''
+    line += stretch_right(azimuth, 5)
+    line += ' '
+
+    velocity = ''
+    line += stretch_right(velocity, 4)
+    incidence = ''  # angle of incidence
+    line += stretch_right(incidence, 4)
+    back_azimuth_residual = ''
+    line += stretch_right(back_azimuth_residual, 3)
+    travel_time_residual = ''
+    line += stretch_right(travel_time_residual, 5)
+    i2_weight = ''
+    line += stretch_right(i2_weight, 2)
+    distance_to_epicenter = ''
+    line += stretch_right(distance_to_epicenter, 5)
+    line += ' '
+
+    azimuth_at_source = ''
+    line += stretch_right(azimuth_at_source, 3)
+
+    line += ' '  # type of this line
+    line += '\n'
+
+    return line
+
+
 def write_phase_table(f, group, datetime, params, location):
     """
     Generates and writes Nordic file detections table.
     """
     # Write title line
     f.write(' STAT SP IPHASW D HRMM SECON CODA AMPLIT PERI AZIMU VELO AIN AR TRES W  DIS CAZ7\n')
+
+    for record in group:
+        f.write(detection_line(record, datetime, params))
 
 
 def generate_event(group, datetime, params):
@@ -381,9 +461,6 @@ def generate_event(group, datetime, params):
     with open(filename, 'w') as f:
         write_nordic_head(f, group, datetime, params, location)
         write_phase_table(f, group, datetime, params, location)
-
-    for record in group:
-        print('Detection: ', record)
 
 
 def generate_events(events, params):
