@@ -1,4 +1,5 @@
 from os.path import isfile
+from obspy import UTCDateTime
 
 
 def order_group(group, channel_order):
@@ -306,12 +307,49 @@ def waveform_line(group, datetime, params, location):
     line += '6'  # type of this line
     line += '\n'
 
+def id_line(group, datetime, params, location):
+    """
+    Returns ID line.
+    """
+    line = ' '
+    line += stretch_left('ACTION:', 7)  # help text for action indicator
+    line += stretch_right('NEW', 3)  # last action done
+    line += ' '
+
+    now_datetime = UTCDateTime().strftime('%y-%m-%d %H:%M')
+    line += stretch_right(now_datetime, 14)  # datetime of last action
+    line += ' '
+
+    line += stretch_left('OP:', 3)  # help text for operator
+    operator = 'mlsp'  # help text for operator
+    line += stretch_right(operator, 4)
+    line += ' '
+
+    line += stretch_left('STATUS:', 7)  # help text for status
+    line += stretch_left('', 14)  # status flags, not yet defined in Seisan
+    line += ' '
+
+    line += stretch_left('ID:', 3)  # help text for ID
+    id = datetime.strftime('%Y%m%d%H%M%S')
+    line += stretch_right(id, 14)  # event ID
+
+    duplicate = ' '  # if initial ID was already taken, and had to create a different ID, then "d",
+                     # otherwive " "
+    line += duplicate
+    line += ' '  # "L" - synced with origin time, " " - not synced
+
+    line += stretch_left('I', 4)  # type of this line
+    line += '\n'
+
+    return line
+
 
 def write_nordic_head(f, group, datetime, params, location):
     """
     Generates and writes Nordic file contents before wave detections table.
     """
     f.write(hypocenter_line(group, datetime, params, location))
+    f.write(id_line(group, datetime, params, location))
     f.write(waveform_line(group, datetime, params, location))
 
 
