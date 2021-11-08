@@ -6,7 +6,7 @@ import os
 from time import time
 from obspy.core.utcdatetime import UTCDateTime
 from collections import deque
-from seisan import generate_events
+from .seisan import generate_events
 
 
 def pre_process_stream(stream, params, station):
