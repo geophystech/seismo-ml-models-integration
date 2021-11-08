@@ -226,22 +226,22 @@ def archive_to_path(arch, date, archives_path):
     }
 
 
-def stretch_right(line, length, character=' '):
+def stretch_right(line, length, character=' ', trim=True):
     line = str(line)
     l_diff = length - len(line)
     if l_diff > 0:
         line = line + character*l_diff
-    if l_diff < 0:
+    if l_diff < 0 and trim:
         line = line[:l_diff]
     return line
 
 
-def stretch_left(line, length, character=' '):
+def stretch_left(line, length, character=' ', trim=True):
     line = str(line)
     l_diff = length - len(line)
     if l_diff > 0:
         line = character*l_diff + line
-    if l_diff < 0:
+    if l_diff < 0 and trim:
         l_diff = -l_diff
         line = line[l_diff:]
     return line
