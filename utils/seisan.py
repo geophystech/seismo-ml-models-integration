@@ -231,6 +231,8 @@ def stretch_right(line, length, character=' '):
     l_diff = length - len(line)
     if l_diff > 0:
         line = line + character*l_diff
+    if l_diff < 0:
+        line = line[:l_diff]
     return line
 
 
@@ -239,6 +241,9 @@ def stretch_left(line, length, character=' '):
     l_diff = length - len(line)
     if l_diff > 0:
         line = character*l_diff + line
+    if l_diff < 0:
+        l_diff = -l_diff
+        line = line[l_diff:]
     return line
 
 
