@@ -225,22 +225,136 @@ def archive_to_path(arch, date, archives_path):
     }
 
 
-def generate_events(events):
+def stretch_right(line, length, character=' '):
+    line = str(line)
+    l_diff = length - len(line)
+    if l_diff > 0:
+        line = line + character*l_diff
+    return line
+
+
+def stretch_left(line, length, character=' '):
+    line = str(line)
+    l_diff = length - len(line)
+    if l_diff > 0:
+        line = character*l_diff + line
+    return line
+
+
+def hypocenter_line(group, datetime, params, location):
+    """
+    Returns first line of Nordic file.
+    """
+    line = ' '
+    line += stretch_left(datetime.year, 4)
+    line += ' '
+    line += stretch_left(datetime.month, 2)
+    line += stretch_left(datetime.day, 2)
+    line += ' '  # fix origin time (normally blank)
+    line += datetime.strftime('%H%M')
+    line += ' '
+    line += datetime.strftime(f'%S.%f')[:4]
+    line += ' '
+    line += location[0]
+    line += ' '  # event id, whitespace means "presumed earthquake"
+
+    latitude = '0.0'
+    longitude = '0.0'
+    line += stretch_left(latitude, 7)
+    line += stretch_left(longitude, 8)
+
+    depth = '0.0'
+    line += stretch_left(depth, 5)
+
+    line += 'F'  # depth indicator
+    line += ' '  # location indicator
+
+    agency = 'SAK'
+    line += agency[:3]  # agency
+
+    number_of_stations = str(0)[:3]  # calculate!
+    line += stretch_left(number_of_stations, 3)
+
+    rms = '0.0'  # RMS of Time Residuals
+    line += stretch_left(rms, 4)
+
+    magnitude = '0.0'
+    line += stretch_left(magnitude, 4)
+    magnitude_type = 'L'  # L=ML, b=mb, B=mB, s=Ms, S=MS, W=MW, G=MbLg (not used by SEISAN), C=Mc
+    line += magnitude_type
+    line += agency[:3]
+
+    line += stretch_left('', 4)  # magnitude no. 2
+    line += stretch_left('', 1)  # magnitude no. 2 type
+    line += stretch_left('', 3)  # magnitude no. 2 agency
+
+    line += stretch_left('', 4)  # magnitude no. 3
+    line += stretch_left('', 1)  # magnitude no. 3 type
+    line += stretch_left('', 3)  # magnitude no. 3 agency
+
+    line += '1'  # type of this line
+    line += '\n'
+
+    return line
+
+
+def waveform_line(group, datetime, params, location):
+    line = ' '
+
+    waveform_filename = '2021-04-01-1235-35S.IMGG__023'
+    line += stretch_right(waveform_filename, 78)  # name of file or archive reference, a-format
+    line += '6'  # type of this line
+    line += '\n'
+
+
+def write_nordic_head(f, group, datetime, params, location):
+    """
+    Generates and writes Nordic file contents before wave detections table.
+    """
+    f.write(hypocenter_line(group, datetime, params, location))
+    f.write(waveform_line(group, datetime, params, location))
+
+
+def write_phase_table(f, group, datetime, params, location):
+    """
+    Generates and writes Nordic file detections table.
+    """
+    # Write title line
+    f.write(' STAT COM NTLO IPHASE W HHMM SS.SSS PAR1 PAR2 AGA OPE AIN RES W DIS CAZ7\n')
+
+
+def generate_event(group, datetime, params):
+    """
+    Generates s-file for a detection.
+    """
+    location = 'L'
+    filename = datetime.strftime(f'%d-%H%M-%S{location}.S%Y%m')
+
+    with open(filename, 'w') as f:
+        write_nordic_head(f, group, datetime, params, location)
+        write_phase_table(f, group, datetime, params, location)
+
+    for record in group:
+        print('Detection: ', record)
+
+
+def generate_events(events, params):
     """
     Generates s-files for detections.
-    :param events:
-    :return:
     """
     groups_counter = 0
-    for filename, groups in detections.items():
-        groups_counter += len(groups)
+    for filename, groups in events.items():
+        for group, datetime in groups:
+            if len(group) > params['main', 'detections-for-event']:
+                groups_counter += len(groups)
 
     # TODO: print message (this many groups found)
     # TODO: unless save-s-files == 'always' or 'never', (if save-s-files == 'ask' or None)
     #       ask for premission to save found events as s-files
 
-    print(f'Events detected: {groups_counter}')
+    print(f'\nEvents detected: {groups_counter}')
 
-    for filename, groups in detections.items():
+    for filename, groups in events.items():
         for group, datetime in groups:
-            print(datetime)
+            if len(group) > params['main', 'detections-for-event']:
+                generate_event(group, datetime, params)
