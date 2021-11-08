@@ -546,6 +546,10 @@ def combine_detections(detections, params):
         def connections_getter(x):
             return x[1]
 
+        # Sorting by station
+        def station_getter(x):
+            return x['station']
+
         groups = []
         for i in range(len(nodes_connections_count)):
 
@@ -569,6 +573,7 @@ def combine_detections(detections, params):
                 x['avaliable'] = False
 
             if len(group):
+                group.sort(key = station_getter, reverse=True)
                 groups.append([group, items[idx]['datetime']])
 
         file_groups[filename] = groups
