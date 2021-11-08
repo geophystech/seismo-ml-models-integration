@@ -300,12 +300,17 @@ def hypocenter_line(group, datetime, params, location):
 
 
 def waveform_line(group, datetime, params, location):
+    """
+    Returns line with waveform filename.
+    """
     line = ' '
-
     waveform_filename = '2021-04-01-1235-35S.IMGG__023'
     line += stretch_right(waveform_filename, 78)  # name of file or archive reference, a-format
     line += '6'  # type of this line
     line += '\n'
+
+    return line
+
 
 def id_line(group, datetime, params, location):
     """
