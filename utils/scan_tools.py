@@ -285,7 +285,7 @@ def scan_traces(*_traces, params=None, n_features=400, shift=10, original_data=N
     global_normalize -- normalize globaly all traces if True or locally if False
     batch_size       -- model.fit batch size
     """
-    batch_size = params['main', 'batch_size']
+    batch_size = params['main', 'batch-size']
     model = params[station, 'model-object']
 
     # Check input types
