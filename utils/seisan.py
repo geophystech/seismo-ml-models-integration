@@ -382,7 +382,10 @@ def detection_line(detection, datetime, params):
     line += quality
 
     phase = detection['type']  # phase ID: PN, PG, LG, P, S, etc.
-    line += stretch_right(phase, 4)
+    if phase in params['main', 'label-names']:
+        line += stretch_right(params['main', 'label-names'][phase], 4)
+    else:
+        line += stretch_right(phase, 4)
 
     weight_indicator = ' '
     line += weight_indicator

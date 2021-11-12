@@ -59,6 +59,7 @@ if __name__ == '__main__':
     # Set values
     model_labels = {'p': 0, 's': 1, 'n': 2}
     positive_labels = {'p': 0, 's': 1}
+    params['main', 'label-names'] = {'p': 'P', 's': 'S'}
     half_duration = (params['main', 'features-number'] * 0.5) / params['main', 'frequency']
 
     # Load model(s)
