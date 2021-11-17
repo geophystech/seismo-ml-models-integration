@@ -16,7 +16,7 @@ def get_unsupported_station_parameters_list():
         # Model input and batches customization
         'features-number', 'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
-        'time', 'cpu', 'print-files', 'generate-waveforms'
+        'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
         # Environment
         'input', 'seisan', 'mulplt', 'archives'
     ]
@@ -46,6 +46,7 @@ def get_args_dictionaries(args):
             'shift': args.shift,
             'detections-for-event': args.detections_for_event,
             'generate-waveforms': args.generate_waveforms,
+            'wavetool-waveforms': args.wavetool_waveforms,
             'no-filter': args.no_filter,
             'no-detrend': args.no_detrend,
             'trace-normalization': args.trace_normalization,
@@ -258,6 +259,7 @@ def get_args_dictionaries(args):
         'no-filter': [bool_converter],
         'no-detrend': [bool_converter],
         'trace-normalization': [bool_converter],
+        'wavetool-waveforms': [bool_converter],
         'plot-positives': [bool_converter],
         'plot-positives-original': [bool_converter],
         'print-scores': [bool_converter],
@@ -321,6 +323,9 @@ def archive_scan_params():
                                                      '(ask once per launch), "ask each" (ask for every event), '
                                                      'default: ask once',
                         default='ask once', type=str)
+    parser.add_argument('--wavetool-waveforms', help='If set, use seisan wavetool programm to generate waveforms, '
+                                                     'otherwise use custom ObsPy based module, not set by default',
+                        action='store_true')
     parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
     parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
     parser.add_argument('--print-files', help='Print out all archive file names before scan',
