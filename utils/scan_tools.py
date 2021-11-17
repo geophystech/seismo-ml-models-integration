@@ -482,9 +482,6 @@ def combine_by_filename(detections, params):
         if filename not in combined_by_filename:
             combined_by_filename[filename] = []
 
-        for x in items:
-            x['station'] = station
-
         combined_by_filename[filename].extend(items)
 
     # Sort by datetime
@@ -518,7 +515,7 @@ def combine_detections(detections, params):
 
         for i, x in enumerate(items):
 
-            dt_range = params[x['station'], 'combine-events-range']
+            dt_range = params[x['station']['station'], 'combine-events-range']
             x_time = x['datetime']
             n_points = 1
 
@@ -548,7 +545,7 @@ def combine_detections(detections, params):
 
         # Sorting by station
         def station_getter(x):
-            return x['station']
+            return x['station']['station']
 
         groups = []
         for i in range(len(nodes_connections_count)):
@@ -632,7 +629,6 @@ def finalize_predictions(detections, params, upper_case=True):
     print_final_predictions(detections, params, upper_case=True)
 
     generate_events(detections, params)
-
 
 
 def parse_archive_csv(path):
