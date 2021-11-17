@@ -466,6 +466,42 @@ def generate_event(group, datetime, params):
         write_phase_table(f, group, datetime, params, location)
 
 
+def create_cbase_file(event, datetime, params):
+    """
+    Creates file with list of archive channels to slice for -cbase option of wavetool command from
+    Seisan. Returns path to generated file.
+    -cbase file contains information about archive to slice from.
+    File example:
+    0        1         2         3         4
+    123456789012345678901234567890123456789012
+    NGLK SHZIM00        20140403  202112312359
+    NGLK SHNIM00        20140403  202112312359
+    NGLK SHEIM00        20140403  202112312359
+    ARGI SHZIM00        20140403  201809062359
+    ARGI SHNIM00        20140403  201809062359
+    ARGI SHEIM00        20140403  201809062359
+
+    First two lines are not present in actual file and just to represent a character index.
+    Each line contains:
+        1:5 - station
+        6:8 - component
+        9:10 - network
+        11:12 - location
+        13:29 - archive start date
+        31:42 - archive end date in format YYYYMMDDhhmm
+    Archive end date is mandatory for "wavetool", so if archive does not have an end date, it will be
+    written as last minute of a current year: "YYYY12312359"
+    """
+    pass
+
+
+def generate_waveforms(event, datetime, params):
+    """
+    Generates (slices) waveform miniSEED file for group of detections. Returns path to generated file.
+    """
+    pass
+
+
 def generate_events(events, params):
     """
     Generates s-files for detections.
@@ -485,4 +521,18 @@ def generate_events(events, params):
     for filename, groups in events.items():
         for group, datetime in groups:
             if len(group) >= params['main', 'detections-for-event']:
+
+                # Waveforms file generation
+                generate_waveforms = False
+                if params['main', 'generate-waveforms'] == 'yes':
+                    generate_waveforms = True
+                if params['main', 'generate-waveforms'] == 'ask once':
+                    generate_waveforms = True  # placeholder
+                if params['main', 'generate-waveforms'] == 'ask each':
+                    generate_waveforms = True  # placeholder
+
+                waveforms_name = None
+                if generate_waveforms:
+                    waveforms_name = generate_waveforms(group, datetime, params)
+
                 generate_event(group, datetime, params)

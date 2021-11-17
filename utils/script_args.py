@@ -16,7 +16,7 @@ def get_unsupported_station_parameters_list():
         # Model input and batches customization
         'features-number', 'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
-        'time', 'cpu', 'print-files',
+        'time', 'cpu', 'print-files', 'generate-waveforms'
         # Environment
         'input', 'seisan', 'mulplt', 'archives'
     ]
@@ -45,6 +45,7 @@ def get_args_dictionaries(args):
             'trace-size': args.trace_size,
             'shift': args.shift,
             'detections-for-event': args.detections_for_event,
+            'generate-waveforms': args.generate_waveforms,
             'no-filter': args.no_filter,
             'no-detrend': args.no_detrend,
             'trace-normalization': args.trace_normalization,
@@ -109,6 +110,11 @@ def get_args_dictionaries(args):
 
     int_converter = applied_function(f_type=int)(type_converter)
     float_converter = applied_function(f_type=float)(type_converter)
+
+    def string_trimmer(value, _, __):
+        if type(value) is not str:
+            return value
+        return value.strip()
 
     def bool_converter(value, _, __):
         if value is None:
@@ -248,6 +254,7 @@ def get_args_dictionaries(args):
         'trace-size': [float_converter, trace_size_converter],
         'shift': [int_converter],
         'detections-for-event': [int_converter],
+        'generate-waveforms': [string_trimmer],
         'no-filter': [bool_converter],
         'no-detrend': [bool_converter],
         'trace-normalization': [bool_converter],
@@ -310,6 +317,10 @@ def archive_scan_params():
                                                        ' default: 30 seconds', default=30., type=float)
     parser.add_argument('--detections-for-event', help='Amount of detections in a group, to be considered as '
                                                        'event, default: 2', default=2, type=int)
+    parser.add_argument('--generate-waveforms', help='Waveform generation: "no", "yes", "ask once" '
+                                                     '(ask once per launch), "ask each" (ask for every event), '
+                                                     'default: ask once',
+                        default='ask once', type=str)
     parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
     parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
     parser.add_argument('--print-files', help='Print out all archive file names before scan',
