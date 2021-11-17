@@ -484,5 +484,5 @@ def generate_events(events, params):
 
     for filename, groups in events.items():
         for group, datetime in groups:
-            if len(group) > params['main', 'detections-for-event']:
+            if len(group) >= params['main', 'detections-for-event']:
                 generate_event(group, datetime, params)
