@@ -128,7 +128,7 @@ if __name__ == '__main__':
         # Update progress bar parameters
         progress_bar.set_prefix_arg('archive', n_archive + 1)
         if station:
-            progress_bar.set_prefix_arg('station', station)
+            progress_bar.set_prefix_arg('station', station['station'])
         else:
             progress_bar.set_prefix_arg('station', 'none')
 
@@ -142,14 +142,14 @@ if __name__ == '__main__':
 
         # If --plot-positives-original, save original streams
         original_streams = None
-        if params[station, 'plot-positives-original']:
+        if params[station['station'], 'plot-positives-original']:
             original_streams = []
             for path in l_archives:
                 original_streams.append(read(path))
 
         # Pre-process data
         for st in streams:
-            stools.pre_process_stream(st, params, station)
+            stools.pre_process_stream(st, params, station['station'])
 
         # Cut archives to the same length
         streams = stools.trim_streams(streams, params['main', 'start'], params['main', 'end'])
@@ -243,7 +243,7 @@ if __name__ == '__main__':
                 try:
                     scores, performance_time = stools.scan_traces(*batches,
                                                                   params=params,
-                                                                  station=station,
+                                                                  station=station['station'],
                                                                   original_data=original_batches)
                 except ValueError:
                     scores, performance_time = None, 0
@@ -255,7 +255,7 @@ if __name__ == '__main__':
 
                 restored_scores = stools.restore_scores(scores,
                                                         (len(batches[0]), len(model_labels)),
-                                                        params[station, 'shift'])
+                                                        params[station['station'], 'shift'])
 
                 # Get indexes of predicted events
                 predicted_labels = {}
@@ -269,7 +269,7 @@ if __name__ == '__main__':
                     positives = stools.get_positives(restored_scores,
                                                      positive_labels[label],
                                                      other_labels,
-                                                     threshold=params[station, 'threshold'][label])
+                                                     threshold=params[station['station'], 'threshold'][label])
 
                     predicted_labels[label] = positives
 
@@ -301,11 +301,16 @@ if __name__ == '__main__':
                 if params['main', 'print-scores']:
                     stools.print_scores(batches, restored_scores, predicted_labels, f't{i}_b{b}')
 
-                stools.print_results(detected_peaks, params, station, last_station=last_saved_station)
-                last_saved_station = station
-                if station not in all_positives:
-                    all_positives[station] = []
-                all_positives[station].extend(detected_peaks)
+                stools.print_results(detected_peaks, params, station['station'], last_station=last_saved_station)
+                last_saved_station = station['station']
+                if station['station'] not in all_positives:
+                    all_positives[station['station']] = []
+
+                # Save extensive station information for every detection for later output!
+                for x in detected_peaks:
+                    x['station'] = station
+
+                all_positives[station['station']].extend(detected_peaks)
 
     # Re-write predictions files
     stools.finalize_predictions(all_positives, params)

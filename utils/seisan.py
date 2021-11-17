@@ -40,7 +40,7 @@ def get_archives(seisan, mulplt, archives, params):
     # Order channels and convert them into nested lists
     archives_paths = []
     for group in paths:
-        l_ordered = order_group(group['paths'], params[group['station'], 'channel-order'])
+        l_ordered = order_group(group['paths'], params[group['station']['station'], 'channel-order'])
         if not l_ordered:
             continue
         archives_paths.append({
@@ -200,12 +200,16 @@ def archive_to_path(arch, date, archives_path):
     station = None
     loc_code = None
     net_code = None
+    components = []
+    start = None
+    end = None
 
     for x in arch:
         # Find channel type
         ch_type = x[1][-1]
 
         chans[ch_type] = x[1]
+        components.append(x[1])
 
         # Get metadata
         if not station:
@@ -214,15 +218,28 @@ def archive_to_path(arch, date, archives_path):
             loc_code = x[3]
         if not net_code:
             net_code = x[2]
+        if not start:
+            start = x[4]
+        if not end:
+            end = x[5]
 
         # Path to archive
         path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(x[2], x[0], x[0], x[2], x[3], x[1], year, julday)
 
         d_result[ch_type] = path
 
+    d_station = {
+        'station': station,
+        'components': components,
+        'network': net_code,
+        'location': loc_code,
+        'start': start,
+        'end': end
+    }
+
     return {
         'paths': d_result,
-        'station': station
+        'station': d_station
     }
 
 
