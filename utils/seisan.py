@@ -128,13 +128,13 @@ def parse_seisan_def(path, multplt_data=None):
 
         for line in lines:
             if line[:len(tag)] == tag:
-                entry = line[len(tag):].split()
+
                 station = line[40:45].strip()
                 channel = line[45:48]
                 code = line[48:50]
                 location = line[50:52]
-                start_date = entry[2] if len(entry) >= 3 else None
-                end_date = entry[3] if len(entry) >= 4 else None
+                start_date = line[53:69].strip()
+                end_date = line[70:].strip()
 
                 if multplt_data is not None:
                     if station + channel not in stations_channels:
