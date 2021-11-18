@@ -580,7 +580,7 @@ def combine_detections(detections, params):
 
 def print_final_predictions(detections, params, upper_case=True, open_mode='w'):
     """
-    Prints final predictions into a file. As an input takes predictions, sturcuted
+    Prints final predictions into a file. As an input takes predictions, sturctured
     as dictionary, indexed by output file name, where each element is a pair:
     (group of positives, datetime).
     Group of positives is a list of positive predictions. Each prediction is a dictionary of fields,
@@ -595,7 +595,7 @@ def print_final_predictions(detections, params, upper_case=True, open_mode='w'):
 
                 for record in group:
 
-                    station = record['station']
+                    station = record['station']['station']
                     precision = params[station, 'print-precision']
 
                     line = ''
