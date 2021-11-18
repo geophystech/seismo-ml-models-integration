@@ -20,13 +20,45 @@ def order_group(group, channel_order):
     return paths
 
 
+def convert_station_group_to_dictionary(group):
+    """
+    Takes station group in format: [[station, component, network, location, start, end], [..], ...]
+    and returns its dictionary representation:
+    {
+     station: <station>,
+     components: [component1, .., componentN],
+     network: <network>,
+     location: <location>,
+     start: <start>,
+     end: <end>
+    }
+    """
+    components = [x[1] for x in group]
+    station = group[0]
+    return {
+        'station': station[0],
+        'components': components,
+        'network':  station[2],
+        'location': station[3],
+        'start': station[4],
+        'end': station[5]
+    }
+
+
 def get_archives(seisan, mulplt, archives, params):
     """
-    Returns lists of lists of archive file names to predict on.
+    Returns lists of lists of archive file names to predict on. Also saves stations information to
+    params['main', 'stations'].
     :return:
     """
     mulplt_parsed = parse_multplt(mulplt)
     seisan_parsed = parse_seisan_def(seisan, multplt_data=mulplt_parsed)
+
+    d_stations = []
+    for x in seisan_parsed:
+        d_stations.append(convert_station_group_to_dictionary(x))
+
+    params['main', 'stations'] = d_stations
 
     start = params['main', 'start']
     end = params['main', 'end']
