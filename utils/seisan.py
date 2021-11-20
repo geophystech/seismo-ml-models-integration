@@ -418,7 +418,7 @@ def detection_line(detection, datetime, params):
     Generates a line for detections table entry.
     """
     line = ' '
-    station = detection['station']
+    station = detection['station']['station']
     line += stretch_right(station, 5)
 
     instrument = 'E'  # instrument Type S = SP, I = IP, L = LP, etc.
