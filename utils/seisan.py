@@ -1,3 +1,4 @@
+import os
 from os.path import isfile
 from obspy import UTCDateTime
 
@@ -515,7 +516,14 @@ def generate_event(group, datetime, params):
         write_phase_table(f, group, datetime, params, location)
 
 
-def create_cbase_file(event, datetime, params):
+def unique_filename(name):
+    """
+    Returns unique file name based on "name" argument.
+    """
+    return name
+
+
+def create_cbase_file(stations, params):
     """
     Creates file with list of archive channels to slice for -cbase option of wavetool command from
     Seisan. Returns path to generated file.
@@ -540,14 +548,92 @@ def create_cbase_file(event, datetime, params):
         31:42 - archive end date in format YYYYMMDDhhmm
     Archive end date is mandatory for "wavetool", so if archive does not have an end date, it will be
     written as last minute of a current year: "YYYY12312359"
+    Parameters:
+    :param event - group of detections
+    :param datetime - datetime of the group (usually, earliest detection time in the group)
+    :param params - parameters of the application
+    :param stations - list of stations continious archives to cut waveforms from
+    """
+    import datetime
+
+    file_name = unique_filename('cbase.inp')
+    with open(file_name, 'w') as f:
+        for station in stations:
+            for component in station['components']:
+                line = stretch_right(station['station'], 5)
+                line += stretch_right(component, 3)
+                line += stretch_right(station['network'], 2)
+                line += stretch_right(station['location'], 2)
+
+                # get/generate archive start date
+                start = station['start']
+                if not start or not len(start):
+                    start = '19600101'
+
+                # get/generate archive end date
+                end = station['end']
+                if not end or not len(end):
+                    end = datetime.datetime.now().strftime('%Y12312359')
+
+                line += stretch_left(start, 17) + ' '
+                line += stretch_right(end, 12)
+
+                line += '\n'
+                f.write(line)
+
+    return file_name
+
+
+def slice_waveforms_wavetool(event, datetime, params, stations):
+    """
+    Generates (slices) waveform miniSEED file for group of detections. Returns path to generated file.
+    Uses wavetool program from Seisan.
+    Parameters:
+    :param event - group of detections
+    :param datetime - datetime of the group (usually, earliest detection time in the group)
+    :param params - parameters of the application
+    :param stations - list of stations continious archives to cut waveforms from
+    """
+    cbase = create_cbase_file(stations, params)
+
+    # Get first event time
+    start_datetime = datetime - params['main', 'waveform-duration']/2
+    s_start = start_datetime.strftime('%Y%m%d%H%M%S')
+
+    os.system(f'wavetool -format MSEED -start {s_start} -arc -duration {params["main", "waveform-duration"]}'
+              f' -wav_out_file SEISAN -cbase {cbase}')
+    os.remove(cbase)
+
+
+def slice_waveforms_obspy(event, datetime, params, stations):
+    """
+    Generates (slices) waveform miniSEED file for group of detections. Returns path to generated file.
+    Uses ObsPy library.
+    Parameters:
+    :param event - group of detections
+    :param datetime - datetime of the group (usually, earliest detection time in the group)
+    :param params - parameters of the application
+    :param stations - list of stations continious archives to cut waveforms from
     """
     pass
 
 
-def generate_waveforms(event, datetime, params):
+def slice_event_waveforms(event, datetime, params, stations):
     """
     Generates (slices) waveform miniSEED file for group of detections. Returns path to generated file.
+    Parameters:
+    :param event - group of detections
+    :param datetime - datetime of the group (usually, earliest detection time in the group)
+    :param params - parameters of the application
+    :param stations - list of stations continious archives to cut waveforms from
     """
+    if params['main', 'wavetool-waveforms']:
+        return slice_waveforms_wavetool(event, datetime, params, stations)
+    else:
+        return slice_waveforms_obspy(event, datetime, params, stations)
+
+
+def get_stations_list(events, params):
     pass
 
 
@@ -558,7 +644,7 @@ def generate_events(events, params):
     groups_counter = 0
     for filename, groups in events.items():
         for group, datetime in groups:
-            if len(group) > params['main', 'detections-for-event']:
+            if len(group) >= params['main', 'detections-for-event']:
                 groups_counter += len(groups)
 
     # TODO: print message (this many groups found)
@@ -566,6 +652,13 @@ def generate_events(events, params):
     #       ask for premission to save found events as s-files
 
     print(f'\nEvents detected: {groups_counter}')
+
+    if not groups_counter:
+        return
+
+    stations_list = None
+    if not params['main', 'waveforms-from-detection-stations']:
+        stations_list = params['main', 'stations']
 
     for filename, groups in events.items():
         for group, datetime in groups:
@@ -582,6 +675,8 @@ def generate_events(events, params):
 
                 waveforms_name = None
                 if generate_waveforms:
-                    waveforms_name = generate_waveforms(group, datetime, params)
+                    if params['main', 'waveforms-from-detection-stations']:
+                        stations_list = None
+                    waveforms_name = slice_event_waveforms(group, datetime, params, stations_list)
 
                 generate_event(group, datetime, params)
