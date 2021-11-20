@@ -17,7 +17,7 @@ def get_unsupported_station_parameters_list():
         'features-number', 'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
         'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
-        'waveforms-from-detection-stations',
+        'waveforms-from-detection-stations', 'waveform-duration',
         # Environment
         'input', 'seisan', 'mulplt', 'archives'
     ]
@@ -39,6 +39,7 @@ def get_args_dictionaries(args):
             'weights': args.weights,
             'loader-argv': args.loader_argv,
             'features-number': args.features_number,
+            'waveform-duration': args.waveform_duration,
             'start': args.start,
             'end': args.end,
             'threshold': args.threshold,
@@ -249,6 +250,7 @@ def get_args_dictionaries(args):
         'model-name': [apply_default_model_name],
         'weights': [apply_default_weights],
         'features-number': [int_converter],
+        'waveform-duration': [float_converter],
         'start': [utc_datetime_converter, start_date_default],
         'end': [utc_datetime_converter, end_date_default],
         'threshold': [threshold_converter],
@@ -306,6 +308,9 @@ def archive_scan_params():
     parser.add_argument('--frequency', help='Model data required frequency, default: 100 Hz', default=100.)
     parser.add_argument('--features-number', help='Model single channel input length, default: 400 samples',
                         default=400)
+    parser.add_argument('--waveform-duration', help='Duration of a waveform slice for potential events, '
+                                                    'default: 600 seconds',
+                        type=float, default=600.)
     parser.add_argument('--no-filter', help='Do not filter input waveforms', action='store_true')
     parser.add_argument('--no-detrend', help='Do not detrend input waveforms', action='store_true')
     parser.add_argument('--plot-positives', help='Plot positives waveforms', action='store_true')
