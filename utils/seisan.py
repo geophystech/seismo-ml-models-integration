@@ -698,7 +698,7 @@ def generate_events(events, params):
             if len(group) >= params['main', 'detections-for-event']:
                 groups_counter += len(groups)
 
-    print(f'\nEvents detected: {groups_counter}')
+    print(f'\n\nPotential events detected: {groups_counter}')
 
     if not groups_counter:
         return
@@ -707,13 +707,13 @@ def generate_events(events, params):
     if params['main', 'generate-s-files'] == 'yes':
         b_events_generation = True
     if params['main', 'generate-s-files'] == 'ask once':
-        b_events_generation = ask_yes_no('Do you want to generate s-files for found events?')
+        b_events_generation = ask_yes_no('Do you want to generate s-files for all potential events?')
 
     b_waveforms_generation = False
     if params['main', 'generate-waveforms'] == 'yes':
         b_waveforms_generation = True
     if params['main', 'generate-waveforms'] == 'ask once':
-        b_waveforms_generation = ask_yes_no('Do you want to slice waveforms for found events?')
+        b_waveforms_generation = ask_yes_no('Do you want to extract waveforms for all potential events?')
 
     stations_list = None
     if not params['main', 'waveforms-from-detection-stations']:
@@ -729,7 +729,7 @@ def generate_events(events, params):
                                f'{datetime.strftime("%Y%m%d%H%M%S")} ({len(group)} positives)?'
                     b_events_generation = ask_yes_no(question)
                 if params['main', 'generate-waveforms'] == 'ask each':
-                    question = f'Do you want to slice waveforms for potential event: ' \
+                    question = f'Do you want to extract waveforms for potential event: ' \
                                f'{datetime.strftime("%Y%m%d%H%M%S")} ({len(group)} positives)?'
                     b_waveforms_generation = ask_yes_no(question)
 
