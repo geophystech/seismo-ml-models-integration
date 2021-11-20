@@ -17,7 +17,7 @@ def get_unsupported_station_parameters_list():
         'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
         'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
-        'waveforms-from-detection-stations', 'waveform-duration',
+        'waveforms-from-detection-stations', 'waveform-duration', 'generate-s-files',
         # Environment
         'input', 'seisan', 'mulplt', 'archives'
     ]
@@ -46,6 +46,7 @@ def get_args_dictionaries(args):
             'batch-size': args.batch_size,
             'trace-size': args.trace_size,
             'shift': args.shift,
+            'generate-s-files': args.generate_s_files,
             'detections-for-event': args.detections_for_event,
             'generate-waveforms': args.generate_waveforms,
             'wavetool-waveforms': args.wavetool_waveforms,
@@ -258,6 +259,7 @@ def get_args_dictionaries(args):
         'frequency': [float_converter],
         'trace-size': [float_converter, trace_size_converter],
         'shift': [int_converter],
+        'generate-s-files': [string_trimmer],
         'detections-for-event': [int_converter],
         'generate-waveforms': [string_trimmer],
         'no-filter': [bool_converter],
@@ -325,6 +327,10 @@ def archive_scan_params():
     parser.add_argument('--combine-events-range', help='Maximum range (in seconds) inside which '
                                                        'positives are visually combined as a single event,'
                                                        ' default: 30 seconds', default=30., type=float)
+    parser.add_argument('--generate-s-files', help='Generate s-files for potential events? "no", "yes", '
+                                                   '"ask once" (ask once per launch), "ask each" '
+                                                   '(ask for every event), default: ask once',
+                        default='ask once', type=str)
     parser.add_argument('--detections-for-event', help='Amount of detections in a group, to be considered as '
                                                        'event, default: 2', default=2, type=int)
     parser.add_argument('--generate-waveforms', help='Waveform generation: "no", "yes", "ask once" '
