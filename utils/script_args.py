@@ -14,7 +14,7 @@ def get_unsupported_station_parameters_list():
         # Custom dates
         'start', 'end',
         # Model input and batches customization
-        'features-number', 'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
+        'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
         'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
         'waveforms-from-detection-stations', 'waveform-duration',
