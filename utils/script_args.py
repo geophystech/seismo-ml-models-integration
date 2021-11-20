@@ -14,9 +14,10 @@ def get_unsupported_station_parameters_list():
         # Custom dates
         'start', 'end',
         # Model input and batches customization
-        'features-number', 'batch-size', 'trace-size', 'shift', 'frequency',
+        'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
-        'time', 'cpu', 'print-files',
+        'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
+        'waveforms-from-detection-stations', 'waveform-duration', 'generate-s-files',
         # Environment
         'input', 'seisan', 'mulplt', 'archives'
     ]
@@ -38,12 +39,18 @@ def get_args_dictionaries(args):
             'weights': args.weights,
             'loader-argv': args.loader_argv,
             'features-number': args.features_number,
+            'waveform-duration': args.waveform_duration,
             'start': args.start,
             'end': args.end,
             'threshold': args.threshold,
             'batch-size': args.batch_size,
             'trace-size': args.trace_size,
             'shift': args.shift,
+            'generate-s-files': args.generate_s_files,
+            'detections-for-event': args.detections_for_event,
+            'generate-waveforms': args.generate_waveforms,
+            'wavetool-waveforms': args.wavetool_waveforms,
+            'waveforms-from-detection-stations': args.waveforms_from_detection_stations,
             'no-filter': args.no_filter,
             'no-detrend': args.no_detrend,
             'trace-normalization': args.trace_normalization,
@@ -108,6 +115,11 @@ def get_args_dictionaries(args):
 
     int_converter = applied_function(f_type=int)(type_converter)
     float_converter = applied_function(f_type=float)(type_converter)
+
+    def string_trimmer(value, _, __):
+        if type(value) is not str:
+            return value
+        return value.strip()
 
     def bool_converter(value, _, __):
         if value is None:
@@ -239,6 +251,7 @@ def get_args_dictionaries(args):
         'model-name': [apply_default_model_name],
         'weights': [apply_default_weights],
         'features-number': [int_converter],
+        'waveform-duration': [float_converter],
         'start': [utc_datetime_converter, start_date_default],
         'end': [utc_datetime_converter, end_date_default],
         'threshold': [threshold_converter],
@@ -246,9 +259,14 @@ def get_args_dictionaries(args):
         'frequency': [float_converter],
         'trace-size': [float_converter, trace_size_converter],
         'shift': [int_converter],
+        'generate-s-files': [string_trimmer],
+        'detections-for-event': [int_converter],
+        'generate-waveforms': [string_trimmer],
         'no-filter': [bool_converter],
         'no-detrend': [bool_converter],
         'trace-normalization': [bool_converter],
+        'wavetool-waveforms': [bool_converter],
+        'waveforms-from-detection-stations': [bool_converter],
         'plot-positives': [bool_converter],
         'plot-positives-original': [bool_converter],
         'print-scores': [bool_converter],
@@ -292,6 +310,9 @@ def archive_scan_params():
     parser.add_argument('--frequency', help='Model data required frequency, default: 100 Hz', default=100.)
     parser.add_argument('--features-number', help='Model single channel input length, default: 400 samples',
                         default=400)
+    parser.add_argument('--waveform-duration', help='Duration of a waveform slice for potential events, '
+                                                    'default: 600 seconds',
+                        type=float, default=600.)
     parser.add_argument('--no-filter', help='Do not filter input waveforms', action='store_true')
     parser.add_argument('--no-detrend', help='Do not detrend input waveforms', action='store_true')
     parser.add_argument('--plot-positives', help='Plot positives waveforms', action='store_true')
@@ -306,6 +327,23 @@ def archive_scan_params():
     parser.add_argument('--combine-events-range', help='Maximum range (in seconds) inside which '
                                                        'positives are visually combined as a single event,'
                                                        ' default: 30 seconds', default=30., type=float)
+    parser.add_argument('--generate-s-files', help='Generate s-files for potential events? "no", "yes", '
+                                                   '"ask once" (ask once per launch), "ask each" '
+                                                   '(ask for every event), default: ask once',
+                        default='ask once', type=str)
+    parser.add_argument('--detections-for-event', help='Amount of detections in a group, to be considered as '
+                                                       'event, default: 2', default=2, type=int)
+    parser.add_argument('--generate-waveforms', help='Waveform generation: "no", "yes", "ask once" '
+                                                     '(ask once per launch), "ask each" (ask for every event), '
+                                                     'default: ask once',
+                        default='ask once', type=str)
+    parser.add_argument('--wavetool-waveforms', help='If set, use seisan wavetool programm to generate waveforms, '
+                                                     'otherwise use custom ObsPy based module, not set by default',
+                        action='store_true')
+    parser.add_argument('--waveforms-from-detection-stations', help='If set, slice waveforms only for stations'
+                                                                    ' with detections, otherwise, slice from'
+                                                                    ' every station scan was performed on.',
+                        action='store_true')
     parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
     parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
     parser.add_argument('--print-files', help='Print out all archive file names before scan',

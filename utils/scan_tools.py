@@ -6,6 +6,7 @@ import os
 from time import time
 from obspy.core.utcdatetime import UTCDateTime
 from collections import deque
+from .seisan import generate_events
 
 
 def pre_process_stream(stream, params, station):
@@ -481,9 +482,6 @@ def combine_by_filename(detections, params):
         if filename not in combined_by_filename:
             combined_by_filename[filename] = []
 
-        for x in items:
-            x['station'] = station
-
         combined_by_filename[filename].extend(items)
 
     # Sort by datetime
@@ -517,7 +515,7 @@ def combine_detections(detections, params):
 
         for i, x in enumerate(items):
 
-            dt_range = params[x['station'], 'combine-events-range']
+            dt_range = params[x['station']['station'], 'combine-events-range']
             x_time = x['datetime']
             n_points = 1
 
@@ -545,6 +543,10 @@ def combine_detections(detections, params):
         def connections_getter(x):
             return x[1]
 
+        # Sorting by station
+        def station_getter(x):
+            return x['station']['station']
+
         groups = []
         for i in range(len(nodes_connections_count)):
 
@@ -568,6 +570,7 @@ def combine_detections(detections, params):
                 x['avaliable'] = False
 
             if len(group):
+                group.sort(key = station_getter, reverse=True)
                 groups.append([group, items[idx]['datetime']])
 
         file_groups[filename] = groups
@@ -575,12 +578,14 @@ def combine_detections(detections, params):
     return file_groups
 
 
-def print_final_predictions(detections, params, upper_case=True):
+def print_final_predictions(detections, params, upper_case=True, open_mode='w'):
     """
-    Prints out all predictions with additional visual enhancements.
+    Prints final predictions into a file. As an input takes predictions, sturctured
+    as dictionary, indexed by output file name, where each element is a pair:
+    (group of positives, datetime).
+    Group of positives is a list of positive predictions. Each prediction is a dictionary of fields,
+    describing the prediction (datetime, station, etc.).
     """
-    detections = combine_detections(detections, params)
-
     for filename, groups in detections.items():
         with open(filename, 'w') as f:
             for group, datetime in groups:
@@ -590,7 +595,7 @@ def print_final_predictions(detections, params, upper_case=True):
 
                 for record in group:
 
-                    station = record['station']
+                    station = record['station']['station']
                     precision = params[station, 'print-precision']
 
                     line = ''
@@ -613,6 +618,17 @@ def print_final_predictions(detections, params, upper_case=True):
                     f.write(line)
 
                 f.write('\n')
+
+
+def finalize_predictions(detections, params, upper_case=True):
+    """
+    Prints out all predictions with additional visual enhancements.
+    """
+    detections = combine_detections(detections, params)
+
+    print_final_predictions(detections, params, upper_case=True)
+
+    generate_events(detections, params)
 
 
 def parse_archive_csv(path):
