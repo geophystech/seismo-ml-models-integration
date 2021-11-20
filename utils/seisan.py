@@ -709,13 +709,13 @@ def generate_events(events, params):
     if params['main', 'generate-s-files'] == 'yes':
         b_events_generation = True
     if params['main', 'generate-s-files'] == 'ask once':
-        b_events_generation = ask_yes_no('Do you want to generate s-files for all potential events?')
+        b_events_generation = ask_yes_no('Do you want to generate s-files for potential events?')
 
     b_waveforms_generation = False
     if params['main', 'generate-waveforms'] == 'yes':
         b_waveforms_generation = True
     if params['main', 'generate-waveforms'] == 'ask once':
-        b_waveforms_generation = ask_yes_no('Do you want to extract waveforms for all potential events?')
+        b_waveforms_generation = ask_yes_no('Do you want to extract waveforms for potential events?')
 
     stations_list = None
     if not params['main', 'waveforms-from-detection-stations']:
