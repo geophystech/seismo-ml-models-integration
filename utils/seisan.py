@@ -600,9 +600,39 @@ def slice_waveforms_wavetool(event, datetime, params, stations):
     start_datetime = datetime - params['main', 'waveform-duration']/2
     s_start = start_datetime.strftime('%Y%m%d%H%M%S')
 
+    # Get all files before calling wavetool
+    from os import listdir
+    from os.path import isfile, join
+    files_before = [f for f in listdir('.') if isfile(join('.', f))]
+
     os.system(f'wavetool -format MSEED -start {s_start} -arc -duration {params["main", "waveform-duration"]}'
               f' -wav_out_file SEISAN -cbase {cbase}')
     os.remove(cbase)
+
+    # Find new file
+    files_after = [f for f in listdir('.') if isfile(join('.', f))]
+    new_files = []
+
+    for file_a in files_after:
+        if file_a not in files_before:
+            new_files.append(file_a)
+
+    if len(new_files) == 0:
+        return None
+    if len(new_files) == 1:
+        return new_files[0]
+
+    # Try to filter out Seisan-like file name
+    filtered_files = []
+    for x in new_files:
+        file_name = x.split('/')[-1]
+
+        if start_datetime.strftime('%Y-%m-%d-%H%M-%S') in file_name:
+            filtered_files.append(x)
+
+    if len(new_files) == 1:
+        return new_files[0]
+    return None
 
 
 def slice_waveforms_obspy(event, datetime, params, stations):
