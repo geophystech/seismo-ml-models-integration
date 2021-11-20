@@ -515,6 +515,8 @@ def generate_event(group, datetime, params, waveform):
         write_nordic_head(f, group, datetime, params, location, waveform)
         write_phase_table(f, group, datetime, params, location)
 
+    return filename
+
 
 def unique_filename(name):
     """
@@ -719,6 +721,8 @@ def generate_events(events, params):
     if not params['main', 'waveforms-from-detection-stations']:
         stations_list = params['main', 'stations']
 
+    l_s_files = []
+    l_waveforms = []
     for filename, groups in events.items():
         for group, datetime in groups:
             if len(group) >= params['main', 'detections-for-event']:
@@ -739,5 +743,17 @@ def generate_events(events, params):
                         stations_list = None
                     waveforms_name = slice_event_waveforms(group, datetime, params, stations_list)
 
+                if waveforms_name:
+                    l_waveforms.append(waveforms_name)
+
                 if b_events_generation:
-                    generate_event(group, datetime, params, waveforms_name)
+                    s_name = generate_event(group, datetime, params, waveforms_name)
+                    l_s_files.append(s_name)
+
+    print('\nGenerated s-files:')
+    for x in l_s_files:
+        print(x)
+
+    print('\nExtracted waveforms:')
+    for x in l_waveforms:
+        print(x)
