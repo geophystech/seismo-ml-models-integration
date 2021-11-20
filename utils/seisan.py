@@ -354,13 +354,12 @@ def hypocenter_line(group, datetime, params, location):
     return line
 
 
-def waveform_line(group, datetime, params, location):
+def waveform_line(group, datetime, params, location, waveform):
     """
     Returns line with waveform filename.
     """
     line = ' '
-    waveform_filename = '2021-04-01-1235-35S.IMGG__023'
-    line += stretch_right(waveform_filename, 78)  # name of file or archive reference, a-format
+    line += stretch_right(waveform, 78)  # name of file or archive reference, a-format
     line += '6'  # type of this line
     line += '\n'
 
@@ -404,13 +403,14 @@ def id_line(group, datetime, params, location):
     return line
 
 
-def write_nordic_head(f, group, datetime, params, location):
+def write_nordic_head(f, group, datetime, params, location, waveform):
     """
     Generates and writes Nordic file contents before wave detections table.
     """
     f.write(hypocenter_line(group, datetime, params, location))
     f.write(id_line(group, datetime, params, location))
-    f.write(waveform_line(group, datetime, params, location))
+    if waveform:
+        f.write(waveform_line(group, datetime, params, location, waveform))
 
 
 def detection_line(detection, datetime, params):
@@ -504,7 +504,7 @@ def write_phase_table(f, group, datetime, params, location):
         f.write(detection_line(record, datetime, params))
 
 
-def generate_event(group, datetime, params):
+def generate_event(group, datetime, params, waveform):
     """
     Generates s-file for a detection.
     """
@@ -512,7 +512,7 @@ def generate_event(group, datetime, params):
     filename = datetime.strftime(f'%d-%H%M-%S{location}.S%Y%m')
 
     with open(filename, 'w') as f:
-        write_nordic_head(f, group, datetime, params, location)
+        write_nordic_head(f, group, datetime, params, location, waveform)
         write_phase_table(f, group, datetime, params, location)
 
 
@@ -637,6 +637,27 @@ def get_stations_list(events, params):
     pass
 
 
+def ask_yes_no(question, repeat=False):
+    """
+    Asks a question with answer YES/NO. Returns True if YES, False otherwise.
+    :param question - question to ask
+    :param repeat - if True, will repeat a question until either positive or negative answer given,
+        if False - any non-positive answer is treated as negative (no need to input exact negative answer, e.g.
+        "NO" or "N", etc.)
+    """
+    print(question + ' [Y/N]: ', end='')
+    answer = input()
+
+    while True:
+        answer = answer.strip().lower()
+        if answer in ['y', 'yes']:
+            return True
+        if not repeat:
+            return False
+        if answer in ['n', 'no']:
+            return False
+
+
 def generate_events(events, params):
     """
     Generates s-files for detections.
@@ -647,14 +668,22 @@ def generate_events(events, params):
             if len(group) >= params['main', 'detections-for-event']:
                 groups_counter += len(groups)
 
-    # TODO: print message (this many groups found)
-    # TODO: unless save-s-files == 'always' or 'never', (if save-s-files == 'ask' or None)
-    #       ask for premission to save found events as s-files
-
     print(f'\nEvents detected: {groups_counter}')
 
     if not groups_counter:
         return
+
+    b_events_generation = False
+    if params['main', 'generate-s-files'] == 'yes':
+        b_events_generation = True
+    if params['main', 'generate-s-files'] == 'ask once':
+        b_events_generation = ask_yes_no('Do you want to generate s-files for found events?')
+
+    b_waveforms_generation = False
+    if params['main', 'generate-waveforms'] == 'yes':
+        b_waveforms_generation = True
+    if params['main', 'generate-waveforms'] == 'ask once':
+        b_waveforms_generation = ask_yes_no('Do you want to slice waveforms for found events?')
 
     stations_list = None
     if not params['main', 'waveforms-from-detection-stations']:
@@ -665,18 +694,20 @@ def generate_events(events, params):
             if len(group) >= params['main', 'detections-for-event']:
 
                 # Waveforms file generation
-                generate_waveforms = False
-                if params['main', 'generate-waveforms'] == 'yes':
-                    generate_waveforms = True
-                if params['main', 'generate-waveforms'] == 'ask once':
-                    generate_waveforms = True  # placeholder
+                if params['main', 'generate-s-files'] == 'ask each':
+                    question = f'Do you want to generate s-file for potential event: ' \
+                               f'{datetime.strftime("%Y%m%d%H%M%S")} ({len(group)} positives)?'
+                    b_events_generation = ask_yes_no(question)
                 if params['main', 'generate-waveforms'] == 'ask each':
-                    generate_waveforms = True  # placeholder
+                    question = f'Do you want to slice waveforms for potential event: ' \
+                               f'{datetime.strftime("%Y%m%d%H%M%S")} ({len(group)} positives)?'
+                    b_waveforms_generation = ask_yes_no(question)
 
                 waveforms_name = None
-                if generate_waveforms:
+                if b_waveforms_generation:
                     if params['main', 'waveforms-from-detection-stations']:
                         stations_list = None
                     waveforms_name = slice_event_waveforms(group, datetime, params, stations_list)
 
-                generate_event(group, datetime, params)
+                if b_events_generation:
+                    generate_event(group, datetime, params, waveforms_name)
