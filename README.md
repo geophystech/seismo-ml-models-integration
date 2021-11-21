@@ -5,7 +5,8 @@ seisan/earthworm integration scripts to process seismology data using machine le
 ```
 git clone https://github.com/Syler1984/seismo-ml-models-integration
 cd seismo-ml-models-integration
-python archive_scan.py
+pip install -r requirements.txt
+python archive_scan.py --start YYYYMMDD --end YYYYMMDD
 ```
 
 ## Configuring stations

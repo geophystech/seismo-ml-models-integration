@@ -113,10 +113,29 @@ if __name__ == '__main__':
     progress_bar.set_prefix_arg('total_archives', len(archives))
     total_performance_time = 0.
 
+    original_archives = archives
+    archives = []
+    rejected_archives = []
+    for arch in original_archives:
+        try:
+            streams = []
+            for path in arch["paths"]:
+                streams.append(read(path))
+        except FileNotFoundError:
+            rejected_archives.append(arch)
+        else:
+            archives.append(arch)
+
+
     if params['main', 'print-files']:
+        print('Scan archives:')
         for n_archive, d_archives in enumerate(archives):
-            print(f'{n_archive}: {d_archives["paths"]}')
+            print(f'{n_archive + 1}: {d_archives["paths"]}')
         print()
+        if len(rejected_archives):
+            print(f'Rejected {len(rejected_archives)} archives (file not found):')
+            for n_archive, d_archives in enumerate(rejected_archives):
+                print(f'{n_archive + 1}: {d_archives["paths"]}')
 
     all_positives = {}
     for n_archive, d_archives in enumerate(archives):
@@ -133,12 +152,9 @@ if __name__ == '__main__':
             progress_bar.set_prefix_arg('station', 'none')
 
         # Read data
-        try:
-            streams = []
-            for path in l_archives:
-                streams.append(read(path))
-        except FileNotFoundError:
-            continue
+        streams = []
+        for path in l_archives:
+            streams.append(read(path))
 
         # If --plot-positives-original, save original streams
         original_streams = None

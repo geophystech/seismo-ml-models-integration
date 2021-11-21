@@ -167,7 +167,7 @@ class ProgressBar:
             self.progress.pop(level, None)
 
     def set_progress(self, *progress, level = None,
-                     fraction = False, percent = False):
+                     fraction = False, percent = False, print=False):
         """
         Sets progress for a single level or for or existing levels as an absolute value, if progress consists of
         multiple values.
@@ -219,6 +219,9 @@ class ProgressBar:
             else:
                 value = min(value, max_progress)
                 self.progress[level] = value
+
+        if print:
+            self.print()
 
     def set_progress_kwargs(self, fraction = False, percent = False, **progress):
         """
@@ -298,6 +301,8 @@ class ProgressBar:
         :param kwargs:
         """
         self._prefix_kwargs = kwargs
+        if print:
+            self.print()
 
     def set_postfix_kwargs(self, **kwargs):
         """
@@ -306,21 +311,25 @@ class ProgressBar:
         """
         self._postfix_kwargs = kwargs
 
-    def set_prefix_arg(self, name, value):
+    def set_prefix_arg(self, name, value, print=False):
         """
         Set one prefix keyword argument by its keyword
         :param name: str - keyword
         :param value:
         """
         self._prefix_kwargs[name] = value
+        if print:
+            self.print()
 
-    def set_postfix_arg(self, name, value):
+    def set_postfix_arg(self, name, value, print=False):
         """
         Set one postfix keyword argument by its keyword
         :param name: str - keyword
         :param value:
         """
         self._postfix_kwargs[name] = value
+        if print:
+            self.print()
 
     def pop_prefix_arg(self, name):
         """
