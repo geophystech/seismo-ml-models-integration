@@ -50,7 +50,7 @@ def get_args_dictionaries(args):
             'detections-for-event': args.detections_for_event,
             'generate-waveforms': args.generate_waveforms,
             'wavetool-waveforms': args.wavetool_waveforms,
-            'detection-stations': args.waveforms_from_detection_stations,
+            'detection-stations': args.detection_stations,
             'no-filter': args.no_filter,
             'no-detrend': args.no_detrend,
             'trace-normalization': args.trace_normalization,
