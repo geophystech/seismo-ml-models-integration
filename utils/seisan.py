@@ -690,6 +690,19 @@ def ask_yes_no(question, repeat=False):
             return False
 
 
+def detection_station_list(event, params):
+    """
+    Returns station list with only stations with detections.
+    """
+    all_stations = params['main', 'stations']
+
+    print('\n\nALL STATIONS:')
+    for x in all_stations:
+        print(x)
+
+    return None
+
+
 def generate_events(events, params):
     """
     Generates s-files for detections.
@@ -718,7 +731,7 @@ def generate_events(events, params):
         b_waveforms_generation = ask_yes_no('Do you want to extract waveforms for potential events?')
 
     stations_list = None
-    if not params['main', 'waveforms-from-detection-stations']:
+    if not params['main', 'detection-stations']:
         stations_list = params['main', 'stations']
 
     l_s_files = []
@@ -739,8 +752,8 @@ def generate_events(events, params):
 
                 waveforms_name = None
                 if b_waveforms_generation:
-                    if params['main', 'waveforms-from-detection-stations']:
-                        stations_list = None
+                    if params['main', 'detection-stations']:
+                        stations_list = detection_station_list(group, params)
                     waveforms_name = slice_event_waveforms(group, datetime, params, stations_list)
 
                 if waveforms_name:
