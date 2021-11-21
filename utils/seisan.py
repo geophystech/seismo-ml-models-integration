@@ -67,7 +67,7 @@ def get_archives(seisan, mulplt, archives, params):
     c_date = start
     paths = []
     while c_date < end:
-        paths.extend([archive_to_path(group, c_date, archives) for group in seisan_parsed])
+        paths.extend([archive_to_path(group, c_date, archives) for group in params['main', 'stations']])
         c_date += 24*60*60
 
     # Order channels and convert them into nested lists
@@ -206,10 +206,16 @@ def date_str(year, month, day, hour=0, minute=0, second=0., microsecond=None):
                       hour=hour, minute=minute, second=second, microsecond=microsecond)
 
 
-def archive_to_path(arch, date, archives_path):
+def archive_to_path(archive, date, archives_path):
     """
-    Converts archive entry (array of elements: [[station, channel, code, location, start_date, end_date],]
-    to dictionary of this format: {"N": "data/20160610AZTRO/20160610000000.AZ.TRO.HHN.mseed",}
+    Converts archive entry - dictionary of elements:
+       {station,
+       components,
+       network,
+       location,
+       start,
+       end]
+    to dictionary of file names: {"N": "data/20160610AZTRO/20160610000000.AZ.TRO.HHN.mseed",}
     Path example: /seismo/archive/IM/LNSK/LNSK.IM.00.EHE.2016.100
                   <archive_dir>/<location>/<station>/<station>.<location>.<code>.<channel>.<year>.<julday>
     """
@@ -229,37 +235,24 @@ def archive_to_path(arch, date, archives_path):
     d_result = {}
 
     # Metadata
-    chans = {}
-    station = None
-    loc_code = None
-    net_code = None
-    components = []
+    station = archive['station']
+    loc_code = archive['location']
+    net_code = archive['network']
+    components = archive['components']
     start = None
     end = None
 
-    for x in arch:
+    for component in components:
         # Find channel type
-        ch_type = x[1][-1]
-
-        chans[ch_type] = x[1]
-        components.append(x[1])
-
-        # Get metadata
-        if not station:
-            station = x[0]
-        if not loc_code:
-            loc_code = x[3]
-        if not net_code:
-            net_code = x[2]
-        if not start:
-            start = x[4]
-        if not end:
-            end = x[5]
+        channel_type = component[-1]
 
         # Path to archive
-        path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(x[2], x[0], x[0], x[2], x[3], x[1], year, julday)
+        path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(net_code, station,
+                                                                station, net_code,
+                                                                loc_code, component,
+                                                                year, julday)
 
-        d_result[ch_type] = path
+        d_result[channel_type] = path
 
     d_station = {
         'station': station,
@@ -647,7 +640,11 @@ def slice_waveforms_obspy(event, datetime, params, stations):
     :param params - parameters of the application
     :param stations - list of stations continious archives to cut waveforms from
     """
-    pass
+    # Get first event time
+    start_datetime = datetime - params['main', 'waveform-duration'] / 2
+    end_datetime = start_datetime + params['main', 'waveform-duration']
+
+    from os.path import isfile
 
 
 def slice_event_waveforms(event, datetime, params, stations):
