@@ -665,10 +665,6 @@ def slice_event_waveforms(event, datetime, params, stations):
         return slice_waveforms_obspy(event, datetime, params, stations)
 
 
-def get_stations_list(events, params):
-    pass
-
-
 def ask_yes_no(question, repeat=False):
     """
     Asks a question with answer YES/NO. Returns True if YES, False otherwise.
@@ -695,12 +691,13 @@ def detection_station_list(event, params):
     Returns station list with only stations with detections.
     """
     all_stations = params['main', 'stations']
+    unique_stations = set([x['station']['station'] for x in event])
+    unique_stations_list = []
+    for station in all_stations:
+        if station['station'] in unique_stations:
+            unique_stations_list.append(station)
 
-    print('\n\nALL STATIONS:')
-    for x in all_stations:
-        print(x)
-
-    return None
+    return unique_stations_list
 
 
 def generate_events(events, params):
