@@ -167,7 +167,7 @@ class ProgressBar:
             self.progress.pop(level, None)
 
     def set_progress(self, *progress, level = None,
-                     fraction = False, percent = False):
+                     fraction = False, percent = False, print=True):
         """
         Sets progress for a single level or for or existing levels as an absolute value, if progress consists of
         multiple values.
@@ -219,6 +219,9 @@ class ProgressBar:
             else:
                 value = min(value, max_progress)
                 self.progress[level] = value
+
+        if print:
+            self.print()
 
     def set_progress_kwargs(self, fraction = False, percent = False, **progress):
         """
