@@ -290,6 +290,13 @@ def stretch_left(line, length, character=' ', trim=True):
     return line
 
 
+def number_of_stations(group):
+    """
+    Culculates number of different stations in detection.
+    """
+    return len(set([x['station']['station'] for x in group]))
+
+
 def hypocenter_line(group, datetime, params, location):
     """
     Returns first line of Nordic file.
@@ -307,31 +314,31 @@ def hypocenter_line(group, datetime, params, location):
     line += location[0]
     line += ' '  # event id, whitespace means "presumed earthquake"
 
-    latitude = '0.0'
-    longitude = '0.0'
+    latitude = ''
+    longitude = ''
     line += stretch_left(latitude, 7)
     line += stretch_left(longitude, 8)
 
-    depth = '0.0'
+    depth = ''
     line += stretch_left(depth, 5)
 
-    line += 'F'  # depth indicator
+    line += ' '  # depth indicator (could be 'F')
     line += ' '  # location indicator
 
     agency = 'SAK'
-    line += agency[:3]  # agency
+    line += stretch_right(agency, 3)  # agency
 
-    number_of_stations = str(0)[:3]  # calculate!
-    line += stretch_left(number_of_stations, 3)
+    n_stations = str(number_of_stations(group))
+    line += stretch_left(n_stations, 3)
 
-    rms = '0.0'  # RMS of Time Residuals
+    rms = ''  # RMS of Time Residuals
     line += stretch_left(rms, 4)
 
-    magnitude = '0.0'
+    magnitude = ''
     line += stretch_left(magnitude, 4)
-    magnitude_type = 'L'  # L=ML, b=mb, B=mB, s=Ms, S=MS, W=MW, G=MbLg (not used by SEISAN), C=Mc
+    magnitude_type = ' '  # L=ML, b=mb, B=mB, s=Ms, S=MS, W=MW, G=MbLg (not used by SEISAN), C=Mc
     line += magnitude_type
-    line += agency[:3]
+    line += stretch_right('', 3)
 
     line += stretch_left('', 4)  # magnitude no. 2
     line += stretch_left('', 1)  # magnitude no. 2 type
@@ -373,7 +380,7 @@ def id_line(group, datetime, params, location):
     line += ' '
 
     line += stretch_left('OP:', 3)  # help text for operator
-    operator = 'mlsp'  # help text for operator
+    operator = 'MLS'  # help text for operator
     line += stretch_right(operator, 4)
     line += ' '
 
