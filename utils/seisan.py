@@ -629,7 +629,7 @@ def slice_waveforms_wavetool(event, datetime, params, stations):
     for x in new_files:
         file_name = x.split('/')[-1]
 
-        if start_datetime.strftime('%Y-%m-%d-%H%M-%S') in file_name:
+        if start_datetime.strftime('%Y-%m-%d-%H%M') in file_name:
             filtered_files.append(x)
 
     if len(filtered_files) == 1:
