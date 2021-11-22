@@ -421,7 +421,7 @@ def detection_line(detection, datetime, params):
     station = detection['station']['station']
     line += stretch_right(station, 5)
 
-    instrument = 'E'  # instrument Type S = SP, I = IP, L = LP, etc.
+    instrument = detection['station']['components'][0][0]  # instrument Type S = SP, I = IP, L = LP, etc.
     line += instrument
 
     component = 'Z'  # component Z, N, E ,T, R, 1, 2
