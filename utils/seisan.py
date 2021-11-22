@@ -67,7 +67,7 @@ def get_archives(seisan, mulplt, archives, params):
     c_date = start
     paths = []
     while c_date < end:
-        paths.extend([archive_to_path(group, c_date, archives) for group in seisan_parsed])
+        paths.extend([archive_to_path(group, c_date, archives) for group in params['main', 'stations']])
         c_date += 24*60*60
 
     # Order channels and convert them into nested lists
@@ -206,10 +206,16 @@ def date_str(year, month, day, hour=0, minute=0, second=0., microsecond=None):
                       hour=hour, minute=minute, second=second, microsecond=microsecond)
 
 
-def archive_to_path(arch, date, archives_path):
+def archive_to_path(archive, date, archives_path):
     """
-    Converts archive entry (array of elements: [[station, channel, code, location, start_date, end_date],]
-    to dictionary of this format: {"N": "data/20160610AZTRO/20160610000000.AZ.TRO.HHN.mseed",}
+    Converts archive entry - dictionary of elements:
+       {station,
+       components,
+       network,
+       location,
+       start,
+       end]
+    to dictionary of file names: {"N": "data/20160610AZTRO/20160610000000.AZ.TRO.HHN.mseed",}
     Path example: /seismo/archive/IM/LNSK/LNSK.IM.00.EHE.2016.100
                   <archive_dir>/<location>/<station>/<station>.<location>.<code>.<channel>.<year>.<julday>
     """
@@ -229,37 +235,24 @@ def archive_to_path(arch, date, archives_path):
     d_result = {}
 
     # Metadata
-    chans = {}
-    station = None
-    loc_code = None
-    net_code = None
-    components = []
+    station = archive['station']
+    loc_code = archive['location']
+    net_code = archive['network']
+    components = archive['components']
     start = None
     end = None
 
-    for x in arch:
+    for component in components:
         # Find channel type
-        ch_type = x[1][-1]
-
-        chans[ch_type] = x[1]
-        components.append(x[1])
-
-        # Get metadata
-        if not station:
-            station = x[0]
-        if not loc_code:
-            loc_code = x[3]
-        if not net_code:
-            net_code = x[2]
-        if not start:
-            start = x[4]
-        if not end:
-            end = x[5]
+        channel_type = component[-1]
 
         # Path to archive
-        path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(x[2], x[0], x[0], x[2], x[3], x[1], year, julday)
+        path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(net_code, station,
+                                                                station, net_code,
+                                                                loc_code, component,
+                                                                year, julday)
 
-        d_result[ch_type] = path
+        d_result[channel_type] = path
 
     d_station = {
         'station': station,
@@ -647,7 +640,11 @@ def slice_waveforms_obspy(event, datetime, params, stations):
     :param params - parameters of the application
     :param stations - list of stations continious archives to cut waveforms from
     """
-    pass
+    # Get first event time
+    start_datetime = datetime - params['main', 'waveform-duration'] / 2
+    end_datetime = start_datetime + params['main', 'waveform-duration']
+
+    from os.path import isfile
 
 
 def slice_event_waveforms(event, datetime, params, stations):
@@ -663,10 +660,6 @@ def slice_event_waveforms(event, datetime, params, stations):
         return slice_waveforms_wavetool(event, datetime, params, stations)
     else:
         return slice_waveforms_obspy(event, datetime, params, stations)
-
-
-def get_stations_list(events, params):
-    pass
 
 
 def ask_yes_no(question, repeat=False):
@@ -688,6 +681,20 @@ def ask_yes_no(question, repeat=False):
             return False
         if answer in ['n', 'no']:
             return False
+
+
+def detection_station_list(event, params):
+    """
+    Returns station list with only stations with detections.
+    """
+    all_stations = params['main', 'stations']
+    unique_stations = set([x['station']['station'] for x in event])
+    unique_stations_list = []
+    for station in all_stations:
+        if station['station'] in unique_stations:
+            unique_stations_list.append(station)
+
+    return unique_stations_list
 
 
 def generate_events(events, params):
@@ -718,7 +725,7 @@ def generate_events(events, params):
         b_waveforms_generation = ask_yes_no('Do you want to extract waveforms for potential events?')
 
     stations_list = None
-    if not params['main', 'waveforms-from-detection-stations']:
+    if not params['main', 'detection-stations']:
         stations_list = params['main', 'stations']
 
     l_s_files = []
@@ -739,8 +746,8 @@ def generate_events(events, params):
 
                 waveforms_name = None
                 if b_waveforms_generation:
-                    if params['main', 'waveforms-from-detection-stations']:
-                        stations_list = None
+                    if params['main', 'detection-stations']:
+                        stations_list = detection_station_list(group, params)
                     waveforms_name = slice_event_waveforms(group, datetime, params, stations_list)
 
                 if waveforms_name:

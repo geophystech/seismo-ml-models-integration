@@ -17,7 +17,7 @@ def get_unsupported_station_parameters_list():
         'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
         'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
-        'waveforms-from-detection-stations', 'waveform-duration', 'generate-s-files',
+        'detection-stations', 'waveform-duration', 'generate-s-files',
         # Environment
         'input', 'seisan', 'mulplt', 'archives'
     ]
@@ -50,7 +50,7 @@ def get_args_dictionaries(args):
             'detections-for-event': args.detections_for_event,
             'generate-waveforms': args.generate_waveforms,
             'wavetool-waveforms': args.wavetool_waveforms,
-            'waveforms-from-detection-stations': args.waveforms_from_detection_stations,
+            'detection-stations': args.detection_stations,
             'no-filter': args.no_filter,
             'no-detrend': args.no_detrend,
             'trace-normalization': args.trace_normalization,
@@ -266,7 +266,7 @@ def get_args_dictionaries(args):
         'no-detrend': [bool_converter],
         'trace-normalization': [bool_converter],
         'wavetool-waveforms': [bool_converter],
-        'waveforms-from-detection-stations': [bool_converter],
+        'detection-stations': [bool_converter],
         'plot-positives': [bool_converter],
         'plot-positives-original': [bool_converter],
         'print-scores': [bool_converter],
@@ -340,7 +340,7 @@ def archive_scan_params():
     parser.add_argument('--wavetool-waveforms', help='If set, use seisan wavetool programm to generate waveforms, '
                                                      'otherwise use custom ObsPy based module, not set by default',
                         action='store_true')
-    parser.add_argument('--waveforms-from-detection-stations', help='If set, slice waveforms only for stations'
+    parser.add_argument('--detection-stations', help='If set, slice waveforms only for stations'
                                                                     ' with detections, otherwise, slice from'
                                                                     ' every station scan was performed on.',
                         action='store_true')
