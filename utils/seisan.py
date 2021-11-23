@@ -46,6 +46,69 @@ def convert_station_group_to_dictionary(group):
     }
 
 
+def archive_to_path(archive, date, archives_path):
+    """
+    Converts archive entry - dictionary of elements:
+       {station,
+       components,
+       network,
+       location,
+       start,
+       end]
+    to dictionary of file names: {"N": "data/20160610AZTRO/20160610000000.AZ.TRO.HHN.mseed",}
+    Path example: /seismo/archive/IM/LNSK/LNSK.IM.00.EHE.2016.100
+                  <archive_dir>/<location>/<station>/<station>.<location>.<code>.<channel>.<year>.<julday>
+    """
+    # Fix path
+    if archives_path[-1] != '/':
+        archives_path += '/'
+
+    # Get julian day and year
+    julday = date.julday
+    year = date.year
+
+    if julday // 10 == 0:
+        julday = '00' + f'{julday}'
+    elif julday // 100 == 0:
+        julday = '0' + f'{julday}'
+
+    d_result = {}
+
+    # Metadata
+    station = archive['station']
+    loc_code = archive['location']
+    net_code = archive['network']
+    components = archive['components']
+    start = None
+    end = None
+
+    for component in components:
+        # Find channel type
+        channel_type = component[-1]
+
+        # Path to archive
+        path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(net_code, station,
+                                                                station, net_code,
+                                                                loc_code, component,
+                                                                year, julday)
+
+        d_result[channel_type] = path
+
+    d_station = {
+        'station': station,
+        'components': components,
+        'network': net_code,
+        'location': loc_code,
+        'start': start,
+        'end': end
+    }
+
+    return {
+        'paths': d_result,
+        'station': d_station
+    }
+
+
 def get_archives(seisan, mulplt, archives, params):
     """
     Returns lists of lists of archive file names to predict on. Also saves stations information to
@@ -204,69 +267,6 @@ def date_str(year, month, day, hour=0, minute=0, second=0., microsecond=None):
 
     return tmp.format(year=year, month=month, day=day,
                       hour=hour, minute=minute, second=second, microsecond=microsecond)
-
-
-def archive_to_path(archive, date, archives_path):
-    """
-    Converts archive entry - dictionary of elements:
-       {station,
-       components,
-       network,
-       location,
-       start,
-       end]
-    to dictionary of file names: {"N": "data/20160610AZTRO/20160610000000.AZ.TRO.HHN.mseed",}
-    Path example: /seismo/archive/IM/LNSK/LNSK.IM.00.EHE.2016.100
-                  <archive_dir>/<location>/<station>/<station>.<location>.<code>.<channel>.<year>.<julday>
-    """
-    # Fix path
-    if archives_path[-1] != '/':
-        archives_path += '/'
-
-    # Get julian day and year
-    julday = date.julday
-    year = date.year
-
-    if julday // 10 == 0:
-        julday = '00' + f'{julday}'
-    elif julday // 100 == 0:
-        julday = '0' + f'{julday}'
-
-    d_result = {}
-
-    # Metadata
-    station = archive['station']
-    loc_code = archive['location']
-    net_code = archive['network']
-    components = archive['components']
-    start = None
-    end = None
-
-    for component in components:
-        # Find channel type
-        channel_type = component[-1]
-
-        # Path to archive
-        path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(net_code, station,
-                                                                station, net_code,
-                                                                loc_code, component,
-                                                                year, julday)
-
-        d_result[channel_type] = path
-
-    d_station = {
-        'station': station,
-        'components': components,
-        'network': net_code,
-        'location': loc_code,
-        'start': start,
-        'end': end
-    }
-
-    return {
-        'paths': d_result,
-        'station': d_station
-    }
 
 
 def stretch_right(line, length, character=' ', trim=True):
@@ -663,6 +663,8 @@ def slice_waveforms_obspy(event, datetime, params, stations):
     end_datetime = start_datetime + params['main', 'waveform-duration']
 
     from os.path import isfile
+    for station in stations:
+        path = archive_to_path(station, start_datetime, params['main', 'archives'])
 
 
 def slice_event_waveforms(event, datetime, params, stations):
