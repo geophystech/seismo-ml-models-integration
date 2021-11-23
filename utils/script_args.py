@@ -17,7 +17,7 @@ def get_unsupported_station_parameters_list():
         'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
         'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
-        'detection-stations', 'waveform-duration', 'generate-s-files',
+        'detection-stations', 'waveform-duration', 'generate-s-files', 'silence-wavetool',
         # Environment
         'input', 'seisan', 'mulplt', 'archives'
     ]
@@ -56,6 +56,7 @@ def get_args_dictionaries(args):
             'trace-normalization': args.trace_normalization,
             'frequency': args.frequency,
             'plot-positives': args.plot_positives,
+            'silence-wavetool': args.silence_wavetool,
             'plot-positives-original': args.plot_positives_original,
             'print-scores': args.print_scores,
             'print-precision': args.print_precision,
@@ -268,6 +269,7 @@ def get_args_dictionaries(args):
         'wavetool-waveforms': [bool_converter],
         'detection-stations': [bool_converter],
         'plot-positives': [bool_converter],
+        'silence-wavetool': [bool_converter],
         'plot-positives-original': [bool_converter],
         'print-scores': [bool_converter],
         'print-precision': [int_converter],
@@ -315,6 +317,7 @@ def archive_scan_params():
                         type=float, default=600.)
     parser.add_argument('--no-filter', help='Do not filter input waveforms', action='store_true')
     parser.add_argument('--no-detrend', help='Do not detrend input waveforms', action='store_true')
+    parser.add_argument('--silence-wavetool', help='Do not output any wavetool messages', action='store_true')
     parser.add_argument('--plot-positives', help='Plot positives waveforms', action='store_true')
     parser.add_argument('--plot-positives-original', help='Plot positives original waveforms, before '
                                                           'pre-processing',

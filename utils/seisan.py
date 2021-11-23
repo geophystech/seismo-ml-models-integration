@@ -46,6 +46,69 @@ def convert_station_group_to_dictionary(group):
     }
 
 
+def archive_to_path(archive, date, archives_path):
+    """
+    Converts archive entry - dictionary of elements:
+       {station,
+       components,
+       network,
+       location,
+       start,
+       end]
+    to dictionary of file names: {"N": "data/20160610AZTRO/20160610000000.AZ.TRO.HHN.mseed",}
+    Path example: /seismo/archive/IM/LNSK/LNSK.IM.00.EHE.2016.100
+                  <archive_dir>/<location>/<station>/<station>.<location>.<code>.<channel>.<year>.<julday>
+    """
+    # Fix path
+    if archives_path[-1] != '/':
+        archives_path += '/'
+
+    # Get julian day and year
+    julday = date.julday
+    year = date.year
+
+    if julday // 10 == 0:
+        julday = '00' + f'{julday}'
+    elif julday // 100 == 0:
+        julday = '0' + f'{julday}'
+
+    d_result = {}
+
+    # Metadata
+    station = archive['station']
+    loc_code = archive['location']
+    net_code = archive['network']
+    components = archive['components']
+    start = None
+    end = None
+
+    for component in components:
+        # Find channel type
+        channel_type = component[-1]
+
+        # Path to archive
+        path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(net_code, station,
+                                                                station, net_code,
+                                                                loc_code, component,
+                                                                year, julday)
+
+        d_result[channel_type] = path
+
+    d_station = {
+        'station': station,
+        'components': components,
+        'network': net_code,
+        'location': loc_code,
+        'start': start,
+        'end': end
+    }
+
+    return {
+        'paths': d_result,
+        'station': d_station
+    }
+
+
 def get_archives(seisan, mulplt, archives, params):
     """
     Returns lists of lists of archive file names to predict on. Also saves stations information to
@@ -204,69 +267,6 @@ def date_str(year, month, day, hour=0, minute=0, second=0., microsecond=None):
 
     return tmp.format(year=year, month=month, day=day,
                       hour=hour, minute=minute, second=second, microsecond=microsecond)
-
-
-def archive_to_path(archive, date, archives_path):
-    """
-    Converts archive entry - dictionary of elements:
-       {station,
-       components,
-       network,
-       location,
-       start,
-       end]
-    to dictionary of file names: {"N": "data/20160610AZTRO/20160610000000.AZ.TRO.HHN.mseed",}
-    Path example: /seismo/archive/IM/LNSK/LNSK.IM.00.EHE.2016.100
-                  <archive_dir>/<location>/<station>/<station>.<location>.<code>.<channel>.<year>.<julday>
-    """
-    # Fix path
-    if archives_path[-1] != '/':
-        archives_path += '/'
-
-    # Get julian day and year
-    julday = date.julday
-    year = date.year
-
-    if julday // 10 == 0:
-        julday = '00' + f'{julday}'
-    elif julday // 100 == 0:
-        julday = '0' + f'{julday}'
-
-    d_result = {}
-
-    # Metadata
-    station = archive['station']
-    loc_code = archive['location']
-    net_code = archive['network']
-    components = archive['components']
-    start = None
-    end = None
-
-    for component in components:
-        # Find channel type
-        channel_type = component[-1]
-
-        # Path to archive
-        path = archives_path + '{}/{}/{}.{}.{}.{}.{}.{}'.format(net_code, station,
-                                                                station, net_code,
-                                                                loc_code, component,
-                                                                year, julday)
-
-        d_result[channel_type] = path
-
-    d_station = {
-        'station': station,
-        'components': components,
-        'network': net_code,
-        'location': loc_code,
-        'start': start,
-        'end': end
-    }
-
-    return {
-        'paths': d_result,
-        'station': d_station
-    }
 
 
 def stretch_right(line, length, character=' ', trim=True):
@@ -602,39 +602,50 @@ def slice_waveforms_wavetool(event, datetime, params, stations):
     start_datetime = datetime - params['main', 'waveform-duration']/2
     s_start = start_datetime.strftime('%Y%m%d%H%M%S')
 
-    # Get all files before calling wavetool
-    from os import listdir
-    from os.path import isfile, join
-    files_before = [f for f in listdir('.') if isfile(join('.', f))]
+    import os
+    wavetool_command = f'wavetool -format MSEED -start {s_start} -arc ' \
+                       f'-duration {params["main", "waveform-duration"]}' \
+                       f' -wav_out_file SEISAN -cbase {cbase}'
 
-    os.system(f'wavetool -format MSEED -start {s_start} -arc -duration {params["main", "waveform-duration"]}'
-              f' -wav_out_file SEISAN -cbase {cbase}')
-    os.remove(cbase)
+    if not params['main', 'silence-wavetool']:
+        print(f'\n{wavetool_command}')
 
-    # Find new file
-    files_after = [f for f in listdir('.') if isfile(join('.', f))]
-    new_files = []
+    wavetool_pipe = os.popen(wavetool_command)
 
-    for file_a in files_after:
-        if file_a not in files_before:
-            new_files.append(file_a)
+    # Parse wavetool output
+    import re
+    wavetool_output = wavetool_pipe.read()
+    if not params['main', 'silence-wavetool']:
 
-    if len(new_files) == 0:
-        return None
-    if len(new_files) == 1:
-        return new_files[0]
+        matches = re.findall(r'Error: .*',
+                             wavetool_output)
+        for x in matches:
+            print(x)
 
-    # Try to filter out Seisan-like file name
-    filtered_files = []
-    for x in new_files:
-        file_name = x.split('/')[-1]
+        matches = re.findall(r'(?<=Number of archive channels defined).*',
+                             wavetool_output)
+        if len(matches):
+            print('Number of archive channels defined: ', matches[0].strip())
 
-        if start_datetime.strftime('%Y-%m-%d-%H%M') in file_name:
-            filtered_files.append(x)
+        matches = re.findall(r'(?<=Total duration:).*',
+                             wavetool_output)
+        if len(matches):
+            print('Total duration:', matches[0].strip())
 
-    if len(filtered_files) == 1:
-        return filtered_files[0]
-    return None
+    waveform_file = None
+    matches = re.findall(r'(?<=Output waveform file name is).*\d{4}-\d{2}-\d{2}-\d{4}-\d{2}\w\..*',
+                         wavetool_output)
+    if len(matches):
+        waveform_file = matches[0].strip('\x00 ')
+
+    files_to_remove = [cbase, 'extract.mes', 'respfile_list.out']
+    for x in files_to_remove:
+        try:
+            os.remove(x)
+        except Exception:
+            pass
+
+    return waveform_file
 
 
 def slice_waveforms_obspy(event, datetime, params, stations):
@@ -652,6 +663,8 @@ def slice_waveforms_obspy(event, datetime, params, stations):
     end_datetime = start_datetime + params['main', 'waveform-duration']
 
     from os.path import isfile
+    for station in stations:
+        path = archive_to_path(station, start_datetime, params['main', 'archives'])
 
 
 def slice_event_waveforms(event, datetime, params, stations):
