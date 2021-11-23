@@ -602,39 +602,50 @@ def slice_waveforms_wavetool(event, datetime, params, stations):
     start_datetime = datetime - params['main', 'waveform-duration']/2
     s_start = start_datetime.strftime('%Y%m%d%H%M%S')
 
-    # Get all files before calling wavetool
-    from os import listdir
-    from os.path import isfile, join
-    files_before = [f for f in listdir('.') if isfile(join('.', f))]
+    import os
+    wavetool_command = f'wavetool -format MSEED -start {s_start} -arc ' \
+                       f'-duration {params["main", "waveform-duration"]}' \
+                       f' -wav_out_file SEISAN -cbase {cbase}'
 
-    os.system(f'wavetool -format MSEED -start {s_start} -arc -duration {params["main", "waveform-duration"]}'
-              f' -wav_out_file SEISAN -cbase {cbase}')
-    os.remove(cbase)
+    if not params['main', 'silence-wavetool']:
+        print(f'\n{wavetool_command}')
 
-    # Find new file
-    files_after = [f for f in listdir('.') if isfile(join('.', f))]
-    new_files = []
+    wavetool_pipe = os.popen(wavetool_command)
 
-    for file_a in files_after:
-        if file_a not in files_before:
-            new_files.append(file_a)
+    # Parse wavetool output
+    import re
+    wavetool_output = wavetool_pipe.read()
+    if not params['main', 'silence-wavetool']:
 
-    if len(new_files) == 0:
-        return None
-    if len(new_files) == 1:
-        return new_files[0]
+        matches = re.findall(r'Error: .*',
+                             wavetool_output)
+        for x in matches:
+            print(x)
 
-    # Try to filter out Seisan-like file name
-    filtered_files = []
-    for x in new_files:
-        file_name = x.split('/')[-1]
+        matches = re.findall(r'(?<=Number of archive channels defined).*',
+                             wavetool_output)
+        if len(matches):
+            print('Number of archive channels defined: ', matches[0].strip())
 
-        if start_datetime.strftime('%Y-%m-%d-%H%M') in file_name:
-            filtered_files.append(x)
+        matches = re.findall(r'(?<=Total duration:).*',
+                             wavetool_output)
+        if len(matches):
+            print('Total duration:', matches[0].strip())
 
-    if len(filtered_files) == 1:
-        return filtered_files[0]
-    return None
+    waveform_file = None
+    matches = re.findall(r'(?<=Output waveform file name is).*\d{4}-\d{2}-\d{2}-\d{4}-\d{2}\w\..*',
+                         wavetool_output)
+    if len(matches):
+        waveform_file = matches[0].strip('\x00 ')
+
+    files_to_remove = [cbase, 'extract.mes', 'respfile_list.out']
+    for x in files_to_remove:
+        try:
+            os.remove(x)
+        except Exception:
+            pass
+
+    return waveform_file
 
 
 def slice_waveforms_obspy(event, datetime, params, stations):
