@@ -19,7 +19,7 @@ def get_unsupported_station_parameters_list():
         'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
         'detection-stations', 'waveform-duration', 'generate-s-files', 'silence-wavetool',
         # Environment
-        'input', 'seisan', 'mulplt', 'archives'
+        'input', 'seisan', 'mulplt-def', 'archives'
     ]
 
 
@@ -68,7 +68,7 @@ def get_args_dictionaries(args):
             'input': args.input,
             'out': args.out,
             'seisan': args.seisan,
-            'mulplt': args.mulplt,
+            'mulplt-def': args.mulplt_def,
             'archives': args.archives,
             'channel-order': args.channel_order,
         },
@@ -288,7 +288,8 @@ def archive_scan_params():
     # Command line arguments parsing
     parser = argparse.ArgumentParser()
     parser.add_argument('--seisan', help='Path to SEISAN.DEF', default='')
-    parser.add_argument('--mulplt', help='Path to MULPLT.DEF', default='')
+    parser.add_argument('--mulplt-def', help='Path to MULPLT.DEF or local file with stations list.',
+                        default='')
     parser.add_argument('--archives', help='Path to archives directory', default='')
     parser.add_argument('--input', help='Path to file with archive names', default='')
     parser.add_argument('--config', '-c', help='Path to config file', default='')
@@ -409,13 +410,13 @@ def archive_scan_params():
         if not params['main', 'seisan']:
             raise AttributeError('Either "input" or "seisan" attribute should be set with correct values '
                                  '(through config file or command line arguments)')
-        if not params['main', 'mulplt']:
+        if not params['main', 'mulplt-def']:
             for x in default_mulplt:
                 if not isfile(x):
                     continue
-                params['main', 'mulplt'] = x
+                params['main', 'mulplt-def'] = x
                 break
-        if not params['main', 'mulplt']:
+        if not params['main', 'mulplt-def']:
             raise AttributeError('Either "input" or "mulplt" attribute should be set with correct values '
                                  '(through config file or command line arguments)')
         if not params['main', 'archives']:

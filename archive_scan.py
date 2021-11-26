@@ -49,7 +49,7 @@ if __name__ == '__main__':
         archives = stools.parse_archive_csv(params['main', 'input'])  # parse archive names
     else:
         archives = get_archives(seisan=params['main', 'seisan'],
-                                mulplt=params['main', 'mulplt'],
+                                mulplt=params['main', 'mulplt-def'],
                                 archives=params['main', 'archives'],
                                 params=params)
 
