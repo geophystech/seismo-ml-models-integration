@@ -45,6 +45,11 @@ if __name__ == '__main__':
 
     params = archive_scan_params()  # parse command line arguments
 
+    import sys
+    print('--batch-size: ', params['main', 'batch-size'])
+    print('--cnn: ', params['main', 'cnn'])
+    sys.exit(0)
+
     if params['main', 'input']:
         archives = stools.parse_archive_csv(params['main', 'input'])  # parse archive names
     else:

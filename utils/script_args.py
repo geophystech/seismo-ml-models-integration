@@ -282,6 +282,31 @@ def get_args_dictionaries(args):
 
     return d_args, d_applied_functions
 
+def parse_unix(params):
+    """
+    Parses environment variables in UNIX systems and passes them to params, if not set earlier
+    (through config file or command line arguments).
+    """
+    import os
+
+    seisan_top = os.environ.get('SEISAN_TOP')
+    if not seisan_top:
+        return
+
+    # Get path to SEISAN.DEF
+    # Get path to MULPLT.DEF
+    # Get path to station archives
+
+
+
+
+def parse_env(params):
+    """
+    Parses environment variables and passes them to params, if not set earlier (through config file or
+    command line arguments).
+    """
+    parse_unix(params)
+
 
 def archive_scan_params():
 
@@ -393,6 +418,9 @@ def archive_scan_params():
     if not params:
         print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
         params = Params(path=None, config=d_args, default_dictionary='config')
+
+    # Parse environment variables
+    parse_env(params)
 
     # Default env values
     default_seisan = ['data/SEISAN.DEF', '/seismo/seisan/DAT/SEISAN.DEF', '/opt/seisan/DAT/SEISAN.DEF']

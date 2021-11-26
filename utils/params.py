@@ -93,7 +93,8 @@ class ParamsDictionary(dict):
 
 def merge_dictionaries(to_dict, from_dict, depth=3, replace=True):
     """
-    Merges both dictionaries, overwriting data in to_dict with from_dict data with the same keys.
+    Merges both dictionaries, if replace is True, overwriting data in to_dict with from_dict data
+    with the same keys.
     Note: Although function does return merged data, actions are inplace and rewrite to_dict.
     :return: merged dictionaries, returns to_dict reference after the merge.
     """
@@ -145,6 +146,8 @@ class Params:
         self.other = ParamsDictionary(other)
         self.default_dictionary = default_dictionary
 
+        print('is key cnn exists? ', self.key_exists(key=('main', 'cnn')))
+
         if path:
             self.read_config(path, mode)
 
@@ -176,11 +179,11 @@ class Params:
         data = configparse_to_dict(config)
 
         if mode == 'config':
-            merge_dictionaries(self.config, data)
+            self.config = merge_dictionaries(data, self.config)
         elif mode == 'data':
-            merge_dictionaries(self.data, data)
+            self.data = merge_dictionaries(data, self.data)
         elif mode == 'other':
-            merge_dictionaries(self.other, data)
+            self.other = merge_dictionaries(data, self.other)
 
     def read_config(self, path, mode):
         from os.path import splitext
@@ -259,7 +262,6 @@ class Params:
     def exact_getitem(self, key):
         """
         Returns an item from a default dictionary, returns None, if value not found or set to None.
-        If first key is not found in first level, searches "main" dictionary.
         If nothing is found in first level dictionary, DOES NOT perform a search in "main" dictionary.
         More of what you would expect from normal __getitem__ behaviour.
         """
@@ -272,9 +274,7 @@ class Params:
         if type(key) is str:
             key = tuple([key])
 
-        if key[0] in params_dict:
-            return params_dict.__getitem__(key)
-        return params_dict.__getitem__(('main', *key[1:]))
+        return params_dict.__getitem__(key)
 
     def __setitem__(self, key, value):
         """
@@ -340,6 +340,23 @@ class Params:
         if not main:
             return [x for x in params_dict if x != 'main']
         return [x for x in params_dict]
+
+    def key_exists(self, key):
+        """
+        Checks if provided key exists in default dictionary.
+        :param key: key
+        :return: bool
+        """
+        params_dict = self._default_dictionary()
+
+        if not params_dict:
+            raise KeyError(f'No default dictionary specified for params to access key: {key}')
+
+        # Convert key to iterable if str
+        if type(key) is str:
+            key = tuple([key])
+
+        return params_dict.key_exists(key)
 
 
 def applied_function(**kwargs):
