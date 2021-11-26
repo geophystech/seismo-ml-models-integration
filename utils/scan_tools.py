@@ -36,7 +36,7 @@ def pre_process_stream(stream, params, station):
         stream.interpolate(frequency)
 
 
-def combined_traces(streams):
+def combined_traces(streams, params):
     """
     Gets a list of combined traces from streams, each trace has the same start and end time.
     :param streams: List of streams to
@@ -59,9 +59,6 @@ def combined_traces(streams):
     for stack in time_span_stacks:
         stack.sort(key=itemgetter(0), reverse=True)
 
-    print('STREAMS:')
-    for x in streams:
-        print(x)
 
     print('\n\n')
     print('STREAM TRACES STACKS:')
@@ -72,7 +69,7 @@ def combined_traces(streams):
             end = y[1].strftime('%H:%M:%S')
             print(f'({start}..{end}) ', end='')
         print('\n')
-    print('\n\n')
+    print('\n')
 
     # Process time spans
     result_time_spans = []
@@ -110,13 +107,49 @@ def combined_traces(streams):
                 spans_remaining = False
                 break
 
+    traces = []
+    if not params.data['invalid_combined_traces_groups']:
+        params.data['invalid_combined_traces_groups'] = 0
+    for x in result_time_spans:
+        stream_group = [stream.slice(x[0], x[1]) for stream in streams]
+        group_valid = True
+        for stream in stream_group:
+            if len(stream_group) != 1:
+                group_valid = False
+        if not group_valid:
+            params.data['invalid_combined_traces_groups'] += 1
+            continue
+        traces.append([stream[0] for stream in stream_group])
+
+
     print(f'RESULT TIME SPANS ({len(result_time_spans)}): ')
     for x in result_time_spans:
         start = x[0].strftime('%H:%M:%S')
         end = x[1].strftime('%H:%M:%S')
         print(f'({start}..{end}) ', end='')
+    print('\n')
+
+    print(f'RESULT TRACES ({len(result_time_spans)}): ')
+    for x in result_time_spans:
+        stream_group = [stream.slice(x[0], x[1]) for stream in streams]
+
+        print('[', end='')
+        for stream in stream_group:
+            start = stream[0].stats.starttime.strftime('%H:%M:%S')
+            end = stream[-1].stats.endtime.strftime('%H:%M:%S')
+            l = len(stream)
+            print(f'({start}..{end} => {l}) ', end='')
+        print(']')
+    print('\n')
+
+    print ('INVALID: ', params.data['invalid_combined_traces_groups'])
+
+
     print('--- ' * 42)
-    print('\n\n')
+    print('\n\n\n')
+
+
+    return traces
 
 
 def trim_streams(streams, start=None, end=None):
