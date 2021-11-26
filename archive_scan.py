@@ -126,7 +126,6 @@ if __name__ == '__main__':
         else:
             archives.append(arch)
 
-
     if params['main', 'print-files']:
         print('Scan archives:')
         for n_archive, d_archives in enumerate(archives):
@@ -173,46 +172,25 @@ if __name__ == '__main__':
             original_streams = stools.trim_streams(original_streams, params['main', 'start'], params['main', 'end'])
 
         # Check if stream traces number is equal
-        lengths = [len(st) for st in streams]
-        if len(np.unique(np.array(lengths))) != 1:
-            continue
+        traces_groups = stools.combined_traces(streams, params)
 
-        n_traces = len(streams[0])
+        if params.data['invalid_combined_traces_groups']:
+            print(f'\nWARNING: invalid combined traces groups detected: '
+                  f'{params.data["invalid_combined_traces_groups"]}', file=sys.stderr)
 
         # Update progress bar params
-        progress_bar.change_max('traces', n_traces)
+        progress_bar.change_max('traces', len(traces_groups))
         progress_bar.set_progress(0, level='traces')
-        # Progress bar preparations
-        total_batch_count = 0
-        for i in range(n_traces):
-
-            progress_bar.set_progress(i, level='traces')
-            traces = [st[i] for st in streams]
-
-            l_trace = traces[0].data.shape[0]
-            last_batch = l_trace % params['main', 'trace-size']
-            batch_count = l_trace // params['main', 'trace-size'] + 1 \
-                if last_batch \
-                else l_trace // params['main', 'trace-size']
-
-            total_batch_count += batch_count
-
-        last_saved_station = None
 
         # Predict
-        for i in range(n_traces):
+        last_saved_station = None
+        for i, traces in enumerate(traces_groups):
 
-            try:
-                traces = stools.get_traces(streams, i)
-            except ValueError:
-                continue
+            progress_bar.set_progress(i, level='traces')
 
             original_traces = None
             if original_streams:
-                try:
-                    original_traces = stools.get_traces(original_streams, i)
-                except ValueError:
-                    continue
+                original_traces = traces
                 if traces[0].data.shape[0] != original_traces[0].data.shape[0]:
                     continue
                     # raise AttributeError('WARNING: Traces and original_traces have different sizes, '
