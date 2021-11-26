@@ -14,7 +14,7 @@ python archive_scan.py --start YYYYMMDD --end YYYYMMDD
 ### MULPLT.DEF
 List of stations to scan is read from *MULPLT.DEF* file. One such file is located in 
  `data/MULPLT.DEF` and used as default option by the *archive_scan.py*.
-To specify path to specific use `--mulplt PATH` option.
+To specify path to specific use `--mulplt-def PATH` option.
 
 Only lines read from the *MULPLT.DEF* file are entries like this:
 
