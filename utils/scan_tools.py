@@ -142,23 +142,6 @@ def trim_streams(streams, start=None, end=None):
     return cut_streams
 
 
-def get_traces(streams, i):
-    """
-    Returns traces with specified index
-    :return: list of traces
-    """
-    traces = [st[i] for st in streams]  # get traces
-
-    # Trim traces to the same length
-    start_time = max([trace.stats.starttime for trace in traces])
-    end_time = min([trace.stats.endtime for trace in traces])
-
-    for j in range(len(traces)):
-        traces[j] = traces[j].slice(start_time, end_time)
-
-    return traces
-
-
 def progress_bar(progress, characters_count=20,
                  erase_line=True,
                  empty_bar='.', filled_bar='=', filled_edge='>',
