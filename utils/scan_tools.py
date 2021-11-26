@@ -59,18 +59,6 @@ def combined_traces(streams, params):
     for stack in time_span_stacks:
         stack.sort(key=itemgetter(0), reverse=True)
 
-
-    print('\n\n')
-    print('STREAM TRACES STACKS:')
-    for x in time_span_stacks:
-        print(f'Group ({len(x)}): ', end='')
-        for y in x:
-            start = y[0].strftime('%H:%M:%S')
-            end = y[1].strftime('%H:%M:%S')
-            print(f'({start}..{end}) ', end='')
-        print('\n')
-    print('\n')
-
     # Process time spans
     result_time_spans = []
     spans_remaining = True
@@ -108,46 +96,17 @@ def combined_traces(streams, params):
                 break
 
     traces = []
-    if not params.data['invalid_combined_traces_groups']:
-        params.data['invalid_combined_traces_groups'] = 0
+    params.data['invalid_combined_traces_groups'] = 0
     for x in result_time_spans:
         stream_group = [stream.slice(x[0], x[1]) for stream in streams]
         group_valid = True
         for stream in stream_group:
-            if len(stream_group) != 1:
+            if len(stream) != 1:
                 group_valid = False
         if not group_valid:
             params.data['invalid_combined_traces_groups'] += 1
             continue
         traces.append([stream[0] for stream in stream_group])
-
-
-    print(f'RESULT TIME SPANS ({len(result_time_spans)}): ')
-    for x in result_time_spans:
-        start = x[0].strftime('%H:%M:%S')
-        end = x[1].strftime('%H:%M:%S')
-        print(f'({start}..{end}) ', end='')
-    print('\n')
-
-    print(f'RESULT TRACES ({len(result_time_spans)}): ')
-    for x in result_time_spans:
-        stream_group = [stream.slice(x[0], x[1]) for stream in streams]
-
-        print('[', end='')
-        for stream in stream_group:
-            start = stream[0].stats.starttime.strftime('%H:%M:%S')
-            end = stream[-1].stats.endtime.strftime('%H:%M:%S')
-            l = len(stream)
-            print(f'({start}..{end} => {l}) ', end='')
-        print(']')
-    print('\n')
-
-    print ('INVALID: ', params.data['invalid_combined_traces_groups'])
-
-
-    print('--- ' * 42)
-    print('\n\n\n')
-
 
     return traces
 
