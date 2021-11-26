@@ -1,8 +1,9 @@
-import obspy.core as oc
-from scipy.signal import find_peaks
+import os
+from operator import itemgetter
 import numpy as np
 import matplotlib.pyplot as plt
-import os
+from scipy.signal import find_peaks
+import obspy.core as oc
 from time import time
 from obspy.core.utcdatetime import UTCDateTime
 from collections import deque
@@ -33,6 +34,89 @@ def pre_process_stream(stream, params, station):
 
     if dt != required_dt:
         stream.interpolate(frequency)
+
+
+def combined_traces(streams):
+    """
+    Gets a list of combined traces from streams, each trace has the same start and end time.
+    :param streams: List of streams to
+    :return: list lists of obspy.Trace objects:
+                [
+                  [trace11, trace12, trace13],
+                  [trace21, trace22, trace23],
+                  ...
+                ]
+              each row is a group of traces, while each column is a channel (original stream).
+              Order of streams preserved.
+    """
+    # Gather time spans for every existing trace in a stack
+    time_span_stacks = [[] for _ in streams]
+    for i, stream in enumerate(streams):
+        j = len(stream) - 1
+        while j >= 0:
+            time_span_stacks[i].append([stream[j].stats.starttime, stream[j].stats.endtime])
+            j -= 1
+    for stack in time_span_stacks:
+        stack.sort(key=itemgetter(0), reverse=True)
+
+    print('STREAMS:')
+    for x in streams:
+        print(x)
+
+    print('\n\n')
+    print('STREAM TRACES STACKS:')
+    for x in time_span_stacks:
+        print(f'Group ({len(x)}): ', end='')
+        for y in x:
+            start = y[0].strftime('%H:%M:%S')
+            end = y[1].strftime('%H:%M:%S')
+            print(f'({start}..{end}) ', end='')
+        print('\n')
+    print('\n\n')
+
+    # Process time spans
+    result_time_spans = []
+    spans_remaining = True
+    while spans_remaining:
+
+        max_start = max([stack[-1][0] for stack in time_span_stacks])
+
+        # Check for spans outside avaliable time
+        spans_removed = False
+        for stack in time_span_stacks:
+            if stack[-1][1] < max_start:
+                stack.pop()
+                spans_removed = True
+
+        if not spans_removed:
+            # Sync spans start
+            for stack in time_span_stacks:
+                stack[-1][0] = max_start
+
+            # Sync by end time
+            min_end = min([stack[-1][1] for stack in time_span_stacks])
+
+            for stack in time_span_stacks:
+                if stack[-1][1] > min_end:
+                    stack[-1][0] = min_end
+                else:
+                    stack.pop()
+
+            # Create a time span if it is longer than set in variable
+            result_time_spans.append((max_start, min_end))
+
+        for stack in time_span_stacks:
+            if not len(stack):
+                spans_remaining = False
+                break
+
+    print(f'RESULT TIME SPANS ({len(result_time_spans)}): ')
+    for x in result_time_spans:
+        start = x[0].strftime('%H:%M:%S')
+        end = x[1].strftime('%H:%M:%S')
+        print(f'({start}..{end}) ', end='')
+    print('--- ' * 42)
+    print('\n\n')
 
 
 def trim_streams(streams, start=None, end=None):
