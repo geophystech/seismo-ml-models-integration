@@ -315,8 +315,12 @@ def parse_unix(params):
 
     parse_seisan_def_env(seisan_path, params)
 
-    params['main', 'seisan'] = seisan_path
-    params['main', 'mulplt'] = mulplt_path
+    if not params.key_exists(('main', 'seisan')):
+        print('seisan!')
+        params['main', 'seisan'] = seisan_path
+    if not params.key_exists(('main', 'mulplt')):
+        print('mulplt!')
+        params['main', 'mulplt'] = mulplt_path
 
 
 def parse_env(params):
