@@ -438,9 +438,6 @@ def archive_scan_params():
         print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
         params = Params(path=None, config=d_args, default_dictionary='config')
 
-    # Parse environment variables
-    parse_env(params)
-
     # Default env values
     default_seisan = ['data/SEISAN.DEF', '/seismo/seisan/DAT/SEISAN.DEF', '/opt/seisan/DAT/SEISAN.DEF']
     default_mulplt = ['data/MULPLT.DEF', '/seismo/seisan/DAT/MULPLT.DEF', '/opt/seisan/DAT/MULPLT.DEF']
@@ -453,31 +450,37 @@ def archive_scan_params():
                     continue
                 params['main', 'seisan'] = x
                 break
-        if not params['main', 'seisan']:
-            raise AttributeError('Either "input" or "seisan" attribute should be set with correct values '
-                                 '(through config file or command line arguments)')
         if not params['main', 'mulplt']:
             for x in default_mulplt:
                 if not isfile(x):
                     continue
                 params['main', 'mulplt'] = x
                 break
-        if not params['main', 'mulplt']:
-            raise AttributeError('Either "input" or "mulplt" attribute should be set with correct values '
-                                 '(through config file or command line arguments)')
         if not params['main', 'archives']:
             for x in default_archives:
                 if not isdir(x):
                     continue
                 params['main', 'archives'] = x
                 break
-        if not params['main', 'archives']:
-            raise AttributeError('Either "input" or "archives" attribute should be set with correct values '
-                                 '(through config file or command line arguments)')
+
+    # Parse environment variables
+    parse_env(params)
 
     for key, functions in d_applied_functions.items():
         for f in functions:
             params.apply_function(key, f)
+
+    # Check env parameters validity
+    if not params['main', 'input']:
+        if not params['main', 'seisan']:
+            raise AttributeError('Either "input" or "seisan" attribute should be set with correct values '
+                                 '(through config file or command line arguments)')
+        if not params['main', 'mulplt']:
+            raise AttributeError('Either "input" or "mulplt" attribute should be set with correct values '
+                                 '(through config file or command line arguments)')
+        if not params['main', 'archives']:
+            raise AttributeError('Either "input" or "archives" attribute should be set with correct values '
+                                 '(through config file or command line arguments)')
 
     l_not_supported = get_unsupported_station_parameters_list()
     for x in l_not_supported:
