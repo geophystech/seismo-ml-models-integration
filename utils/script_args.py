@@ -282,6 +282,23 @@ def get_args_dictionaries(args):
 
     return d_args, d_applied_functions
 
+
+def parse_seisan_def_env(path, params):
+    """
+    Reads SEISAN.DEF and parses main environment parameters (does not parse stations).
+    """
+    pattern = 'ARC_ARCHIVE'
+    l_pattern = len(pattern)
+    with open(path, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            if line[:l_pattern] == pattern:
+                archive_path = line.split()
+                if len(archive_path) == 2:
+                    params['main', 'archives'] = archive_path[1].strip()
+                break
+
+
 def parse_unix(params):
     """
     Parses environment variables in UNIX systems and passes them to params, if not set earlier
@@ -293,11 +310,13 @@ def parse_unix(params):
     if not seisan_top:
         return
 
-    # Get path to SEISAN.DEF
-    # Get path to MULPLT.DEF
-    # Get path to station archives
+    seisan_path = os.path.join(seisan_top, 'DAT/SEISAN.DEF')
+    mulplt_path = os.path.join(seisan_top, 'DAT/MULPLT.DEF')
 
+    parse_seisan_def_env(seisan_path, params)
 
+    params['main', 'seisan'] = seisan_path
+    params['main', 'mulplt'] = mulplt_path
 
 
 def parse_env(params):
