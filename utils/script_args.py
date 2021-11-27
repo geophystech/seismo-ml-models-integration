@@ -439,9 +439,9 @@ def archive_scan_params():
         params = Params(path=None, config=d_args, default_dictionary='config')
 
     # Default env values
-    default_seisan = ['data/SEISAN.DEF', '/seismo/seisan/DAT/SEISAN.DEF', '/opt/seisan/DAT/SEISAN.DEF']
-    default_mulplt = ['data/MULPLT.DEF', '/seismo/seisan/DAT/MULPLT.DEF', '/opt/seisan/DAT/MULPLT.DEF']
-    default_archives = ['data/archives/', '/seismo/archives/', '/opt/archive/']
+    default_seisan = ['data/SEISAN.DEF']
+    default_mulplt = ['data/MULPLT.DEF']
+    default_archives = ['data/archives/']
 
     if not params['main', 'input']:
         if not params['main', 'seisan']:
