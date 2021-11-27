@@ -30,7 +30,10 @@ class ParamsDictionary(dict):
         if type(key) is tuple:
             item = self
             for x in key:
-                item = item[x]
+                if type(item) is ParamsDictionary:
+                    item = item._exception_getitem(x)
+                else:
+                    item = item[x]
             return item
         else:
             return self._dict[key]
@@ -145,8 +148,6 @@ class Params:
         self.data = ParamsDictionary(data)
         self.other = ParamsDictionary(other)
         self.default_dictionary = default_dictionary
-
-        print('is key cnn exists? ', self.key_exists(key=('main', 'cnn')))
 
         if path:
             self.read_config(path, mode)
