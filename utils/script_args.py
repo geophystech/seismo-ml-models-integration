@@ -327,6 +327,13 @@ def parse_env(params):
     parse_unix(params)
 
 
+def default_params(params):
+    """
+    Applies default values to not set parameters.
+    """
+    pass
+
+
 def archive_scan_params():
 
     # Command line arguments parsing
@@ -465,6 +472,8 @@ def archive_scan_params():
 
     # Parse environment variables
     parse_env(params)
+    # Apply default values if not set
+    default_params(params)
 
     for key, functions in d_applied_functions.items():
         for f in functions:
