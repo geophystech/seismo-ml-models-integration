@@ -154,56 +154,74 @@ def defaults():
     }
     return defs
 
+
+def args_to_dictionary(args):
+    """
+    Converts args to dictionary (only for positive args: not False, None or empty strings).
+    Also this functions dictionary d_args_rules presents a set of rules, used to convert command line
+    arguments into application/config parameters.
+    """
+    d_args_rules = {
+        'main': {
+            'favor': 'favor',
+            'cnn': 'cnn',
+            'gpd': 'gpd',
+            'model': 'model',
+            'weights': 'weights',
+            'features-number': 'features_number',
+            'waveform-duration': 'waveform_duration',
+            'start': 'start',
+            'end': 'end',
+            'threshold': 'threshold',
+            'batch-size': 'batch_size',
+            'trace-size': 'trace_size',
+            'shift': 'shift',
+            'generate-s-files': 'generate_s_files',
+            'detections-for-event': 'detections_for_event',
+            'generate-waveforms': 'generate_waveforms',
+            'wavetool-waveforms': 'wavetool_waveforms',
+            'detection-stations': 'detection_stations',
+            'no-filter': 'no_filter',
+            'no-detrend': 'no_detrend',
+            'trace-normalization': 'trace_normalization',
+            'frequency': 'frequency',
+            'plot-positives': 'plot_positives',
+            'silence-wavetool': 'silence_wavetool',
+            'plot-positives-original': 'plot_positives_original',
+            'print-scores': 'print_scores',
+            'print-precision': 'print_precision',
+            'combine-events-range': 'combine_events_range',
+            'time': 'time',
+            'cpu': 'cpu',
+            'print-files': 'print_files',
+            'config': 'config',
+            'input': 'input',
+            'out': 'out',
+            'seisan': 'seisan',
+            'mulplt': 'mulplt',
+            'archives': 'archives',
+            'channel-order': 'channel_order',
+        },
+    }
+
+    d_args = {}
+    for level_name, level in d_args_rules.items():
+        d_args[level_name] = {}
+        for name, arg in level.items():
+            attr = getattr(args, arg)
+            if attr:
+                d_args[level_name][name] = attr
+
+    return d_args
+
+
 def get_args_dictionaries(args):
     """
     Returns converted to a dictionary arguments and a dictionary of arguments type
     :return: (dict, dict)
     """
     # Convert args namespace to a final nested dictionary-like structure of config file
-    d_args = {
-        'main': {
-            'favor': args.favor,
-            'cnn': args.cnn,
-            'gpd': args.gpd,
-            'model': args.model,
-            'model-name': None,
-            'weights': args.weights,
-            'loader-argv': args.loader_argv,
-            'features-number': args.features_number,
-            'waveform-duration': args.waveform_duration,
-            'start': args.start,
-            'end': args.end,
-            'threshold': args.threshold,
-            'batch-size': args.batch_size,
-            'trace-size': args.trace_size,
-            'shift': args.shift,
-            'generate-s-files': args.generate_s_files,
-            'detections-for-event': args.detections_for_event,
-            'generate-waveforms': args.generate_waveforms,
-            'wavetool-waveforms': args.wavetool_waveforms,
-            'detection-stations': args.detection_stations,
-            'no-filter': args.no_filter,
-            'no-detrend': args.no_detrend,
-            'trace-normalization': args.trace_normalization,
-            'frequency': args.frequency,
-            'plot-positives': args.plot_positives,
-            'silence-wavetool': args.silence_wavetool,
-            'plot-positives-original': args.plot_positives_original,
-            'print-scores': args.print_scores,
-            'print-precision': args.print_precision,
-            'combine-events-range': args.combine_events_range,
-            'time': args.time,
-            'cpu': args.cpu,
-            'print-files': args.print_files,
-            'config': args.config,
-            'input': args.input,
-            'out': args.out,
-            'seisan': args.seisan,
-            'mulplt': args.mulplt,
-            'archives': args.archives,
-            'channel-order': args.channel_order,
-        },
-    }
+
 
     # Default weights for models
     default_weights = {'favor': 'weights/w_model_performer_with_spec.hd5',
@@ -411,7 +429,7 @@ def get_args_dictionaries(args):
         'channel-order': [channel_order_converter],
     }
 
-    return d_args, d_applied_functions
+    return d_applied_functions
 
 
 def parse_seisan_def_env(path, params):
@@ -446,6 +464,8 @@ def parse_unix(params):
 
     parse_seisan_def_env(seisan_path, params)
 
+    print('seisan: ', params['main', 'seisan'])
+    print('seisan exists: ', params.key_exists(('main', 'seisan')))
     if not params.key_exists(('main', 'seisan')):
         print('seisan!')
         params['main', 'seisan'] = seisan_path
@@ -473,6 +493,7 @@ def archive_scan_params():
 
     # Command line arguments parsing
     args = parse_command_line_args()
+    command_line_defaults(args)
 
     # Default config file path
     if not args.config:
@@ -484,7 +505,14 @@ def archive_scan_params():
                        '~/.config/seismo-ml-models-integration/archive_scan_config.ini']
 
     # Convert args to a dictionary
-    d_args, d_applied_functions = get_args_dictionaries(args)
+    d_args = args_to_dictionary(args)
+
+    for key, value in d_args['main'].items():
+        print(f'{key}: {value}')
+
+    import sys
+    sys.exit(0)
+    # d_args, d_applied_functions = get_args_dictionaries(args)
 
     # Parse config files
     params = None

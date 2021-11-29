@@ -45,9 +45,6 @@ if __name__ == '__main__':
 
     params = archive_scan_params()  # parse command line arguments
 
-    import sys
-    print('--batch-size: ', params['main', 'batch-size'])
-    print('--cnn: ', params['main', 'cnn'])
     sys.exit(0)
 
     if params['main', 'input']:
@@ -57,6 +54,15 @@ if __name__ == '__main__':
                                 mulplt=params['main', 'mulplt'],
                                 archives=params['main', 'archives'],
                                 params=params)
+
+    print('seisan: ', params['main', 'seisan'])
+    print('mulplt: ', params['main', 'mulplt'])
+    print('archives: ', params['main', 'archives'])
+    print('batch-size: ', params['main', 'batch-size'])
+    print('ARCHIVES:')
+    for n_archive, d_archives in enumerate(archives):
+        print(f'{n_archive}: {d_archives}')
+    sys.exit(0)
 
     if params['main', 'cpu']:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
