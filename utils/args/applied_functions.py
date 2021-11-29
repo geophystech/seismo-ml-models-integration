@@ -1,4 +1,5 @@
 import sys
+from obspy import UTCDateTime
 from utils.params import applied_function
 
 # Default weights for models
