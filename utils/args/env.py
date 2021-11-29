@@ -36,13 +36,9 @@ def parse_unix(params):
 
     parse_seisan_def(seisan_path, params)
 
-    print('seisan: ', params['main', 'seisan'])
-    print('seisan exists: ', params.key_exists(('main', 'seisan')))
     if not params.key_exists(('main', 'seisan')):
-        print('seisan!')
         params['main', 'seisan'] = seisan_path
     if not params.key_exists(('main', 'mulplt')):
-        print('mulplt!')
         params['main', 'mulplt'] = mulplt_path
 
 
