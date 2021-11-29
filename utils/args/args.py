@@ -21,9 +21,6 @@ def defaults():
     """
     defs = {
         'main': {
-            'seisan': '',
-            'mulplt': '',
-            'archives': '',
             'input': '',
             'config': '',
             'weights': '',
