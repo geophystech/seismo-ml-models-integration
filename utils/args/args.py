@@ -76,6 +76,13 @@ def archive_scan():
     from .env import archive_scan as env_params
     env_params(params)
 
+    # Apply default values
+    d_defaults = defaults()
+    for level_name, level in d_defaults.items():
+        for name, arg in level.items():
+            if not params[level_name, name]:
+                params[level_name, name] = arg
+
     # Apply functions to parameters
     from .applied_functions import archive_scan as applied_functions
     applied_functions = applied_functions()
