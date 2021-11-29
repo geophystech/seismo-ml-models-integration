@@ -2,7 +2,7 @@ import numpy as np
 from obspy import read
 import sys
 
-from utils.script_args import archive_scan_params
+from utils.args import archive_scan as archive_scan_params
 import utils.scan_tools as stools
 from utils.seisan import get_archives
 from utils.progress_bar import ProgressBar
@@ -44,6 +44,9 @@ def get_model_ref(data, name_weights):
 if __name__ == '__main__':
 
     params = archive_scan_params()  # parse command line arguments
+
+    if params['main', 'print-params']:
+        print(params)
 
     if params['main', 'input']:
         archives = stools.parse_archive_csv(params['main', 'input'])  # parse archive names
