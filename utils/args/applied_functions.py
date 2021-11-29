@@ -65,8 +65,6 @@ def bool_converter(value, _, __):
 
 def favor_default(value, params, key):
     params = params[key]
-    if value is None and params['cnn'] is None and params['gpd'] is None and params['weights'] is None:
-        return None
     if not params['cnn'] and not params['gpd'] and not params['model']:
         return True
 
