@@ -48,8 +48,6 @@ if __name__ == '__main__':
     if params['main', 'print-params']:
         print(params)
 
-    sys.exit(0)
-
     if params['main', 'input']:
         archives = stools.parse_archive_csv(params['main', 'input'])  # parse archive names
     else:
@@ -57,15 +55,6 @@ if __name__ == '__main__':
                                 mulplt=params['main', 'mulplt'],
                                 archives=params['main', 'archives'],
                                 params=params)
-
-    print('seisan: ', params['main', 'seisan'])
-    print('mulplt: ', params['main', 'mulplt'])
-    print('archives: ', params['main', 'archives'])
-    print('batch-size: ', params['main', 'batch-size'])
-    print('ARCHIVES:')
-    for n_archive, d_archives in enumerate(archives):
-        print(f'{n_archive}: {d_archives}')
-    sys.exit(0)
 
     if params['main', 'cpu']:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
