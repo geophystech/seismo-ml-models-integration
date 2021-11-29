@@ -105,6 +105,55 @@ def get_unsupported_station_parameters_list():
     ]
 
 
+def defaults():
+    """
+    Returns dictionary of default values for parameters.
+    """
+    defs = {
+        'main': {
+            'seisan': '',
+            'mulplt': '',
+            'archives': '',
+            'input': '',
+            'config': '',
+            'weights': '',
+            'favor': False,
+            'cnn': False,
+            'gpd': False,
+            'model': '',
+            'loader_argv': '',
+            'out': 'predictions.txt',
+            'threshold': 0.95,
+            'batch-size': 150,
+            'trace-size': 600,
+            'shift': 40,
+            'frequency': 100.,
+            'features-number': 400,
+            'waveform-duration': 600.,
+            'no-filter': False,
+            'no-detrend': False,
+            'silence-wavetool': False,
+            'plot-positives': False,
+            'plot-positives-original': False,
+            'print-scores': False,
+            'print-precision': 4,
+            'combine-events-range': 30.,
+            'generate-s-files': 'ask once',
+            'detections-for-event': 2,
+            'generate-waveforms': 'ask once',
+            'wavetool-waveforms': False,
+            'detection-stations': False,
+            'time': False,
+            'cpu': False,
+            'print-files': False,
+            'start': '',
+            'end': '',
+            'trace-normalization': False,
+            'channel-order': 'N,E,Z'
+        },
+    }
+    return defs
+
 def get_args_dictionaries(args):
     """
     Returns converted to a dictionary arguments and a dictionary of arguments type
