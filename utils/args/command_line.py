@@ -77,6 +77,8 @@ def archive_scan_args():
                                               ' format examples: "2021-04-01" or "2021-04-01T12:35:40"')
     parser.add_argument('--end', '-e', help='Latest time stamp allowed for input waveforms'
                                             ' format examples: "2021-04-01" or "2021-04-01T12:35:40"')
+    parser.add_argument('--print-params', help='Print out all parameters values for current launch.',
+                        action='store_true')
     parser.add_argument('--trace-normalization', help='Normalize input data per trace, otherwise - per full trace.'
                                                       ' Increases performance and reduces memory demand if set (at'
                                                       ' a cost of potential accuracy loss).',
@@ -109,6 +111,7 @@ def archive_scan_dictionary(args):
     """
     d_args_rules = {
         'main': {
+            'print-params': 'print_params',
             'database': 'database',
             'favor': 'favor',
             'cnn': 'cnn',
