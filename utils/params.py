@@ -204,6 +204,23 @@ class Params:
         merge_dictionaries(self.other, params.other, replace=replace)
 
     def __str__(self):
+        r_str = 'Params Main Dictionary:\n'
+        params_dict = self._default_dictionary()
+        level = 1
+        filler = '-'
+        k = 2
+        for station_key, data in params_dict.items():
+            level = 1
+            r_str += filler*k*level + ' ' + station_key + ': \n'
+
+            level = 2
+            for key, value in data.items():
+                r_str += filler*k*level + ' ' + key + ': '
+                r_str += str(value) + '\n'
+
+        return r_str
+
+    def __repr__(self):
         r_str = 'Params object:\n' \
                 '\t.config:\n' \
                 f'{self.config}\n' \
@@ -212,9 +229,6 @@ class Params:
                 '\t.other:\n' \
                 f'{self.other}'
         return r_str
-
-    def __repr__(self):
-        return self.__str__()
 
     def __bool__(self):
         params_dict = self._default_dictionary()
