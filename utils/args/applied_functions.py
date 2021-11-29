@@ -66,6 +66,10 @@ def string_filler(value, _, __, length=0, append=True, filler='_'):
         else:
             return filler*l_diff + value
     return value
+
+database_filler = applied_function(length=5)(string_filler)
+
+
 def bool_converter(value, _, __):
     if value is None:
         return None
@@ -205,6 +209,7 @@ def archive_scan():
         'waveform-duration': [float_converter],
         'start': [utc_datetime_converter, start_date_default],
         'end': [utc_datetime_converter, end_date_default],
+        'database': [database_filler],
         'threshold': [threshold_converter],
         'batch-size': [int_converter],
         'frequency': [float_converter],

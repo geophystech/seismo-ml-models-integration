@@ -8,6 +8,9 @@ def archive_scan_args():
     parser.add_argument('--seisan', help='Path to SEISAN.DEF')
     parser.add_argument('--mulplt', help='Path to MULPLT.DEF')
     parser.add_argument('--archives', help='Path to archives directory')
+    parser.add_argument('--database', help='Name of default database. Not longer than 5 characters. '
+                                           'Names shorter than 5 characters will be appended with '
+                                           'underscores.')
     parser.add_argument('--input', help='Path to file with archive names')
     parser.add_argument('--config', '-c', help='Path to config file')
     parser.add_argument('--weights', '-w', help='Path to model weights')
@@ -106,6 +109,7 @@ def archive_scan_dictionary(args):
     """
     d_args_rules = {
         'main': {
+            'database': 'database',
             'favor': 'favor',
             'cnn': 'cnn',
             'gpd': 'gpd',
