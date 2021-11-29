@@ -167,7 +167,9 @@ if __name__ == '__main__':
             stools.pre_process_stream(st, params, station['station'])
 
         # Cut archives to the same length
-        streams = stools.trim_streams(streams, params['main', 'start'], params['main', 'end'])
+        streams = stools.trim_streams(streams, station, params['main', 'start'], params['main', 'end'])
+        if not streams:
+            continue
         if original_streams:
             original_streams = stools.trim_streams(original_streams, params['main', 'start'], params['main', 'end'])
 

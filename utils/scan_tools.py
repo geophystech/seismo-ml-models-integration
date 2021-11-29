@@ -111,7 +111,7 @@ def combined_traces(streams, params):
     return traces
 
 
-def trim_streams(streams, start=None, end=None):
+def trim_streams(streams, station, start=None, end=None):
     """
     Trims streams to the same overall time span.
     :return: list of trimmed streams
@@ -136,6 +136,11 @@ def trim_streams(streams, start=None, end=None):
 
     cut_streams = []
 
+    if max_start_time > end:
+        print(f'\nSkipping archives for {station}: archive(s) starts '
+              f'({max_start_time.strftime("%Y-%m-%d %H:%M:%S")}) after the end of scanning window '
+              f'({max_start_time.strftime("%Y-%m-%d %H:%M:%S")})!')
+        return None
     for st in streams:
         cut_streams.append(st.slice(max_start_time, min_end_time))
 
