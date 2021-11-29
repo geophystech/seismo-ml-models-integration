@@ -23,6 +23,7 @@ def apply_default_model_name(model_name, params, key):
     raise AttributeError('Model is not specified, and default model did not apply! If you see this message, '
                          'this is a bug!')
 
+
 @applied_function(defaults=default_weights)
 def apply_default_weights(weight, params, key, defaults):
     params = params[key]
@@ -45,11 +46,26 @@ def type_converter(value, _, __, f_type):
 int_converter = applied_function(f_type=int)(type_converter)
 float_converter = applied_function(f_type=float)(type_converter)
 
+# String processing
 def string_trimmer(value, _, __):
     if type(value) is not str:
         return value
     return value.strip()
 
+def string_filler(value, _, __, length=0, append=True, filler='_'):
+    if type(value) is not str:
+        return value
+    if len(filler) != 1:
+        print('WARNING: In string_filler length of "filler" parameter is not equal to 1! '
+              'Skipping function!', file=sys.stderr)
+        return value
+    if len(value) < length:
+        l_diff = length - len(value)
+        if append:
+            return value + filler*l_diff
+        else:
+            return filler*l_diff + value
+    return value
 def bool_converter(value, _, __):
     if value is None:
         return None
