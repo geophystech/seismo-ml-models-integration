@@ -24,6 +24,10 @@ def parse_unix(params):
     """
     seisan_top = os.environ.get('SEISAN_TOP')
     default_database = os.environ.get('DEF_BASE')
+
+    if not params.key_exists(('main', 'database')):
+        params['main', 'database'] = default_database
+
     if not seisan_top:
         return
 
