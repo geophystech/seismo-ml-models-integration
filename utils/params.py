@@ -30,7 +30,10 @@ class ParamsDictionary(dict):
         if type(key) is tuple:
             item = self
             for x in key:
-                item = item[x]
+                if type(item) is ParamsDictionary:
+                    item = item._exception_getitem(x)
+                else:
+                    item = item[x]
             return item
         else:
             return self._dict[key]
@@ -93,7 +96,8 @@ class ParamsDictionary(dict):
 
 def merge_dictionaries(to_dict, from_dict, depth=3, replace=True):
     """
-    Merges both dictionaries, overwriting data in to_dict with from_dict data with the same keys.
+    Merges both dictionaries, if replace is True, overwriting data in to_dict with from_dict data
+    with the same keys.
     Note: Although function does return merged data, actions are inplace and rewrite to_dict.
     :return: merged dictionaries, returns to_dict reference after the merge.
     """
@@ -176,11 +180,11 @@ class Params:
         data = configparse_to_dict(config)
 
         if mode == 'config':
-            merge_dictionaries(self.config, data)
+            self.config = merge_dictionaries(data, self.config)
         elif mode == 'data':
-            merge_dictionaries(self.data, data)
+            self.data = merge_dictionaries(data, self.data)
         elif mode == 'other':
-            merge_dictionaries(self.other, data)
+            self.other = merge_dictionaries(data, self.other)
 
     def read_config(self, path, mode):
         from os.path import splitext
@@ -200,6 +204,23 @@ class Params:
         merge_dictionaries(self.other, params.other, replace=replace)
 
     def __str__(self):
+        r_str = 'Params Main Dictionary:\n'
+        params_dict = self._default_dictionary()
+        level = 1
+        filler = '-'
+        k = 2
+        for station_key, data in params_dict.items():
+            level = 1
+            r_str += filler*k*level + ' ' + station_key + ': \n'
+
+            level = 2
+            for key, value in data.items():
+                r_str += filler*k*level + ' ' + key + ': '
+                r_str += str(value) + '\n'
+
+        return r_str
+
+    def __repr__(self):
         r_str = 'Params object:\n' \
                 '\t.config:\n' \
                 f'{self.config}\n' \
@@ -208,9 +229,6 @@ class Params:
                 '\t.other:\n' \
                 f'{self.other}'
         return r_str
-
-    def __repr__(self):
-        return self.__str__()
 
     def __bool__(self):
         params_dict = self._default_dictionary()
@@ -259,7 +277,6 @@ class Params:
     def exact_getitem(self, key):
         """
         Returns an item from a default dictionary, returns None, if value not found or set to None.
-        If first key is not found in first level, searches "main" dictionary.
         If nothing is found in first level dictionary, DOES NOT perform a search in "main" dictionary.
         More of what you would expect from normal __getitem__ behaviour.
         """
@@ -272,9 +289,7 @@ class Params:
         if type(key) is str:
             key = tuple([key])
 
-        if key[0] in params_dict:
-            return params_dict.__getitem__(key)
-        return params_dict.__getitem__(('main', *key[1:]))
+        return params_dict.__getitem__(key)
 
     def __setitem__(self, key, value):
         """
@@ -340,6 +355,23 @@ class Params:
         if not main:
             return [x for x in params_dict if x != 'main']
         return [x for x in params_dict]
+
+    def key_exists(self, key):
+        """
+        Checks if provided key exists in default dictionary.
+        :param key: key
+        :return: bool
+        """
+        params_dict = self._default_dictionary()
+
+        if not params_dict:
+            raise KeyError(f'No default dictionary specified for params to access key: {key}')
+
+        # Convert key to iterable if str
+        if type(key) is str:
+            key = tuple([key])
+
+        return params_dict.key_exists(key)
 
 
 def applied_function(**kwargs):
