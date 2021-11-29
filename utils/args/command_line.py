@@ -1,7 +1,9 @@
 import argparse
 
 def archive_scan_args():
-
+    """
+    Reads command-line arguments for archive_scan.py.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--seisan', help='Path to SEISAN.DEF')
     parser.add_argument('--mulplt', help='Path to MULPLT.DEF')
@@ -97,6 +99,9 @@ def archive_scan_defaults(args):
 
 
 def archive_scan():
+    """
+    Performs full processing of command-line arguments for archive_scan.py.
+    """
     args = archive_scan_args()
     archive_scan_defaults(args)
     return args
