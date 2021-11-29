@@ -2,7 +2,7 @@ import numpy as np
 from obspy import read
 import sys
 
-from utils.script_args import archive_scan_params
+from utils.args import archive_scan as archive_scan_params
 import utils.scan_tools as stools
 from utils.seisan import get_archives
 from utils.progress_bar import ProgressBar
