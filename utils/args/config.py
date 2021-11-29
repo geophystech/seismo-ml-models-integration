@@ -17,11 +17,11 @@ def archive_scan_defaults(params):
                     continue
                 params['main', 'seisan'] = x
                 break
-        if not params['main', 'mulplt']:
+        if not params['main', 'mulplt-def']:
             for x in default_mulplt:
                 if not isfile(x):
                     continue
-                params['main', 'mulplt'] = x
+                params['main', 'mulplt-def'] = x
                 break
         if not params['main', 'archives']:
             for x in default_archives:

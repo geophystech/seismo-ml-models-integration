@@ -6,7 +6,7 @@ def archive_scan_args():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--seisan', help='Path to SEISAN.DEF')
-    parser.add_argument('--mulplt', help='Path to MULPLT.DEF')
+    parser.add_argument('--mulplt-def', help='Path to MULPLT.DEF')
     parser.add_argument('--archives', help='Path to archives directory')
     parser.add_argument('--database', help='Name of default database. Not longer than 5 characters. '
                                            'Names shorter than 5 characters will be appended with '
@@ -148,7 +148,7 @@ def archive_scan_dictionary(args):
             'input': 'input',
             'out': 'out',
             'seisan': 'seisan',
-            'mulplt': 'mulplt',
+            'mulplt-def': 'mulplt_def',
             'archives': 'archives',
             'channel-order': 'channel_order',
         },

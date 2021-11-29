@@ -38,8 +38,8 @@ def parse_unix(params):
 
     if not params.key_exists(('main', 'seisan')):
         params['main', 'seisan'] = seisan_path
-    if not params.key_exists(('main', 'mulplt')):
-        params['main', 'mulplt'] = mulplt_path
+    if not params.key_exists(('main', 'mulplt-def')):
+        params['main', 'mulplt-def'] = mulplt_path
 
 
 def archive_scan(params):

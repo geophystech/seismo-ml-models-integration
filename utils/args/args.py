@@ -11,7 +11,7 @@ def get_unsupported_station_parameters_list():
         'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
         'detection-stations', 'waveform-duration', 'generate-s-files', 'silence-wavetool',
         # Environment
-        'input', 'seisan', 'mulplt', 'archives', 'database'
+        'input', 'seisan', 'mulplt-def', 'archives', 'database'
     ]
 
 
@@ -96,8 +96,8 @@ def archive_scan():
         if not params['main', 'seisan']:
             raise AttributeError('Either "input" or "seisan" attribute should be set with correct values '
                                  '(through config file or command line arguments)')
-        if not params['main', 'mulplt']:
-            raise AttributeError('Either "input" or "mulplt" attribute should be set with correct values '
+        if not params['main', 'mulplt-def']:
+            raise AttributeError('Either "input" or "mulplt-def" attribute should be set with correct values '
                                  '(through config file or command line arguments)')
         if not params['main', 'archives']:
             raise AttributeError('Either "input" or "archives" attribute should be set with correct values '
