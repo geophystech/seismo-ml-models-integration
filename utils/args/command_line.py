@@ -98,10 +98,70 @@ def archive_scan_defaults(args):
                        '~/.config/seismo-ml-models-integration/archive_scan_config.ini']
 
 
+def archive_scan_dictionary(args):
+    """
+    Converts args to dictionary (only for positive args: not False, None or empty strings).
+    Also this functions dictionary d_args_rules presents a set of rules, used to convert command line
+    arguments into application/config parameters.
+    """
+    d_args_rules = {
+        'main': {
+            'favor': 'favor',
+            'cnn': 'cnn',
+            'gpd': 'gpd',
+            'model': 'model',
+            'weights': 'weights',
+            'features-number': 'features_number',
+            'waveform-duration': 'waveform_duration',
+            'start': 'start',
+            'end': 'end',
+            'threshold': 'threshold',
+            'batch-size': 'batch_size',
+            'trace-size': 'trace_size',
+            'shift': 'shift',
+            'generate-s-files': 'generate_s_files',
+            'detections-for-event': 'detections_for_event',
+            'generate-waveforms': 'generate_waveforms',
+            'wavetool-waveforms': 'wavetool_waveforms',
+            'detection-stations': 'detection_stations',
+            'no-filter': 'no_filter',
+            'no-detrend': 'no_detrend',
+            'trace-normalization': 'trace_normalization',
+            'frequency': 'frequency',
+            'plot-positives': 'plot_positives',
+            'silence-wavetool': 'silence_wavetool',
+            'plot-positives-original': 'plot_positives_original',
+            'print-scores': 'print_scores',
+            'print-precision': 'print_precision',
+            'combine-events-range': 'combine_events_range',
+            'time': 'time',
+            'cpu': 'cpu',
+            'print-files': 'print_files',
+            'config': 'config',
+            'input': 'input',
+            'out': 'out',
+            'seisan': 'seisan',
+            'mulplt': 'mulplt',
+            'archives': 'archives',
+            'channel-order': 'channel_order',
+        },
+    }
+
+    d_args = {}
+    for level_name, level in d_args_rules.items():
+        d_args[level_name] = {}
+        for name, arg in level.items():
+            attr = getattr(args, arg)
+            if attr:
+                d_args[level_name][name] = attr
+
+    return d_args
+
+
 def archive_scan():
     """
     Performs full processing of command-line arguments for archive_scan.py.
     """
     args = archive_scan_args()
     archive_scan_defaults(args)
-    return args
+    return archive_scan_dictionary(args)

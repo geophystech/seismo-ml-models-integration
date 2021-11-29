@@ -72,66 +72,6 @@ def defaults():
     return defs
 
 
-def args_to_dictionary(args):
-    """
-    Converts args to dictionary (only for positive args: not False, None or empty strings).
-    Also this functions dictionary d_args_rules presents a set of rules, used to convert command line
-    arguments into application/config parameters.
-    """
-    d_args_rules = {
-        'main': {
-            'favor': 'favor',
-            'cnn': 'cnn',
-            'gpd': 'gpd',
-            'model': 'model',
-            'weights': 'weights',
-            'features-number': 'features_number',
-            'waveform-duration': 'waveform_duration',
-            'start': 'start',
-            'end': 'end',
-            'threshold': 'threshold',
-            'batch-size': 'batch_size',
-            'trace-size': 'trace_size',
-            'shift': 'shift',
-            'generate-s-files': 'generate_s_files',
-            'detections-for-event': 'detections_for_event',
-            'generate-waveforms': 'generate_waveforms',
-            'wavetool-waveforms': 'wavetool_waveforms',
-            'detection-stations': 'detection_stations',
-            'no-filter': 'no_filter',
-            'no-detrend': 'no_detrend',
-            'trace-normalization': 'trace_normalization',
-            'frequency': 'frequency',
-            'plot-positives': 'plot_positives',
-            'silence-wavetool': 'silence_wavetool',
-            'plot-positives-original': 'plot_positives_original',
-            'print-scores': 'print_scores',
-            'print-precision': 'print_precision',
-            'combine-events-range': 'combine_events_range',
-            'time': 'time',
-            'cpu': 'cpu',
-            'print-files': 'print_files',
-            'config': 'config',
-            'input': 'input',
-            'out': 'out',
-            'seisan': 'seisan',
-            'mulplt': 'mulplt',
-            'archives': 'archives',
-            'channel-order': 'channel_order',
-        },
-    }
-
-    d_args = {}
-    for level_name, level in d_args_rules.items():
-        d_args[level_name] = {}
-        for name, arg in level.items():
-            attr = getattr(args, arg)
-            if attr:
-                d_args[level_name][name] = attr
-
-    return d_args
-
-
 def get_args_dictionaries(args):
     """
     Returns converted to a dictionary arguments and a dictionary of arguments type
@@ -412,10 +352,7 @@ def archive_scan():
     from .command_line import archive_scan
     args = archive_scan()
 
-    # Convert args to a dictionary
-    d_args = args_to_dictionary(args)
-
-    for key, value in d_args['main'].items():
+    for key, value in args['main'].items():
         print(f'{key}: {value}')
 
     import sys
@@ -424,16 +361,16 @@ def archive_scan():
 
     # Parse config files
     params = None
-    if type(d_args['main']['config']) is str:
-        d_args['main']['config'] = [d_args['main']['config']]
-    for x in d_args['main']['config']:
+    if type(args['main']['config']) is str:
+        args['main']['config'] = [args['main']['config']]
+    for x in args['main']['config']:
         if not isfile(x):
             continue
-        params = Params(path=x, config=d_args, default_dictionary='config')
+        params = Params(path=x, config=args, default_dictionary='config')
         break
     if not params:
         print('Config file not found, using only default values and command line arguments!', file=sys.stderr)
-        params = Params(path=None, config=d_args, default_dictionary='config')
+        params = Params(path=None, config=args, default_dictionary='config')
 
     # Default env values
     default_seisan = ['data/SEISAN.DEF']
