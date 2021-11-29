@@ -36,7 +36,7 @@ def defaults():
             'threshold': 0.95,
             'batch-size': 150,
             'trace-size': 600,
-            'shift': 40,
+            'shift': 10,
             'frequency': 100.,
             'features-number': 400,
             'waveform-duration': 600.,
