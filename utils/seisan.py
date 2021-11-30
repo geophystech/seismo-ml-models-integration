@@ -750,9 +750,12 @@ def generate_events(events, params):
 
     l_s_files = []
     l_waveforms = []
+    saved_events = []
     for filename, groups in events.items():
         for group, datetime in groups:
             if len(group) >= params['main', 'detections-for-event']:
+
+                c_saved_event = {}
 
                 # Waveforms file generation
                 if params['main', 'generate-s-files'] == 'ask each':
@@ -772,10 +775,14 @@ def generate_events(events, params):
 
                 if waveforms_name:
                     l_waveforms.append(waveforms_name)
+                    c_saved_event['waveform'] = waveforms_name
 
                 if b_events_generation:
                     s_name = generate_event(group, datetime, params, waveforms_name)
                     l_s_files.append(s_name)
+                    c_saved_event['s-file'] = s_name
+                    c_saved_event['datetime'] = datetime
+                    saved_events.append(c_saved_event)
 
     print('\nGenerated s-files:')
     for x in l_s_files:
@@ -784,3 +791,34 @@ def generate_events(events, params):
     print('\nExtracted waveforms:')
     for x in l_waveforms:
         print(x)
+    print()
+
+    # Events registration in the database
+    if params['main', 'register-events'] == 'no':
+        return
+
+    if params['main', 'register-events'] == 'yes':
+        b_register_event = True
+    if params['main', 'register-events'] == 'ask once':
+        b_register_event = ask_yes_no('Do you register all generated events in the database?')
+
+    for d_event in saved_events:
+        s_file = d_event['s-file']
+        datetime = d_event['datetime']
+        waveform = None
+        if 'waveform' in d_event:
+            waveform = d_event['waveform']
+
+        id = datetime.strftime('%Y%m%d%H%M%S')
+
+        if params['main', 'register-events'] == 'ask each':
+            question = f'Do you want to register event: ' \
+                       f'{id} (file: {s_file}) '
+            if waveform:
+                question += f'and waveform {waveform} '
+            question += 'in the database?'
+
+            b_register_event = ask_yes_no(question)
+
+        if b_register_event:
+            print('Event registration!')
