@@ -218,6 +218,7 @@ def archive_scan():
         'generate-s-files': [string_trimmer],
         'detections-for-event': [int_converter],
         'generate-waveforms': [string_trimmer],
+        'register-events': [string_trimmer],
         'no-filter': [bool_converter],
         'no-detrend': [bool_converter],
         'trace-normalization': [bool_converter],
@@ -233,7 +234,7 @@ def archive_scan():
         'cpu': [bool_converter],
         'print-files': [bool_converter],
         'channel-order': [channel_order_converter],
-        'print-params': [bool_converter]
+        'print-params': [bool_converter],
     }
 
     return d_applied_functions

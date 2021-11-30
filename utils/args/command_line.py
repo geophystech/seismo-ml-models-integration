@@ -11,6 +11,8 @@ def archive_scan_args():
     parser.add_argument('--database', help='Name of default database. Not longer than 5 characters. '
                                            'Names shorter than 5 characters will be appended with '
                                            'underscores.')
+    parser.add_argument('--rea', help='Path to REA directory.')
+    parser.add_argument('--wav', help='Path to WAV directory.')
     parser.add_argument('--input', help='Path to file with archive names')
     parser.add_argument('--config', '-c', help='Path to config file')
     parser.add_argument('--weights', '-w', help='Path to model weights')
@@ -54,13 +56,17 @@ def archive_scan_args():
                                                        ' default: 30 seconds', type=float)
     parser.add_argument('--generate-s-files', help='Generate s-files for potential events? "no", "yes", '
                                                    '"ask once" (ask once per launch), "ask each" '
-                                                   '(ask for every event), default: ask once',
+                                                   '(ask for every event), default: "ask once"',
                         type=str)
     parser.add_argument('--detections-for-event', help='Amount of detections in a group, to be considered as '
                                                        'event, default: 2', type=int)
     parser.add_argument('--generate-waveforms', help='Waveform generation: "no", "yes", "ask once" '
                                                      '(ask once per launch), "ask each" (ask for every event), '
-                                                     'default: ask once',
+                                                     'default: "ask once"',
+                        type=str)
+    parser.add_argument('--register-events', help='Register generated events in database: "no", "yes", '
+                                                  '"ask once" (once per launch), "ask each" (ask for every '
+                                                  'event), default: "ask once"',
                         type=str)
     parser.add_argument('--wavetool-waveforms', help='If set, use seisan wavetool programm to generate waveforms, '
                                                      'otherwise use custom ObsPy based module, not set by default',
@@ -113,6 +119,8 @@ def archive_scan_dictionary(args):
         'main': {
             'print-params': 'print_params',
             'database': 'database',
+            'rea': 'rea',
+            'wav': 'wav',
             'favor': 'favor',
             'cnn': 'cnn',
             'gpd': 'gpd',
@@ -129,6 +137,7 @@ def archive_scan_dictionary(args):
             'generate-s-files': 'generate_s_files',
             'detections-for-event': 'detections_for_event',
             'generate-waveforms': 'generate_waveforms',
+            'register-events': 'register_events',
             'wavetool-waveforms': 'wavetool_waveforms',
             'detection-stations': 'detection_stations',
             'no-filter': 'no_filter',

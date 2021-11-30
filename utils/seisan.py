@@ -1,4 +1,5 @@
 import os
+import sys
 from os.path import isfile
 from obspy import UTCDateTime
 
@@ -717,6 +718,48 @@ def detection_station_list(event, params):
     return unique_stations_list
 
 
+def register_event(s_file, waveform, datetime, params):
+    import os
+    # os.path.join(base, new)
+    rea_path = params['main', 'rea']
+    wav_path = params['main', 'wav']
+    database = params['main', 'database']
+
+    year = datetime.strftime('%Y')
+    month = datetime.strftime('%m')
+
+    rea_path = os.path.join(rea_path, database, year, month)
+    wav_path = os.path.join(wav_path, database, year, month)
+
+    # Check if path(s) are valid
+    full_s_file_path = os.path.join(rea_path, s_file)
+    if not os.path.isfile(s_file):
+        print(f'Cannot register event: generated s-file {s_file} not found!', file=sys.stderr)
+    if not os.path.isdir(rea_path):
+        print(f'Cannot register event: directory {rea_path} is not found!', file=sys.stderr)
+        return
+    if os.path.isfile(full_s_file_path):
+        print(f'Cannot register event: file {full_s_file_path} already exists!', file=sys.stderr)
+        return
+    full_waveform_path = None
+    if waveform:
+        full_waveform_path = os.path.join(wav_path, waveform)
+        if not os.path.isfile(waveform):
+            print(f'Cannot register event: waveform {waveform} not found!', file=sys.stderr)
+        if not os.path.isdir(wav_path):
+            print(f'Cannot register event: directory {wav_path} is not found!', file=sys.stderr)
+            return
+        if os.path.isfile(full_waveform_path):
+            print(f'Cannot register event: file {full_waveform_path} already exists!', file=sys.stderr)
+            return
+
+    os.rename(s_file, full_s_file_path)
+    if full_waveform_path:
+        os.rename(waveform, full_waveform_path)
+
+    print(f'Saved: {full_s_file_path} and {full_waveform_path}')
+
+
 def generate_events(events, params):
     """
     Generates s-files for detections.
@@ -750,9 +793,12 @@ def generate_events(events, params):
 
     l_s_files = []
     l_waveforms = []
+    saved_events = []
     for filename, groups in events.items():
         for group, datetime in groups:
             if len(group) >= params['main', 'detections-for-event']:
+
+                c_saved_event = {}
 
                 # Waveforms file generation
                 if params['main', 'generate-s-files'] == 'ask each':
@@ -772,10 +818,14 @@ def generate_events(events, params):
 
                 if waveforms_name:
                     l_waveforms.append(waveforms_name)
+                    c_saved_event['waveform'] = waveforms_name
 
                 if b_events_generation:
                     s_name = generate_event(group, datetime, params, waveforms_name)
                     l_s_files.append(s_name)
+                    c_saved_event['s-file'] = s_name
+                    c_saved_event['datetime'] = datetime
+                    saved_events.append(c_saved_event)
 
     print('\nGenerated s-files:')
     for x in l_s_files:
@@ -784,3 +834,47 @@ def generate_events(events, params):
     print('\nExtracted waveforms:')
     for x in l_waveforms:
         print(x)
+    print()
+
+    # Events registration in the database
+    if params['main', 'register-events'] == 'no':
+        return
+
+    if not params['main', 'database']:
+        print('Cannot register event(s): --database is not set and failed to autodetect!',
+              file=sys.stderr)
+        return
+    if not params['main', 'rea']:
+        print('Cannot register event(s): --rea is not set and failed to autodetect!',
+              file=sys.stderr)
+        return
+    if not params['main', 'wav']:
+        print('Cannot register event(s): --wav is not set and failed to autodetect!',
+              file=sys.stderr)
+        return
+
+    if params['main', 'register-events'] == 'yes':
+        b_register_event = True
+    if params['main', 'register-events'] == 'ask once':
+        b_register_event = ask_yes_no('Do you register all generated events in the database?')
+
+    for d_event in saved_events:
+        s_file = d_event['s-file']
+        datetime = d_event['datetime']
+        waveform = None
+        if 'waveform' in d_event:
+            waveform = d_event['waveform']
+
+        id = datetime.strftime('%Y%m%d%H%M%S')
+
+        if params['main', 'register-events'] == 'ask each':
+            question = f'Do you want to register event: ' \
+                       f'{id} (file: {s_file}) '
+            if waveform:
+                question += f'and waveform {waveform} '
+            question += 'in the database?'
+
+            b_register_event = ask_yes_no(question)
+
+        if b_register_event:
+            register_event(s_file, waveform, datetime, params)

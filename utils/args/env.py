@@ -33,6 +33,8 @@ def parse_unix(params):
 
     seisan_path = os.path.join(seisan_top, 'DAT/SEISAN.DEF')
     mulplt_path = os.path.join(seisan_top, 'DAT/MULPLT.DEF')
+    rea_path = os.path.join(seisan_top, 'REA')
+    wav_path = os.path.join(seisan_top, 'WAV')
 
     parse_seisan_def(seisan_path, params)
 
@@ -40,6 +42,10 @@ def parse_unix(params):
         params['main', 'seisan'] = seisan_path
     if not params.key_exists(('main', 'mulplt-def')):
         params['main', 'mulplt-def'] = mulplt_path
+    if not params.key_exists(('main', 'rea')):
+        params['main', 'rea'] = rea_path
+    if not params.key_exists(('main', 'wav')):
+        params['main', 'wav'] = wav_path
 
 
 def archive_scan(params):
