@@ -103,15 +103,6 @@ def archive_scan():
         if not params['main', 'archives']:
             raise AttributeError('Either "input" or "archives" attribute should be set with correct values '
                                  '(through config file or command line arguments)')
-        if not params['main', 'database']:
-            raise AttributeError('Either "input" or "database" attribute should be set with correct values '
-                                 '(through config file or command line arguments)')
-        if not params['main', 'rea']:
-            raise AttributeError('Either "input" or "rea" attribute should be set with correct values '
-                                 '(through config file or command line arguments)')
-        if not params['main', 'wav']:
-            raise AttributeError('Either "input" or "wav" attribute should be set with correct values '
-                                 '(through config file or command line arguments)')
     if params['main', 'database'] and len(params['main', 'database']) != 5:
         raise AttributeError(f'"database" attribute ({params["main", "database"]}) should '
                              f'have a length of 5 characters.')
