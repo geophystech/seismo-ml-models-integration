@@ -218,6 +218,7 @@ def archive_scan():
         'generate-s-files': [string_trimmer],
         'detections-for-event': [int_converter],
         'generate-waveforms': [string_trimmer],
+        'register-events': [string_trimmer],
         'no-filter': [bool_converter],
         'no-detrend': [bool_converter],
         'trace-normalization': [bool_converter],

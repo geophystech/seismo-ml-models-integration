@@ -8,7 +8,7 @@ def get_unsupported_station_parameters_list():
         # Model input and batches customization
         'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
-        'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
+        'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms', 'register-events',
         'detection-stations', 'waveform-duration', 'generate-s-files', 'silence-wavetool',
         # Environment
         'input', 'seisan', 'mulplt-def', 'archives', 'database'
@@ -48,6 +48,7 @@ def defaults():
             'generate-s-files': 'ask once',
             'detections-for-event': 2,
             'generate-waveforms': 'ask once',
+            'register-events': 'ask once',
             'wavetool-waveforms': False,
             'detection-stations': False,
             'time': False,

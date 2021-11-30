@@ -62,6 +62,10 @@ def archive_scan_args():
                                                      '(ask once per launch), "ask each" (ask for every event), '
                                                      'default: ask once',
                         type=str)
+    parser.add_argument('--register-events', help='Register generated events in database: "no", "yes", '
+                                                  '"ask once" (once per launch), "ask each" (ask for every '
+                                                  'event), default: "ask once"',
+                        type=str)
     parser.add_argument('--wavetool-waveforms', help='If set, use seisan wavetool programm to generate waveforms, '
                                                      'otherwise use custom ObsPy based module, not set by default',
                         action='store_true')
@@ -129,6 +133,7 @@ def archive_scan_dictionary(args):
             'generate-s-files': 'generate_s_files',
             'detections-for-event': 'detections_for_event',
             'generate-waveforms': 'generate_waveforms',
+            'register-events': 'register_events',
             'wavetool-waveforms': 'wavetool_waveforms',
             'detection-stations': 'detection_stations',
             'no-filter': 'no_filter',
