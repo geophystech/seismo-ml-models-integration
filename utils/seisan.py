@@ -720,6 +720,7 @@ def detection_station_list(event, params):
 
 def register_event(s_file, waveform, datetime, params):
     import os
+    import shutil
     # os.path.join(base, new)
     rea_path = params['main', 'rea']
     wav_path = params['main', 'wav']
@@ -753,9 +754,9 @@ def register_event(s_file, waveform, datetime, params):
             print(f'Cannot register event: file {full_waveform_path} already exists!', file=sys.stderr)
             return
 
-    os.rename(s_file, full_s_file_path)
+    shutil.move(s_file, full_s_file_path)
     if full_waveform_path:
-        os.rename(waveform, full_waveform_path)
+        shutil.move(waveform, full_waveform_path)
 
     print(f'Saved: {full_s_file_path} and {full_waveform_path}')
 
