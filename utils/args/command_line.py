@@ -54,13 +54,13 @@ def archive_scan_args():
                                                        ' default: 30 seconds', type=float)
     parser.add_argument('--generate-s-files', help='Generate s-files for potential events? "no", "yes", '
                                                    '"ask once" (ask once per launch), "ask each" '
-                                                   '(ask for every event), default: ask once',
+                                                   '(ask for every event), default: "ask once"',
                         type=str)
     parser.add_argument('--detections-for-event', help='Amount of detections in a group, to be considered as '
                                                        'event, default: 2', type=int)
     parser.add_argument('--generate-waveforms', help='Waveform generation: "no", "yes", "ask once" '
                                                      '(ask once per launch), "ask each" (ask for every event), '
-                                                     'default: ask once',
+                                                     'default: "ask once"',
                         type=str)
     parser.add_argument('--register-events', help='Register generated events in database: "no", "yes", '
                                                   '"ask once" (once per launch), "ask each" (ask for every '
