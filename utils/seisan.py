@@ -857,7 +857,7 @@ def generate_events(events, params):
     if params['main', 'register-events'] == 'yes':
         b_register_event = True
     if params['main', 'register-events'] == 'ask once':
-        b_register_event = ask_yes_no('Do you register all generated events in the database?')
+        b_register_event = ask_yes_no('Do you want to register all generated events in the database?')
 
     for d_event in saved_events:
         s_file = d_event['s-file']
