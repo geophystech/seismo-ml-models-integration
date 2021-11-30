@@ -8,10 +8,10 @@ def get_unsupported_station_parameters_list():
         # Model input and batches customization
         'batch-size', 'trace-size', 'shift', 'frequency', 'detections-for-event',
         # Info output and computation restriction
-        'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms',
+        'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms', 'register-events',
         'detection-stations', 'waveform-duration', 'generate-s-files', 'silence-wavetool',
         # Environment
-        'input', 'seisan', 'mulplt-def', 'archives', 'database'
+        'input', 'seisan', 'mulplt-def', 'archives', 'database', 'rea', 'wav',
     ]
 
 
@@ -48,6 +48,7 @@ def defaults():
             'generate-s-files': 'ask once',
             'detections-for-event': 2,
             'generate-waveforms': 'ask once',
+            'register-events': 'ask once',
             'wavetool-waveforms': False,
             'detection-stations': False,
             'time': False,
@@ -101,9 +102,6 @@ def archive_scan():
                                  '(through config file or command line arguments)')
         if not params['main', 'archives']:
             raise AttributeError('Either "input" or "archives" attribute should be set with correct values '
-                                 '(through config file or command line arguments)')
-        if not params['main', 'database']:
-            raise AttributeError('Either "input" or "database" attribute should be set with correct values '
                                  '(through config file or command line arguments)')
     if params['main', 'database'] and len(params['main', 'database']) != 5:
         raise AttributeError(f'"database" attribute ({params["main", "database"]}) should '
