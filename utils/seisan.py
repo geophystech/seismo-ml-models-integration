@@ -769,7 +769,7 @@ def generate_events(events, params):
     for filename, groups in events.items():
         for group, datetime in groups:
             if len(group) >= params['main', 'detections-for-event']:
-                groups_counter += len(groups)
+                groups_counter += 1
 
     print(f'\n\nPotential events detected: {groups_counter}')
 
