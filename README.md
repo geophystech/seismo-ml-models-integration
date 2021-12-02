@@ -13,7 +13,7 @@ Note: required `python == 3.8`
 
 ## Quick setup guide
 
-### Install the prigramm
+### Install the programm
 ```
 git clone https://github.com/Syler1984/seismo-ml-models-integration
 cd seismo-ml-models-integration
@@ -47,7 +47,9 @@ Three models are supported by default and can be specified via command-line opti
 `--gpd` - GPD (Generalized Phase Detection) or ConvNet. <br>
 *no model flag* or `--favor` - Seismo-Performer.
 
-It is also possible to provide a custom model, see more at [Custom models](#custom-models) section.
+It is also possible to provide a custom model, see more at [Custom models](#custom-models) section. Or see at 
+[Model configuration](#model-configuration) at how to set models through config file, including usage of different
+models for different stations.
 
 
 ## Full setup guide
@@ -112,10 +114,10 @@ all three stations fit that arrangement.
 Default channel-order is `N,E,Z;1,2,Z;Z,Z,Z`, so there is no need to specify it, unless extra arrangements 
 are required.
 
-Note, that all default models trained on data with Z channael being the last one, so it is recommended to keep that
+Note, that all default models trained on data with Z channal being the last one, so it is recommended to keep that
 order in custom arrangements.
 
-### Config file
+## Detailed configuration
 
 In *archive_scan.py* .ini config file, provided via `--config PATH` option,
 station-specific options (eg filtering, output, channel order, ...) might be written.
@@ -129,6 +131,8 @@ no-filter = true
 out = predictions_argi.txt
 ```
 
-## Custom models
+### Model configuration
+WIP
 
+## Custom models
 WIP
