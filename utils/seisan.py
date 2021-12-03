@@ -840,6 +840,8 @@ def generate_events(events, params):
     # Events registration in the database
     if params['main', 'register-events'] == 'no':
         return
+    if not len(saved_events):
+        return
 
     if not params['main', 'database']:
         print('Cannot register event(s): --database is not set and failed to autodetect!',
