@@ -68,6 +68,10 @@ def archive_scan_args():
                                                   '"ask once" (once per launch), "ask each" (ask for every '
                                                   'event), default: "ask once"',
                         type=str)
+    parser.add_argument('--use-default-database', help='Usually program will ask  to manually input '
+                                                       'name of the database (with default suggestion), '
+                                                       'setting this option will silence this question and '
+                                                       'just use default value.')
     parser.add_argument('--wavetool-waveforms', help='If set, use seisan wavetool programm to generate waveforms, '
                                                      'otherwise use custom ObsPy based module, not set by default',
                         action='store_true')
@@ -117,6 +121,7 @@ def archive_scan_dictionary(args):
     """
     d_args_rules = {
         'main': {
+            'use-default-database': 'use_default_database',
             'print-params': 'print_params',
             'database': 'database',
             'rea': 'rea',
