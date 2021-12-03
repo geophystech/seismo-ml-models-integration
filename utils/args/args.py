@@ -10,6 +10,7 @@ def get_unsupported_station_parameters_list():
         # Info output and computation restriction
         'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms', 'register-events',
         'detection-stations', 'waveform-duration', 'generate-s-files', 'silence-wavetool',
+        'use-default-database',
         # Environment
         'input', 'seisan', 'mulplt-def', 'archives', 'database', 'rea', 'wav',
     ]
@@ -49,6 +50,7 @@ def defaults():
             'detections-for-event': 2,
             'generate-waveforms': 'ask once',
             'register-events': 'ask once',
+            'use-default-database': False,
             'wavetool-waveforms': False,
             'detection-stations': False,
             'time': False,

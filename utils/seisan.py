@@ -683,7 +683,36 @@ def slice_event_waveforms(event, datetime, params, stations):
         return slice_waveforms_obspy(event, datetime, params, stations)
 
 
-def ask_yes_no(question, repeat=False):
+def ask(question, default=None, validation=None):
+    """
+    Asks a question, expecting string input.
+    :param question: Question to ask. Note, that ":" and default will be automatically appended to the question
+    string.
+    :param default: Default value if input is empty. If not set, will ask for to non-empty input.
+    :param validation: Validation function: def valid_func(answer: str) -> bool.
+    :return: bool
+    """
+    if default:
+        while True:
+            print(question, f' [{default}]: ', sep='', end='')
+            answer = input().strip()
+            if validation and not validation(answer):
+                continue
+            if answer:
+                return answer
+            return default
+    if not default:
+        while True:
+            print(question, ': ', sep='', end='')
+            answer = input().strip()
+            if validation and not validation(answer):
+                continue
+            if answer:
+                return answer
+            print('Empty string is not accepted!')
+
+
+def ask_yes_no(question, repeat=True):
     """
     Asks a question with answer YES/NO. Returns True if YES, False otherwise.
     :param question - question to ask
@@ -692,9 +721,9 @@ def ask_yes_no(question, repeat=False):
         "NO" or "N", etc.)
     """
     print(question + ' [Y/N]: ', end='')
-    answer = input()
 
     while True:
+        answer = input()
         answer = answer.strip().lower()
         if answer in ['y', 'yes']:
             return True
@@ -702,7 +731,7 @@ def ask_yes_no(question, repeat=False):
             return False
         if answer in ['n', 'no']:
             return False
-
+        print('Please, enter either Y or N: ', end='')
 
 def detection_station_list(event, params):
     """
@@ -718,13 +747,12 @@ def detection_station_list(event, params):
     return unique_stations_list
 
 
-def register_event(s_file, waveform, datetime, params):
+def register_event(s_file, waveform, datetime, database, params):
     import os
     import shutil
     # os.path.join(base, new)
     rea_path = params['main', 'rea']
     wav_path = params['main', 'wav']
-    database = params['main', 'database']
 
     year = datetime.strftime('%Y')
     month = datetime.strftime('%m')
@@ -840,6 +868,8 @@ def generate_events(events, params):
     # Events registration in the database
     if params['main', 'register-events'] == 'no':
         return
+    if not len(saved_events):
+        return
 
     if not params['main', 'database']:
         print('Cannot register event(s): --database is not set and failed to autodetect!',
@@ -854,10 +884,39 @@ def generate_events(events, params):
               file=sys.stderr)
         return
 
+    b_register_event = True
     if params['main', 'register-events'] == 'yes':
         b_register_event = True
     if params['main', 'register-events'] == 'ask once':
-        b_register_event = ask_yes_no('Do you register all generated events in the database?')
+        b_register_event = ask_yes_no('Do you want to register all generated events in the database?')
+
+    if not b_register_event:
+        return
+
+    if not params['main', 'use-default-database']:
+        def database_validation(name):
+            if len(name) > 5:
+                print('Database name should be shorter than or exactly 5 characters long!')
+                return False
+            return True
+
+        database = ask('Enter target database for events registering', default=params['main', 'database'],
+                       validation=database_validation)
+
+        # Make sure database name is 5 characters long!
+        def string_filler(value, length=0, append=True, filler='_'):
+            if len(value) < length:
+                l_diff = length - len(value)
+                if append:
+                    return value + filler * l_diff
+                else:
+                    return filler * l_diff + value
+            return value
+
+        database = string_filler(database, 5)
+    else:
+        database = params['main', 'database']
+        print(f'Saving to the database {database}..')
 
     for d_event in saved_events:
         s_file = d_event['s-file']
@@ -878,4 +937,4 @@ def generate_events(events, params):
             b_register_event = ask_yes_no(question)
 
         if b_register_event:
-            register_event(s_file, waveform, datetime, params)
+            register_event(s_file, waveform, datetime, database, params)
