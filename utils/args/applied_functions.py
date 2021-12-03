@@ -69,7 +69,6 @@ def string_filler(value, _, __, length=0, append=True, filler='_'):
 
 database_filler = applied_function(length=5)(string_filler)
 
-
 def bool_converter(value, _, __):
     if value is None:
         return None
