@@ -71,7 +71,8 @@ def archive_scan_args():
     parser.add_argument('--use-default-database', help='Usually program will ask  to manually input '
                                                        'name of the database (with default suggestion), '
                                                        'setting this option will silence this question and '
-                                                       'just use default value.')
+                                                       'just use default value.',
+                        action='store_true')
     parser.add_argument('--wavetool-waveforms', help='If set, use seisan wavetool programm to generate waveforms, '
                                                      'otherwise use custom ObsPy based module, not set by default',
                         action='store_true')
