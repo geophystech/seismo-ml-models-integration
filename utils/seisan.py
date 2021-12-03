@@ -683,7 +683,7 @@ def slice_event_waveforms(event, datetime, params, stations):
         return slice_waveforms_obspy(event, datetime, params, stations)
 
 
-def ask_yes_no(question, repeat=False):
+def ask_yes_no(question, repeat=True):
     """
     Asks a question with answer YES/NO. Returns True if YES, False otherwise.
     :param question - question to ask
@@ -692,9 +692,9 @@ def ask_yes_no(question, repeat=False):
         "NO" or "N", etc.)
     """
     print(question + ' [Y/N]: ', end='')
-    answer = input()
 
     while True:
+        answer = input()
         answer = answer.strip().lower()
         if answer in ['y', 'yes']:
             return True
@@ -702,7 +702,7 @@ def ask_yes_no(question, repeat=False):
             return False
         if answer in ['n', 'no']:
             return False
-
+        print('Please, enter either Y or N: ', end='')
 
 def detection_station_list(event, params):
     """
