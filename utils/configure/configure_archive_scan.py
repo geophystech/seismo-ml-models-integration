@@ -7,8 +7,8 @@ import os
 
 def ask(question, default=None, validation=None):
     if default:
-        print(question, f' [{default}]: ', sep='', end='')
         while True:
+            print(question, f' [{default}]: ', sep='', end='')
             answer = input().strip()
             if validation and not validation(answer):
                 continue
@@ -16,8 +16,8 @@ def ask(question, default=None, validation=None):
                 return answer
             return default
     if not default:
-        print(question, ': ', sep='', end='')
         while True:
+            print(question, ': ', sep='', end='')
             answer = input().strip()
             if validation and not validation(answer):
                 continue
