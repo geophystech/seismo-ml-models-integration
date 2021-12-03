@@ -5,6 +5,9 @@ def archive_scan_args():
     Reads command-line arguments for archive_scan.py.
     """
     parser = argparse.ArgumentParser()
+    parser.add_argument('--run-configure', help='Generate config file for later uses (based on '
+                                                'automatic generation and user input).',
+                        action='store_true')
     parser.add_argument('--seisan', help='Path to SEISAN.DEF')
     parser.add_argument('--mulplt-def', help='Path to MULPLT.DEF')
     parser.add_argument('--archives', help='Path to archives directory')
@@ -117,6 +120,7 @@ def archive_scan_dictionary(args):
     """
     d_args_rules = {
         'main': {
+            'run-configure': 'run_configure',
             'print-params': 'print_params',
             'database': 'database',
             'rea': 'rea',

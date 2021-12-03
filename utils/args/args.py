@@ -57,6 +57,7 @@ def defaults():
             'start': '',
             'end': '',
             'trace-normalization': False,
+            'run-configure': False,
             'channel-order': 'N,E,Z;1,2,Z;Z,Z,Z'
         },
     }
