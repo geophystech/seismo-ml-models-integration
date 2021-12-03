@@ -856,11 +856,14 @@ def generate_events(events, params):
               file=sys.stderr)
         return
 
+    b_register_event = True
     if params['main', 'register-events'] == 'yes':
         b_register_event = True
     if params['main', 'register-events'] == 'ask once':
         b_register_event = ask_yes_no('Do you want to register all generated events in the database?')
 
+    if not b_register_event:
+        return
     for d_event in saved_events:
         s_file = d_event['s-file']
         datetime = d_event['datetime']
