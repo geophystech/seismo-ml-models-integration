@@ -4,6 +4,29 @@ from os.path import isfile
 from obspy import UTCDateTime
 
 
+def parse_seisan_params(path, params=None):
+    """
+    Reads SEISAN.DEF and parses main environment parameters (does not parse stations).
+    If params is None, then will return a dictionary with parsed data.
+    """
+    if not params:
+        d_params = []
+    pattern = 'ARC_ARCHIVE'
+    l_pattern = len(pattern)
+    with open(path, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            if line[:l_pattern] == pattern:
+                archive_path = line.split()
+                if len(archive_path) == 2:
+                    if not params:
+                        params['main', 'archives'] = archive_path[1].strip()
+                        d_params['archives'] = archive_path[1].strip()
+                break
+    if not params:
+        return d_params
+
+
 def order_group(group, channel_order):
     # Determine correct channel order group
     order = None

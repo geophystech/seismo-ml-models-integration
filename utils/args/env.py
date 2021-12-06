@@ -1,21 +1,5 @@
 import os
-
-
-def parse_seisan_def(path, params):
-    """
-    Reads SEISAN.DEF and parses main environment parameters (does not parse stations).
-    """
-    pattern = 'ARC_ARCHIVE'
-    l_pattern = len(pattern)
-    with open(path, 'r') as file:
-        lines = file.readlines()
-        for line in lines:
-            if line[:l_pattern] == pattern:
-                archive_path = line.split()
-                if len(archive_path) == 2:
-                    params['main', 'archives'] = archive_path[1].strip()
-                break
-
+from ..seisan import parse_seisan_params
 
 def parse_unix(params):
     """
@@ -36,7 +20,7 @@ def parse_unix(params):
     rea_path = os.path.join(seisan_top, 'REA')
     wav_path = os.path.join(seisan_top, 'WAV')
 
-    parse_seisan_def(seisan_path, params)
+    parse_seisan_params(seisan_path, params)
 
     if not params.key_exists(('main', 'seisan')):
         params['main', 'seisan'] = seisan_path
