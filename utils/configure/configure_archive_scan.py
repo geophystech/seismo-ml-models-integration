@@ -3,6 +3,7 @@ This module primary function is configure() which will try to generate a new con
 the archive_scan.py script run.
 """
 import os
+from ..seisan import parse_seisan_def, parse_seisan_params
 
 
 def ask_yes_no(question, repeat=True):
@@ -57,9 +58,13 @@ def configure_unix():
     default_database = ask('Enter default database name (5 or shorter characters)',
                            default_database)
 
-    # Parse stations
-    from ..seisan import parse_seisan_def
-    seisan = os.path.join()
+    seisan = os.path.join(seisan_top, 'DAT', 'SEISAN.DEF')
+    seisan = ask('Enter path to SEISAN.DEF', seisan)
+    seisan_params_parsed = parse_seisan_params(seisan)
+
+    archives = seisan_params_parsed['archives']
+    archives = ask('Enter path to top archive directory', archives)
+
 
 
 def configure():
