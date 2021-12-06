@@ -10,7 +10,7 @@ def parse_seisan_params(path, params=None):
     If params is None, then will return a dictionary with parsed data.
     """
     if not params:
-        d_params = []
+        d_params = {}
     pattern = 'ARC_ARCHIVE'
     l_pattern = len(pattern)
     with open(path, 'r') as file:
@@ -20,8 +20,9 @@ def parse_seisan_params(path, params=None):
                 archive_path = line.split()
                 if len(archive_path) == 2:
                     if not params:
-                        params['main', 'archives'] = archive_path[1].strip()
                         d_params['archives'] = archive_path[1].strip()
+                    else:
+                        params['main', 'archives'] = archive_path[1].strip()
                 break
     if not params:
         return d_params
