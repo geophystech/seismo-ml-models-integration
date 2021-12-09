@@ -141,11 +141,7 @@ def get_archives(seisan, mulplt, archives, params):
     :return:
     """
     mulplt_parsed = parse_multplt(mulplt)
-    seisan_parsed = parse_seisan_def(seisan, multplt_data=mulplt_parsed)
-
-    d_stations = []
-    for x in seisan_parsed:
-        d_stations.append(convert_station_group_to_dictionary(x))
+    d_stations = parse_seisan_def(seisan, multplt_data=mulplt_parsed)
 
     params['main', 'stations'] = d_stations
 
@@ -264,7 +260,12 @@ def parse_seisan_def(path, multplt_data=None):
                 parsed_line = [station, channel, code, location, start_date, end_date]
                 data.append(parsed_line)
 
-    return process_archives_list(data)
+    d_stations = []
+    data = process_archives_list(data)
+    for x in data:
+        d_stations.append(convert_station_group_to_dictionary(x))
+
+    return d_stations
 
 
 def date_str(year, month, day, hour=0, minute=0, second=0., microsecond=None):
