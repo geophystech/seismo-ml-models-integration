@@ -124,22 +124,65 @@ def configure_unix():
             if x['station'] == name:
                 selected_stations.append(x)
 
+    print('Selecting stations channel orders to organize model input data..')
     # Create a list of unique channels (order does not matter).
     unique_channels = []
+    for x in selected_stations:
+        channels = {component[-1] for component in x['components']}
+        if channels not in unique_channels:
+            unique_channels.append(channels)
+
     default_channel_orders = [
         ['N', 'E', 'Z'],
         ['1', '2', 'Z'],
         ['Z', 'Z', 'Z']
     ]
-    # If all stations fall into default channel orders, then just generate new MULPLT.DEF
-        # Watch for name uniqueness!
-    # If not, ask to input channel orders, to resolve unknown channels
 
-    # If stations have more than 3 channels (with the same two letters) notify about them!
+    orders_used = []
+    channels_not_fit = []
 
-    # Make sure every "component" has at least two characters: instrument and channel
+    # TODO: all raw list outputs replace by proper outputs
 
-    # Ask for a name
+    # TODO: This needs to be a separate function "validate_channel_orders" which needed to be called in the loop
+    #   ..until everything is fine, or "discard unfit stations" ("quit") option is selected.
+    for channels in unique_channels:
+        passed = False
+        for order in default_channel_orders:
+            local_passed = True
+            for x in order:
+                if x not in channels:
+                    local_passed = False
+                    break
+            if local_passed:
+                if order not in orders_used:
+                    orders_used.append(order)
+                passed = True
+                break
+
+        if not passed:
+            channels_not_fit.append(channels)
+
+    if len(channels_not_fit):
+        print('Failed to generate channel orders for some stations channels:')
+        for i, x in enumerate(channels_not_fit):
+            print(f'{i}. {x}')
+        raise NotImplementedError('Channels order input is not implemented!')
+
+    print('Selected channel orders:')
+    for i, x in enumerate(orders_used):
+        print(f'{i}. {x}')
+
+    # TODO: also do the opposite! Gather unique_channels, which will not be fully covered by orders
+    #   ..and ask to resolve them, if needed.
+    # TODO: If all stations fall into default channel orders, then just generate new MULPLT.DEF
+    #   ..watch for name uniqueness!
+    # TODO: If not, ask to input channel orders, to resolve unknown channels
+
+    # TODO: If stations have more than 3 channels (with the same two letters) notify about them!
+
+    # TODO: Make sure every "component" has at least two characters: instrument and channel
+
+    # TODO: Ask for a name
     mulplt_def = 'MULPLT.DEF'
     generate_mulplt_def('MULPLT.DEF', selected_stations, enforce_unique=True)
     print(f'Stations list saved as {mulplt_def}')
