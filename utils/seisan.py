@@ -904,3 +904,41 @@ def generate_events(events, params):
 
         if b_register_event:
             register_event(s_file, waveform, datetime, params)
+
+
+def create_unique_file(path, mode):
+    """
+    Opens a file. Ensures that provided path leads to unique filename (by adding to a filename).
+    """
+    # Split path into file names
+    # Split path into extension and name
+    n = 1
+    if not os.path.isfile(path):
+        return open(path, mode)
+    else:
+        raise NotImplementedError('Not implemented unique filename generation!')
+
+
+def generate_mulplt_def(path, stations, enforce_unique=False):
+    """
+    Generates MULPLT.DEF file based on the list of stations.
+    Each station is a dictionary (see parse_seisan_def return).
+    :param path: path to save generated file.
+    :param stations: list of station dictionaries.
+    :param enforce_unique: if True, will modify provided path, if it points to existing file.
+                           if False, will rewrite the path.
+    """
+    prefix = 'DEFAULT CHANNEL '
+    if enforce_unique:
+        f = create_unique_file(path, 'w')
+    else:
+        f = open(path, 'w')
+
+    with f:
+        for x in stations:
+            name = x['station']
+            f.write(f'[{name}]\n')
+            current_prefix = f'{prefix}{name}\t'
+            for component in x['components']:
+                f.write(f'{current_prefix}{component[:-1]} {component[-1]}\n')
+            f.write('\n')
