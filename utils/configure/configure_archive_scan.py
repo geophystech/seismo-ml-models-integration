@@ -3,8 +3,20 @@ This module primary function is configure() which will try to generate a new con
 the archive_scan.py script run.
 """
 import os
+import re
+
 from ..seisan import parse_seisan_def, parse_seisan_params, parse_multplt, generate_mulplt_def
 from . import completer
+
+
+n_channels = 3
+
+
+def generate_config(path, **kwargs):
+    print('generate_config called!')
+    print('path: ', path)
+    print('kwargs type: ', kwargs)
+    print('kwargs: ', kwargs)
 
 
 def ask_yes_no(question, repeat=True):
@@ -50,7 +62,55 @@ def ask(question, default=None, validation=None):
             print('Empty string is not accepted!')
 
 
+def validate_channels(unique_channels, channel_orders):
+    """
+    Checks if list of unique channels lists (or sets) fully covered by provided channel orders.
+    Returns tuple of two lists: list channel orders, which are covering provided channels and
+    list of station channels, which are not covered. Former being empty indicates full coverege.
+    :param unique_channels:
+    :param channel_orders:
+    :return: <orders used>, <channels not covered>
+    """
+    orders_used = []
+    channels_not_fit = []
+
+    for channels in unique_channels:
+        passed = False
+        for order in channel_orders:
+            local_passed = True
+            for x in order:
+                if x not in channels:
+                    local_passed = False
+                    break
+            if local_passed:
+                if order not in orders_used:
+                    orders_used.append(order)
+                passed = True
+                break
+
+        if not passed:
+            channels_not_fit.append(channels)
+
+    return orders_used, channels_not_fit
+
+
+def parse_channel_order(s_order):
+    """
+    Parses string to a channel order.
+    If parsing is failed, returns str with error failure description!
+    """
+    channels = re.split('\W+', s_order)
+    if len(channels) != n_channels:
+        return f'Channel order should have {n_channels} channels but has {len(channels)}!'
+    for x in channels:
+        if len(x) != 1:
+            return f'Each channel should be exactly one character long. Channel "{x}" breaks this rule!'
+    return channels
+
+
+
 def configure_unix():
+    # TODO: all raw list outputs replace by proper outputs
     completer.init()
 
     seisan_top = os.environ.get('SEISAN_TOP')
@@ -132,41 +192,47 @@ def configure_unix():
         if channels not in unique_channels:
             unique_channels.append(channels)
 
-    default_channel_orders = [
+    channel_orders = [
         ['N', 'E', 'Z'],
         ['1', '2', 'Z'],
         ['Z', 'Z', 'Z']
     ]
 
-    orders_used = []
-    channels_not_fit = []
+    while True:
 
-    # TODO: all raw list outputs replace by proper outputs
+        # TODO: Assign channel_order only on the first launch (to filter unused defaul orders)
+        channel_orders, channels_not_covered = validate_channels(unique_channels, channel_orders)
 
-    # TODO: This needs to be a separate function "validate_channel_orders" which needed to be called in the loop
-    #   ..until everything is fine, or "discard unfit stations" ("quit") option is selected.
-    for channels in unique_channels:
-        passed = False
-        for order in default_channel_orders:
-            local_passed = True
-            for x in order:
-                if x not in channels:
-                    local_passed = False
-                    break
-            if local_passed:
-                if order not in orders_used:
-                    orders_used.append(order)
-                passed = True
-                break
+        if not len(channels_not_fit):
+            break
 
-        if not passed:
-            channels_not_fit.append(channels)
-
-    if len(channels_not_fit):
         print('Failed to generate channel orders for some stations channels:')
         for i, x in enumerate(channels_not_fit):
             print(f'{i}. {x}')
-        raise NotImplementedError('Channels order input is not implemented!')
+
+        print('You can either enter channel orders manually or discard stations which are '
+              'not covered by channel orders.')
+        answer = ask('Enter a channel order (separated by commas or whitespaces) or "quit" to '
+                     'finish and discard all not covered stations')
+
+        if answer == 'quit':
+            # TODO: discard not covered channel orders
+            break
+
+        parsed_channels = parse_channel_order(answer)
+        # str return means parsing failed!
+        if type(parsed_channels) is str:
+            print(parsed_channels)
+            # TODO: Need to properly handle that error, and ask for repeated input
+            #   ..just create a validator function instead of parse_channel_order.
+            break
+
+        channel_orders.append(parsed_channels)
+        print(f'Appended channel order: {parsed_channels}')
+
+
+
+    # TODO: until everything is fine, or "discard unfit stations" ("quit") option is selected.
 
     print('Selected channel orders:')
     for i, x in enumerate(orders_used):
@@ -186,6 +252,9 @@ def configure_unix():
     mulplt_def = 'MULPLT.DEF'
     generate_mulplt_def('MULPLT.DEF', selected_stations, enforce_unique=True)
     print(f'Stations list saved as {mulplt_def}')
+
+    config_path = 'data/new_config.ini'
+
 
 
 def configure():
