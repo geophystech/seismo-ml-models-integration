@@ -310,18 +310,30 @@ if __name__ == '__main__':
                     stools.print_scores(batches, restored_scores, predicted_labels, f't{i}_b{b}')
 
                 stools.print_results(detected_peaks, params, station_name, last_station=last_saved_station)
-                last_saved_station = station_name
-                if station_name not in all_positives:
-                    all_positives[station_name] = []
 
                 # Save extensive station information for every detection for later output!
-                for x in detected_peaks:
-                    x['station'] = station
+                if input_mode:
+                    last_saved_station = None
+                    str_archives = ';'.join(l_archives)
+                    if str_archives not in all_positives:
+                        all_positives[str_archives] = []
 
-                all_positives[station_name].extend(detected_peaks)
+                    for x in detected_peaks:
+                        x['input'] = str_archives
+
+                    all_positives[str_archives].extend(detected_peaks)
+                else:
+                    last_saved_station = station_name
+                    if station_name not in all_positives:
+                        all_positives[station_name] = []
+
+                    for x in detected_peaks:
+                        x['station'] = station
+
+                    all_positives[station_name].extend(detected_peaks)
 
     # Re-write predictions files
-    stools.finalize_predictions(all_positives, params)
+    stools.finalize_predictions(all_positives, params, input_mode=input_mode)
 
     print('')
     if params['main', 'time']:
