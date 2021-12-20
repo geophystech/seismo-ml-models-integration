@@ -186,6 +186,21 @@ class Params:
         elif mode == 'other':
             self.other = merge_dictionaries(data, self.other)
 
+    def save_ini(self, path):
+        """
+        Saves Params default dictionary as .ini file.
+        :param path:
+        """
+        params_dict = self._default_dictionary()
+
+        with open(path, 'w') as f:
+            for category_name, category in params_dict.items():
+                f.write(f'[{category_name}]\n')
+                for key, value in category.items():
+                    if type(value) is bool:
+                        value = 'true' if value else 'false'
+                    f.write(f'{key} = {value}\n')
+
     def read_config(self, path, mode):
         from os.path import splitext
         _, extension = splitext(path)
