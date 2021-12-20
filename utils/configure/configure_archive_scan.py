@@ -5,7 +5,8 @@ the archive_scan.py script run.
 import os
 import re
 
-from ..seisan import parse_seisan_def, parse_seisan_params, parse_multplt, generate_mulplt_def
+from ..seisan import parse_seisan_def, parse_seisan_params, parse_multplt, \
+    generate_mulplt_def, create_unique_file
 from . import completer
 from ..params import Params
 
@@ -264,17 +265,18 @@ def configure_unix():
     # TODO: Make sure every "component" has at least two characters: instrument and channel
 
     # TODO: Ask for a name
-    mulplt_def = 'MULPLT.DEF'
+    mulplt_def = 'data/MULPLT.DEF'
     mulplt_def = generate_mulplt_def('MULPLT.DEF', selected_stations, enforce_unique=True)
     print(f'Stations list saved as {mulplt_def}')
     d_params['main']['mulplt-def'] = mulplt_def
 
-    config_path = 'config.ini'
     params = Params(config=d_params, default_dictionary='config')
-    params.save_ini(config_path)
     print('\nGenerated archive_scan.py params:')
     print(params)
 
+    config_path = 'data/config.ini'
+    config_file, config_path = create_unique_file(config_path, 'w')
+    params.save_ini(file=config_file)
 
 def configure():
     print('Running archive_scan.py configuration script!')
