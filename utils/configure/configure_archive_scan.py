@@ -112,7 +112,6 @@ def parse_channel_order(s_order):
 
 
 def configure_unix():
-    # TODO: all raw list outputs replace by proper outputs
     completer.init()
 
     d_params = {
@@ -146,7 +145,6 @@ def configure_unix():
     if len(mulplt_parsed):
         print('MULPLT.DEF found!')
         use_default_mulplt = ask_yes_no(f'Generate list of stations for scanning from {mulplt_def_env}')
-        # TODO: make a better question. Ask either use MULPLT or generate your own list
 
     print('Reading all avaliable stations from SEISAN.DEF..')
     stations = parse_seisan_def(seisan)
@@ -156,12 +154,10 @@ def configure_unix():
         station_names = [x['station'] for x in stations]
         station_names.append('quit')
         completer.set_completer(station_names)
-        # TODO: unset completer after done with stations
         print('\nTo add station to a list, enter its name, '
               'note that auto-completion avaliable by pressing TAB '
               '(or double TAB for all avaliable options).')
         print('Enter "quit" to finish the process.')
-        # TODO: also give option to just use all stations
         s_input = ''
         while s_input != 'quit':
 
@@ -210,7 +206,6 @@ def configure_unix():
 
     while True:
 
-        # TODO: Assign channel_order only on the first launch (to filter unused defaul orders)
         channel_orders, channels_not_covered = validate_channels(unique_channels, channel_orders)
 
         if not len(channels_not_covered):
@@ -226,21 +221,16 @@ def configure_unix():
                      'finish and discard all not covered stations')
 
         if answer == 'quit':
-            # TODO: discard not covered channel orders
             break
 
         parsed_channels = parse_channel_order(answer)
         # str return means parsing failed!
         if type(parsed_channels) is str:
             print(parsed_channels)
-            # TODO: Need to properly handle that error, and ask for repeated input
-            #   ..just create a validator function instead of parse_channel_order.
             break
 
         channel_orders.append(parsed_channels)
         print(f'Appended channel order: {parsed_channels}')
-
-    # TODO: until everything is fine, or "discard unfit stations" ("quit") option is selected.
 
     print('Selected channel orders:')
     s_channel_order = ''
@@ -254,17 +244,6 @@ def configure_unix():
         s_channel_order += ','.join(x)
     d_params['main']['channel-order'] = s_channel_order
 
-    # TODO: also do the opposite! Gather unique_channels, which will not be fully covered by orders
-    #   ..and ask to resolve them, if needed.
-    # TODO: If all stations fall into default channel orders, then just generate new MULPLT.DEF
-    #   ..watch for name uniqueness!
-    # TODO: If not, ask to input channel orders, to resolve unknown channels
-
-    # TODO: If stations have more than 3 channels (with the same two letters) notify about them!
-
-    # TODO: Make sure every "component" has at least two characters: instrument and channel
-
-    # TODO: Ask for a name
     mulplt_def = 'data/MULPLT.DEF'
     mulplt_def = generate_mulplt_def('MULPLT.DEF', selected_stations, enforce_unique=True)
     print(f'Stations list saved as {mulplt_def}')
