@@ -909,12 +909,13 @@ def generate_events(events, params):
 def create_unique_file(path, mode):
     """
     Opens a file. Ensures that provided path leads to unique filename (by adding to a filename).
+    :return file, path
     """
     # Split path into file names
     # Split path into extension and name
     n = 1
     if not os.path.isfile(path):
-        return open(path, mode)
+        return open(path, mode), path
     else:
         raise NotImplementedError('Not implemented unique filename generation!')
 
@@ -930,7 +931,7 @@ def generate_mulplt_def(path, stations, enforce_unique=False):
     """
     prefix = 'DEFAULT CHANNEL '
     if enforce_unique:
-        f = create_unique_file(path, 'w')
+        f, path = create_unique_file(path, 'w')
     else:
         f = open(path, 'w')
 
@@ -942,3 +943,4 @@ def generate_mulplt_def(path, stations, enforce_unique=False):
             for component in x['components']:
                 f.write(f'{current_prefix}{component[:-1]} {component[-1]}\n')
             f.write('\n')
+    return path
