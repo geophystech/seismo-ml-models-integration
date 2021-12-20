@@ -6,6 +6,7 @@ from utils.args import archive_scan as archive_scan_params
 import utils.scan_tools as stools
 from utils.seisan import get_archives
 from utils.progress_bar import ProgressBar
+from utils.configure.configure_archive_scan import configure
 
 # Silence tensorflow warnings
 import os
@@ -44,6 +45,10 @@ def get_model_ref(data, name_weights):
 if __name__ == '__main__':
 
     params = archive_scan_params()  # parse command line arguments
+
+    if params['main', 'run-configure']:
+        configure()
+        sys.exit(0)
 
     if params['main', 'print-params']:
         print(params)
