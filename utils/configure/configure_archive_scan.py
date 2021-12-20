@@ -203,11 +203,11 @@ def configure_unix():
         # TODO: Assign channel_order only on the first launch (to filter unused defaul orders)
         channel_orders, channels_not_covered = validate_channels(unique_channels, channel_orders)
 
-        if not len(channels_not_fit):
+        if not len(channels_not_covered):
             break
 
         print('Failed to generate channel orders for some stations channels:')
-        for i, x in enumerate(channels_not_fit):
+        for i, x in enumerate(channels_not_covered):
             print(f'{i}. {x}')
 
         print('You can either enter channel orders manually or discard stations which are '
@@ -235,7 +235,7 @@ def configure_unix():
     # TODO: until everything is fine, or "discard unfit stations" ("quit") option is selected.
 
     print('Selected channel orders:')
-    for i, x in enumerate(orders_used):
+    for i, x in enumerate(channel_orders):
         print(f'{i}. {x}')
 
     # TODO: also do the opposite! Gather unique_channels, which will not be fully covered by orders
