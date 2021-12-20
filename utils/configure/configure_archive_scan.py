@@ -7,6 +7,7 @@ import re
 
 from ..seisan import parse_seisan_def, parse_seisan_params, parse_multplt, generate_mulplt_def
 from . import completer
+from ..params import Params
 
 
 n_channels = 3
@@ -113,6 +114,10 @@ def configure_unix():
     # TODO: all raw list outputs replace by proper outputs
     completer.init()
 
+    d_params = {
+        'main': {}
+    }
+
     seisan_top = os.environ.get('SEISAN_TOP')
     seisan_top = ask('Enter path to top seisan directory (which contains DAT, REA, WAV, ect.)',
                      seisan_top)
@@ -120,13 +125,17 @@ def configure_unix():
     default_database = os.environ.get('DEF_BASE')
     default_database = ask('Enter default database name (5 or shorter characters)',
                            default_database)
+    d_params['main']['database'] = default_database
 
     seisan = os.path.join(seisan_top, 'DAT', 'SEISAN.DEF')
     seisan = ask('Enter path to SEISAN.DEF', seisan)
+    d_params['main']['seisan'] = seisan
+
     seisan_params_parsed = parse_seisan_params(seisan)
 
     archives = seisan_params_parsed['archives']
     archives = ask('Enter path to top archive directory', archives)
+    d_params['main']['archives'] = archives
 
     mulplt_def_env = os.path.join(seisan_top, 'DAT', 'MULPLT.DEF')
     use_default_mulplt = False
@@ -230,13 +239,19 @@ def configure_unix():
         channel_orders.append(parsed_channels)
         print(f'Appended channel order: {parsed_channels}')
 
-
-
     # TODO: until everything is fine, or "discard unfit stations" ("quit") option is selected.
 
     print('Selected channel orders:')
+    s_channel_order = ''
+    first_order = True
     for i, x in enumerate(channel_orders):
         print(f'{i}. {x}')
+        if first_order:
+            first_order = False
+        else:
+            s_channel_order += ';'
+        s_channel_order += ','.join(x)
+    d_params['main']['channel-order'] = s_channel_order
 
     # TODO: also do the opposite! Gather unique_channels, which will not be fully covered by orders
     #   ..and ask to resolve them, if needed.
@@ -250,11 +265,15 @@ def configure_unix():
 
     # TODO: Ask for a name
     mulplt_def = 'MULPLT.DEF'
-    generate_mulplt_def('MULPLT.DEF', selected_stations, enforce_unique=True)
+    mulplt_def = generate_mulplt_def('MULPLT.DEF', selected_stations, enforce_unique=True)
     print(f'Stations list saved as {mulplt_def}')
+    d_params['main']['mulplt-def'] = mulplt_def
 
-    config_path = 'data/new_config.ini'
-
+    config_path = 'config.ini'
+    params = Params(config=d_params, default_dictionary='config')
+    params.save_ini(config_path)
+    print('\nGenerated archive_scan.py params:')
+    print(params)
 
 
 def configure():
