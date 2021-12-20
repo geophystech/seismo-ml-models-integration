@@ -917,7 +917,11 @@ def create_unique_file(path, mode):
     if not os.path.isfile(path):
         return open(path, mode), path
     else:
-        raise NotImplementedError('Not implemented unique filename generation!')
+        base_path, extension = os.path.splitext(path)
+        while os.path.isfile(path):
+            path = f'{base_path}_{n}{extension}'
+            n += 1
+        return open(path, mode), path
 
 
 def generate_mulplt_def(path, stations, enforce_unique=False):
