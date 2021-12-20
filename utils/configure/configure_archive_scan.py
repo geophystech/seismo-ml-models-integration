@@ -278,6 +278,16 @@ def configure_unix():
     config_file, config_path = create_unique_file(config_path, 'w')
     params.save_ini(file=config_file)
 
+    print(f'Config saved as {config_path}\n')
+    print('USAGE (last 24 hours scan):')
+    print(f'python archive_scan.py -c {config_path}\n')
+    print('USAGE (custom time scan):')
+    print(f'python archive_scan.py -s <START_DATE> -e <END_DATE> -c {config_path}')
+    print('Date format:')
+    print('YYYY-MM-DD or YYYY-MM-DDThh:mm:ss')
+    print('2021-04-01 or 2021-04-01T12:35:50\n')
+
+
 def configure():
     print('Running archive_scan.py configuration script!')
     configure_unix()
