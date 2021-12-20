@@ -4,6 +4,30 @@ from os.path import isfile
 from obspy import UTCDateTime
 
 
+def parse_seisan_params(path, params=None):
+    """
+    Reads SEISAN.DEF and parses main environment parameters (does not parse stations).
+    If params is None, then will return a dictionary with parsed data.
+    """
+    if not params:
+        d_params = {}
+    pattern = 'ARC_ARCHIVE'
+    l_pattern = len(pattern)
+    with open(path, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            if line[:l_pattern] == pattern:
+                archive_path = line.split()
+                if len(archive_path) == 2:
+                    if not params:
+                        d_params['archives'] = archive_path[1].strip()
+                    else:
+                        params['main', 'archives'] = archive_path[1].strip()
+                break
+    if not params:
+        return d_params
+
+
 def order_group(group, channel_order):
     # Determine correct channel order group
     order = None
@@ -117,11 +141,7 @@ def get_archives(seisan, mulplt, archives, params):
     :return:
     """
     mulplt_parsed = parse_multplt(mulplt)
-    seisan_parsed = parse_seisan_def(seisan, multplt_data=mulplt_parsed)
-
-    d_stations = []
-    for x in seisan_parsed:
-        d_stations.append(convert_station_group_to_dictionary(x))
+    d_stations = parse_seisan_def(seisan, multplt_data=mulplt_parsed)
 
     params['main', 'stations'] = d_stations
 
@@ -240,7 +260,12 @@ def parse_seisan_def(path, multplt_data=None):
                 parsed_line = [station, channel, code, location, start_date, end_date]
                 data.append(parsed_line)
 
-    return process_archives_list(data)
+    d_stations = []
+    data = process_archives_list(data)
+    for x in data:
+        d_stations.append(convert_station_group_to_dictionary(x))
+
+    return d_stations
 
 
 def date_str(year, month, day, hour=0, minute=0, second=0., microsecond=None):
@@ -938,3 +963,47 @@ def generate_events(events, params):
 
         if b_register_event:
             register_event(s_file, waveform, datetime, database, params)
+            
+
+def create_unique_file(path, mode):
+    """
+    Opens a file. Ensures that provided path leads to unique filename (by adding to a filename).
+    :return file, path
+    """
+    # Split path into file names
+    # Split path into extension and name
+    n = 1
+    if not os.path.isfile(path):
+        return open(path, mode), path
+    else:
+        base_path, extension = os.path.splitext(path)
+        while os.path.isfile(path):
+            path = f'{base_path}_{n}{extension}'
+            n += 1
+        return open(path, mode), path
+
+
+def generate_mulplt_def(path, stations, enforce_unique=False):
+    """
+    Generates MULPLT.DEF file based on the list of stations.
+    Each station is a dictionary (see parse_seisan_def return).
+    :param path: path to save generated file.
+    :param stations: list of station dictionaries.
+    :param enforce_unique: if True, will modify provided path, if it points to existing file.
+                           if False, will rewrite the path.
+    """
+    prefix = 'DEFAULT CHANNEL '
+    if enforce_unique:
+        f, path = create_unique_file(path, 'w')
+    else:
+        f = open(path, 'w')
+
+    with f:
+        for x in stations:
+            name = x['station']
+            f.write(f'[{name}]\n')
+            current_prefix = f'{prefix}{name}\t'
+            for component in x['components']:
+                f.write(f'{current_prefix}{component[:-1]} {component[-1]}\n')
+            f.write('\n')
+    return path
