@@ -111,7 +111,7 @@ def combined_traces(streams, params):
     return traces
 
 
-def trim_streams(streams, station, start=None, end=None):
+def trim_streams(streams, station_name, start=None, end=None):
     """
     Trims streams to the same overall time span.
     :return: list of trimmed streams
@@ -558,7 +558,7 @@ def combine_by_filename(detections, params):
     return combined_by_filename
 
 
-def combine_detections(detections, params):
+def combine_detections(detections, params, input_mode=False):
 
     detections = combine_by_filename(detections, params)
 
@@ -579,7 +579,11 @@ def combine_detections(detections, params):
 
         for i, x in enumerate(items):
 
-            dt_range = params[x['station']['station'], 'combine-events-range']
+            if input_mode:
+                dt_range = params['main', 'combine-events-range']
+            else:
+                dt_range = params[x['station']['station'], 'combine-events-range']
+
             x_time = x['datetime']
             n_points = 1
 
@@ -611,6 +615,9 @@ def combine_detections(detections, params):
         def station_getter(x):
             return x['station']['station']
 
+        def input_getter(x):
+            return x['input']
+
         groups = []
         for i in range(len(nodes_connections_count)):
 
@@ -634,7 +641,10 @@ def combine_detections(detections, params):
                 x['avaliable'] = False
 
             if len(group):
-                group.sort(key = station_getter, reverse=True)
+                if input_mode:
+                    group.sort(key = input_getter, reverse=True)
+                else:
+                    group.sort(key = station_getter, reverse=True)
                 groups.append([group, items[idx]['datetime']])
 
         file_groups[filename] = groups
@@ -642,7 +652,7 @@ def combine_detections(detections, params):
     return file_groups
 
 
-def print_final_predictions(detections, params, upper_case=True, open_mode='w'):
+def print_final_predictions(detections, params, upper_case=True, open_mode='w', input_mode=False):
     """
     Prints final predictions into a file. As an input takes predictions, sturctured
     as dictionary, indexed by output file name, where each element is a pair:
@@ -659,7 +669,10 @@ def print_final_predictions(detections, params, upper_case=True, open_mode='w'):
 
                 for record in group:
 
-                    station = record['station']['station']
+                    if input_mode:
+                        station = record['input']
+                    else:
+                        station = record['station']['station']
                     precision = params[station, 'print-precision']
 
                     line = ''
@@ -684,15 +697,16 @@ def print_final_predictions(detections, params, upper_case=True, open_mode='w'):
                 f.write('\n')
 
 
-def finalize_predictions(detections, params, upper_case=True):
+def finalize_predictions(detections, params, upper_case=True, input_mode=False):
     """
     Prints out all predictions with additional visual enhancements.
     """
-    detections = combine_detections(detections, params)
+    detections = combine_detections(detections, params, input_mode=input_mode)
 
-    print_final_predictions(detections, params, upper_case=True)
+    print_final_predictions(detections, params, upper_case=True, input_mode=input_mode)
 
-    generate_events(detections, params)
+    if not input_mode:
+        generate_events(detections, params)
 
 
 def parse_archive_csv(path):

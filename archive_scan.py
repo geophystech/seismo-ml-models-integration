@@ -55,11 +55,13 @@ if __name__ == '__main__':
 
     if params['main', 'input']:
         archives = stools.parse_archive_csv(params['main', 'input'])  # parse archive names
+        input_mode = True
     else:
         archives = get_archives(seisan=params['main', 'seisan'],
                                 mulplt=params['main', 'mulplt-def'],
                                 archives=params['main', 'archives'],
                                 params=params)
+        input_mode = False
 
     if params['main', 'cpu']:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -149,14 +151,15 @@ if __name__ == '__main__':
 
         # Unpack
         station = d_archives['station']
+        if not station:
+            station_name = None
+        else:
+            station_name = station['station']
         l_archives = d_archives['paths']
 
         # Update progress bar parameters
         progress_bar.set_prefix_arg('archive', n_archive + 1)
-        if station:
-            progress_bar.set_prefix_arg('station', station['station'])
-        else:
-            progress_bar.set_prefix_arg('station', 'none')
+        progress_bar.set_prefix_arg('station', station_name)
 
         # Read data
         streams = []
@@ -165,17 +168,21 @@ if __name__ == '__main__':
 
         # If --plot-positives-original, save original streams
         original_streams = None
-        if params[station['station'], 'plot-positives-original']:
+        if params[station_name, 'plot-positives-original']:
             original_streams = []
             for path in l_archives:
                 original_streams.append(read(path))
 
         # Pre-process data
         for st in streams:
-            stools.pre_process_stream(st, params, station['station'])
+            stools.pre_process_stream(st, params, station_name)
 
         # Cut archives to the same length
-        streams = stools.trim_streams(streams, station, params['main', 'start'], params['main', 'end'])
+        if input_mode:
+            streams = stools.trim_streams(streams, station_name)
+        else:
+            streams = stools.trim_streams(streams, station_name, params['main', 'start'], params['main', 'end'])
+
         if not streams:
             continue
         if original_streams:
@@ -249,7 +256,7 @@ if __name__ == '__main__':
                 try:
                     scores, performance_time = stools.scan_traces(*batches,
                                                                   params=params,
-                                                                  station=station['station'],
+                                                                  station=station_name,
                                                                   original_data=original_batches)
                 except ValueError:
                     scores, performance_time = None, 0
@@ -261,7 +268,7 @@ if __name__ == '__main__':
 
                 restored_scores = stools.restore_scores(scores,
                                                         (len(batches[0]), len(model_labels)),
-                                                        params[station['station'], 'shift'])
+                                                        params[station_name, 'shift'])
 
                 # Get indexes of predicted events
                 predicted_labels = {}
@@ -275,7 +282,7 @@ if __name__ == '__main__':
                     positives = stools.get_positives(restored_scores,
                                                      positive_labels[label],
                                                      other_labels,
-                                                     threshold=params[station['station'], 'threshold'][label])
+                                                     threshold=params[station_name, 'threshold'][label])
 
                     predicted_labels[label] = positives
 
@@ -307,19 +314,31 @@ if __name__ == '__main__':
                 if params['main', 'print-scores']:
                     stools.print_scores(batches, restored_scores, predicted_labels, f't{i}_b{b}')
 
-                stools.print_results(detected_peaks, params, station['station'], last_station=last_saved_station)
-                last_saved_station = station['station']
-                if station['station'] not in all_positives:
-                    all_positives[station['station']] = []
+                stools.print_results(detected_peaks, params, station_name, last_station=last_saved_station)
 
                 # Save extensive station information for every detection for later output!
-                for x in detected_peaks:
-                    x['station'] = station
+                if input_mode:
+                    last_saved_station = None
+                    str_archives = ';'.join(l_archives)
+                    if str_archives not in all_positives:
+                        all_positives[str_archives] = []
 
-                all_positives[station['station']].extend(detected_peaks)
+                    for x in detected_peaks:
+                        x['input'] = str_archives
+
+                    all_positives[str_archives].extend(detected_peaks)
+                else:
+                    last_saved_station = station_name
+                    if station_name not in all_positives:
+                        all_positives[station_name] = []
+
+                    for x in detected_peaks:
+                        x['station'] = station
+
+                    all_positives[station_name].extend(detected_peaks)
 
     # Re-write predictions files
-    stools.finalize_predictions(all_positives, params)
+    stools.finalize_predictions(all_positives, params, input_mode=input_mode)
 
     print('')
     if params['main', 'time']:
