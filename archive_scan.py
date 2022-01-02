@@ -13,7 +13,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
-def init_progress_bar(char_length=30, char_empty='.', char_fill='=', char_point='>'):
+def init_progress_bar(char_length=30, char_empty='.', char_fill='=', char_point='>', use_station=False):
 
     progress_bar = ProgressBar()
 
@@ -23,7 +23,10 @@ def init_progress_bar(char_length=30, char_empty='.', char_fill='=', char_point=
     progress_bar.set_progress_character(char_fill)
     progress_bar.set_current_progress_char(char_point)
 
-    progress_bar.set_prefix_expression('{archive} out of {total_archives} ({station}) [')
+    if use_station:
+        progress_bar.set_prefix_expression('{archive} out of {total_archives} ({station}) [')
+    else:
+        progress_bar.set_prefix_expression('{archive} out of {total_archives} [')
     progress_bar.set_postfix_expression('] - Batch: {start} - {end}')
 
     progress_bar.set_max(traces=1., batches=1., inter=1.)
@@ -119,7 +122,10 @@ if __name__ == '__main__':
         models_data.append((params[x, 'model-name'], params[x, 'weights'], model))
 
     # Main loop
-    progress_bar = init_progress_bar()
+    if input_mode:
+        progress_bar = init_progress_bar()
+    else:
+        progress_bar = init_progress_bar(use_station=True)
     progress_bar.set_prefix_arg('total_archives', len(archives))
     total_performance_time = 0.
 
