@@ -121,7 +121,6 @@ if __name__ == '__main__':
         params[x, 'model-object'] = model
         models_data.append((params[x, 'model-name'], params[x, 'weights'], model))
 
-    # Main loop
     if input_mode:
         progress_bar = init_progress_bar()
     else:
@@ -134,9 +133,8 @@ if __name__ == '__main__':
     rejected_archives = []
     for arch in original_archives:
         try:
-            streams = []
             for path in arch["paths"]:
-                streams.append(read(path))
+                read(path)
         except FileNotFoundError:
             rejected_archives.append(arch)
         else:
