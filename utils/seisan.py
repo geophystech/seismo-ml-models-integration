@@ -1007,3 +1007,13 @@ def generate_mulplt_def(path, stations, enforce_unique=False):
                 f.write(f'{current_prefix}{component[:-1]} {component[-1]}\n')
             f.write('\n')
     return path
+
+
+def get_all_station_events(start, end):
+    """
+    Returns all events, combined by stations, for the specified date.
+    :param start:
+    :param end:
+    :return:
+    """
+    pass

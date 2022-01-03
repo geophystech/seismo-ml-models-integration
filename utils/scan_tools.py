@@ -7,7 +7,7 @@ import obspy.core as oc
 from time import time
 from obspy.core.utcdatetime import UTCDateTime
 from collections import deque
-from .seisan import generate_events
+from .seisan import generate_events, get_all_station_events
 
 
 def pre_process_stream(stream, params, station):
@@ -707,6 +707,20 @@ def finalize_predictions(detections, params, upper_case=True, input_mode=False):
 
     if not input_mode:
         generate_events(detections, params)
+
+
+def evaluate_predictions(detections, params):
+    """
+    Evaluates all predictions and determines whether they are True Positives, False Positives and also adds
+    False Negative to them. Result is then saved in the output file.
+    """
+    detections = combine_detections(detections, params, input_mode=input_mode)
+    print('Detections:')
+    print(detections)
+
+    events = get_all_station_events(params['main', 'start'], params['main', 'end'])
+    print('Events:')
+    print(events)
 
 
 def parse_archive_csv(path):

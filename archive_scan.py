@@ -46,6 +46,10 @@ if __name__ == '__main__':
                                 params=params)
         input_mode = False
 
+    if input_mode and params['main', 'evaluate']:
+        raise AttributeError('Cannot have --input and --evaluate parameters both (cannot evaluate model without seisan'
+                             ' database archive)!')
+
     if params['main', 'cpu']:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
@@ -127,8 +131,12 @@ if __name__ == '__main__':
 
     # Scan
     all_positives = archive_scan(archives, params)
+
     # Re-write predictions files
-    stools.finalize_predictions(all_positives, params, input_mode=input_mode)
+    if params['main', 'evaluate']:
+        stools.evaluate_predictions(all_positives, params)
+    else:
+        stools.finalize_predictions(all_positives, params, input_mode=input_mode)
 
     print('')
     if params['main', 'time']:
