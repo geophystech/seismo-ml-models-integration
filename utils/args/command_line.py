@@ -101,6 +101,11 @@ def archive_scan_args():
                         help='Order of channels, specify with comma separation,'
                              ' without whitespaces. It is possible to specify multiple'
                              ' configurations using semicolon as a group separator: N,E,Z;1,2,Z')
+    parser.add_argument('--evaluate',
+                        help='Run programm in evaluate mode. All the picks are now marked as: True Positive,'
+                             ' False Positive or False Negative. --combine-events-range is used to determine '
+                             ' prediction marking.',
+                        action='store_true')
     return parser.parse_args()
 
 
@@ -170,6 +175,7 @@ def archive_scan_dictionary(args):
             'mulplt-def': 'mulplt_def',
             'archives': 'archives',
             'channel-order': 'channel_order',
+            'evaluate': 'evaluate',
         },
     }
 
