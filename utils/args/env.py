@@ -1,7 +1,7 @@
 import os
 from ..seisan import parse_seisan_params
 
-def parse_unix(params):
+def archive_scan_parse_unix(params):
     """
     Parses environment variables in UNIX systems and passes them to params, if not set earlier
     (through config file or command line arguments).
@@ -33,4 +33,4 @@ def parse_unix(params):
 
 
 def archive_scan(params):
-    parse_unix(params)
+    archive_scan_parse_unix(params)
