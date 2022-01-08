@@ -137,9 +137,9 @@ def trim_streams(streams, station_name, start=None, end=None):
     cut_streams = []
 
     if max_start_time > end:
-        print(f'\nSkipping archive(s) for station {station["station"]}: archive(s) starts '
-              f'({max_start_time.strftime("%Y-%m-%d %H:%M:%S")}) after the end of the scanning window '
-              f'({end.strftime("%Y-%m-%d %H:%M:%S")})!')
+        print(f'\nSkipping archives for {station_name}: archive(s) starts '
+              f'({max_start_time.strftime("%Y-%m-%d %H:%M:%S")}) after the end of scanning window '
+              f'({max_start_time.strftime("%Y-%m-%d %H:%M:%S")})!')
         return None
     for st in streams:
         cut_streams.append(st.slice(max_start_time, min_end_time))
