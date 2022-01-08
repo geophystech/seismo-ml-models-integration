@@ -144,6 +144,11 @@ def trim_streams(streams, station_name, start=None, end=None):
     for st in streams:
         cut_streams.append(st.slice(max_start_time, min_end_time))
 
+    # Check if streams has any traces
+    for stream in cut_streams:
+        if len(stream) == 0:
+            return None
+
     return cut_streams
 
 
