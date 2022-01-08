@@ -191,9 +191,9 @@ if __name__ == '__main__':
 
         if not streams:
             if station_name:
-                print(f'Skipping station: {station_name}: no data in specified time span!', file=sys.stderr)
+                print(f'\nSkipping station: {station_name}: no data in specified time span!', file=sys.stderr)
             else:
-                print(f'Skipping archives: {d_archives}: no data in specified time span!', file=sys.stderr)
+                print(f'\nSkipping archives: {d_archives}: no data in specified time span!', file=sys.stderr)
             continue
         if original_streams:
             original_streams = stools.trim_streams(original_streams, params['main', 'start'], params['main', 'end'])
