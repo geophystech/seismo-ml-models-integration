@@ -106,6 +106,15 @@ def archive_scan_args():
                              ' False Positive or False Negative. --combine-events-range is used to determine '
                              ' prediction marking.',
                         action='store_true')
+    parser.add_argument('--false-positives',
+                        help='Path to save false positives into (format .h5). False positives will be gathered '
+                             'only if this argument is provided.', default=None)
+    parser.add_argument('--false-positives-length',
+                        help='Length of false positive picks in seconds, default: 8.0',
+                        default=8.0, type=float)
+    parser.add_argument('--false-positives-frequency',
+                        help='To which frequency (in Hz) all false positives should be transformed, default: 100',
+                        default=100, type=int)
     return parser.parse_args()
 
 
@@ -176,6 +185,9 @@ def archive_scan_dictionary(args):
             'archives': 'archives',
             'channel-order': 'channel_order',
             'evaluate': 'evaluate',
+            'false-positives': 'false_positives',
+            'false-positives-length': 'false_positives_length',
+            'false-positives-frequency': 'false_positives_frequency',
         },
     }
 

@@ -60,7 +60,8 @@ def defaults():
             'end': '',
             'trace-normalization': False,
             'run-configure': False,
-            'channel-order': 'N,E,Z;1,2,Z;Z,Z,Z'
+            'channel-order': 'N,E,Z;1,2,Z;Z,Z,Z',
+            'false-positives': None,
         },
     }
     return defs
