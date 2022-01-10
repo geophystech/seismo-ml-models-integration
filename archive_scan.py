@@ -49,6 +49,9 @@ if __name__ == '__main__':
     if input_mode and params['main', 'evaluate']:
         raise AttributeError('Cannot have --input and --evaluate parameters both (cannot evaluate model without seisan'
                              ' database archive)!')
+    if input_mode and params['main', 'false-positives']:
+        raise AttributeError('Cannot have --input and --false-positives parameters both (cannot evaluate model '
+                             'without seisan database archive)!')
 
     if params['main', 'cpu']:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -133,10 +136,11 @@ if __name__ == '__main__':
     all_positives = archive_scan(archives, params)
 
     # Re-write predictions files
+    if params['main', 'false-positives']:
+        stools.gather_false_positives(all_positives, params)
+
     if params['main', 'evaluate']:
         stools.evaluate_predictions(all_positives, params)
-    if params['main', 'false-positives']:
-        pass  # TODO: Function which gathers false positives
     else:
         stools.finalize_predictions(all_positives, params, input_mode=input_mode)
 
