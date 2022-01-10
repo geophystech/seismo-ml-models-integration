@@ -530,15 +530,17 @@ def print_results(_detected_peaks, params, station, upper_case=True, last_statio
             f.write(line)
 
 
-def combine_by_filename(detections, params):
+def combine_by_filename(detections, params, single_filename=False):
     """
-    Combines detections (represented as lists, indexed by stations) by filenames. Also adds a station key to
-        every item to preserve station information.
+    Combines detections (represented as lists, indexed by stations) by filenames.
     """
     combined_by_filename = {}
     for station, items in detections.items():
 
-        filename = params[station, 'out']
+        if single_filename:
+            filename = params['main', 'out']
+        else:
+            filename = params[station, 'out']
 
         # Convert relative filename to absolute
 
@@ -558,9 +560,10 @@ def combine_by_filename(detections, params):
     return combined_by_filename
 
 
-def combine_detections(detections, params, input_mode=False):
+def combine_detections(detections, params,
+                       input_mode=False, filename_grouping=True, combine_different_stations=True):
 
-    detections = combine_by_filename(detections, params)
+    detections = combine_by_filename(detections, params, single_filename=(not filename_grouping))
 
     file_groups = {}
     for filename, items in detections.items():
@@ -593,6 +596,10 @@ def combine_detections(detections, params, input_mode=False):
                 dt = abs(x_time - y['datetime'])
                 if dt > dt_range:
                     break
+                if not combine_different_stations and x['station']['station'] != y['station']['station']:
+                    j -= 1
+                    continue
+
                 nodes_in_range[i].appendleft(j)
                 nodes_including[j].append(i)
                 nodes_connections_count[i][1] += 1
@@ -603,6 +610,8 @@ def combine_detections(detections, params, input_mode=False):
                 dt = abs(x_time - y['datetime'])
                 if dt > dt_range:
                     break
+                if not combine_different_stations and x['station']['station'] != y['station']['station']:
+                    continue
                 nodes_in_range[i].append(j)
                 nodes_including[j].append(i)
                 nodes_connections_count[i][1] += 1
@@ -623,7 +632,7 @@ def combine_detections(detections, params, input_mode=False):
 
             group = []
             # Sort from most to least connections
-            nodes_connections_count.sort(key = connections_getter, reverse=True)
+            nodes_connections_count.sort(key=connections_getter, reverse=True)
 
             idx = nodes_connections_count[i][0]
 
@@ -724,7 +733,7 @@ def evaluate_predictions(detections, params):
     Evaluates all predictions and determines whether they are True Positives, False Positives and also adds
     False Negative to them. Result is then saved in the output file.
     """
-    detections = combine_detections(detections, params, input_mode=input_mode)
+    detections = combine_detections(detections, params)
     print('Detections:')
     print(detections)
 
