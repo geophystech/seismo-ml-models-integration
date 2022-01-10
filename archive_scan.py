@@ -135,6 +135,8 @@ if __name__ == '__main__':
     # Re-write predictions files
     if params['main', 'evaluate']:
         stools.evaluate_predictions(all_positives, params)
+    if params['main', 'false-positives']:
+        pass  # TODO: Function which gathers false positives
     else:
         stools.finalize_predictions(all_positives, params, input_mode=input_mode)
 

@@ -709,6 +709,16 @@ def finalize_predictions(detections, params, upper_case=True, input_mode=False):
         generate_events(detections, params)
 
 
+def gather_false_positives(detections, params):
+    """
+    Collects all false positives and saves them in .h5 file.
+    :param detections:
+    :param params:
+    :return:
+    """
+    pass
+
+
 def evaluate_predictions(detections, params):
     """
     Evaluates all predictions and determines whether they are True Positives, False Positives and also adds
