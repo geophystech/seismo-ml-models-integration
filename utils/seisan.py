@@ -1009,11 +1009,12 @@ def generate_mulplt_def(path, stations, enforce_unique=False):
     return path
 
 
-def get_all_station_events(start, end):
+def get_events(day, params, start=None, end=None):
     """
-    Returns all events, combined by stations, for the specified date.
-    :param start:
-    :param end:
-    :return:
+    Return all events (true positives) in specified day, if start or end specified, then all events outside
+        start-end span will be ignored.
+    Events returned as a list in which each event represented as dictionary.
+    Each dictionary fields represent a property of an event, e.g.:
+        'daytime', 'station', 'phase'
     """
-    pass
+    return []

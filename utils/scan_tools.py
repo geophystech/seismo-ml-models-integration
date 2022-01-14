@@ -7,7 +7,7 @@ import obspy.core as oc
 from time import time
 from obspy.core.utcdatetime import UTCDateTime
 from collections import deque
-from .seisan import generate_events, get_all_station_events
+from .seisan import generate_events, get_events
 
 
 def pre_process_stream(stream, params, station):
@@ -718,6 +718,38 @@ def finalize_predictions(detections, params, upper_case=True, input_mode=False):
         generate_events(detections, params)
 
 
+def combine_daily_detections(detections):
+    """
+    Combines list of detections by days. Resulting data structure is a list of dictionaries:
+    [
+        {'day': UTCDateTime, 'detections': [detections]},
+        ...
+    ]
+    """
+    combined = []
+    current_day = None
+    daily_detections = None
+    for event in detections:
+        event = event[0]  # event[1] is event's datetime, event[0] - event's detections
+        for x in event:
+            x_date = x['datetime']
+            if not current_day:
+                current_day = x_date
+                daily_detections = {'detections': []}
+            if current_day.year != x_date.year or current_day.month != x_date.month or current_day.day != x_date.day:
+                daily_detections['day'] = current_day
+                combined.append(daily_detections)
+                current_day = x_date
+                daily_detections = {'detections': []}
+            daily_detections['detections'].append(x)
+
+    if len(daily_detections['detections']):
+        daily_detections['day'] = current_day
+        combined.append(daily_detections)
+
+    return combined
+
+
 def gather_false_positives(detections, params):
     """
     Collects all false positives and saves them in .h5 file.
@@ -725,7 +757,30 @@ def gather_false_positives(detections, params):
     :param params:
     :return:
     """
-    pass
+    detections = combine_detections(detections, params, filename_grouping=False, combine_different_stations=False)
+    detections = detections[params['main', 'out']]
+
+    # Combine by days
+    detections = combine_daily_detections(detections)
+
+    # For each day - read all s-files
+    for day in detections:
+
+        true_positives = get_events(day['day'], params, start=params['main', 'start'], end=params['main', 'end'])
+
+        # Compare against picks and determine false positives
+        pass
+
+    print('\nCombined daily detections:')
+    for day in detections:
+        print(f'Day {day["day"].strftime("%Y.%m.%d")}:')
+        day = day['detections']
+        for x in day:
+            _type = x['type']
+            _datetime = x['datetime']
+            _probability = x['pseudo-probability']
+            _station = x['station']['station']
+            print(f'--- {_type}, {_probability:1.4}: {_datetime} {_station}')
 
 
 def evaluate_predictions(detections, params):
@@ -737,7 +792,7 @@ def evaluate_predictions(detections, params):
     print('Detections:')
     print(detections)
 
-    events = get_all_station_events(params['main', 'start'], params['main', 'end'])
+    # events = get_all_station_events(params['main', 'start'], params['main', 'end'])
     print('Events:')
     print(events)
 
