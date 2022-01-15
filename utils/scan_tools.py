@@ -750,6 +750,18 @@ def combine_daily_detections(detections):
     return combined
 
 
+def combine_by_filed(detections, key):
+    """
+    Combines list by filed into dictionaries
+    """
+    combined = {}
+    for x in detections:
+        key_value = x[key]
+        if key_value not in combined:
+            combined[key_value] = []
+        combined[key_value].append(x)
+    return combined
+
 def gather_false_positives(detections, params):
     """
     Collects all false positives and saves them in .h5 file.
@@ -764,12 +776,32 @@ def gather_false_positives(detections, params):
     detections = combine_daily_detections(detections)
 
     # For each day - read all s-files
+    print('s-files:')
     for day in detections:
 
         true_positives = get_events(day['day'], params, start=params['main', 'start'], end=params['main', 'end'])
+        true_positives = combine_by_filed(true_positives, 'station')
+
+        for key, value in true_positives.items():
+            print(f'{key}:')
+            for x in value:
+                print(f'---{x}')
 
         # Compare against picks and determine false positives
-        pass
+        daily_detections = day['detections']
+        false_positives = []
+        print('detections:')
+        for x in daily_detections:
+            x_datetime = x['datetime']
+            x_station = x['station']['station']
+
+            if x_station not in true_positives:
+                false_positives.append(x_datetime)
+                continue
+            failed_check = False
+            for tp in true_positives[x_station]:
+                # diff between tp['datetime'] and x_datetime
+
 
     print('\nCombined daily detections:')
     for day in detections:
