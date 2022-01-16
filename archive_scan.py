@@ -281,7 +281,7 @@ if __name__ == '__main__':
 
                 if params['main', 'time-batch']:
                     current_batch_time = {
-                        'id': f'{s_batch_start_time}..{s_batch_end_time}',
+                        'id': f'{s_batch_start_time} .. {s_batch_end_time}',
                     }
 
                 try:
@@ -381,10 +381,9 @@ if __name__ == '__main__':
     # Re-write predictions files
     stools.finalize_predictions(all_positives, params, input_mode=input_mode)
 
-    print('')
     if params['main', 'time-batch']:
         utils.print_time_batch(batch_time)
     if params['main', 'time-archive']:
         utils.print_time_archive(archives_time)
     if params['main', 'time']:
-        print(f'Total prediction time: {total_performance_time:.6} seconds')
+        print(f'\nTotal prediction time: {total_performance_time:.6} seconds')
