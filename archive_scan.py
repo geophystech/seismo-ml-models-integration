@@ -382,5 +382,9 @@ if __name__ == '__main__':
     stools.finalize_predictions(all_positives, params, input_mode=input_mode)
 
     print('')
+    if params['main', 'time-batch']:
+        utils.print_time_batch(batch_time)
+    if params['main', 'time-archive']:
+        utils.print_time_archive(archives_time)
     if params['main', 'time']:
-        print(f'Total model prediction time: {total_performance_time:.6} seconds')
+        print(f'Total prediction time: {total_performance_time:.6} seconds')
