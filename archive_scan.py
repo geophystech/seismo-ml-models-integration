@@ -7,6 +7,7 @@ import utils.scan_tools as stools
 from utils.seisan import get_archives
 from utils.progress_bar import ProgressBar
 from utils.configure.configure_archive_scan import configure
+from utils import utils
 
 # Silence tensorflow warnings
 import os
@@ -127,7 +128,11 @@ if __name__ == '__main__':
     else:
         progress_bar = init_progress_bar(use_station=True)
     progress_bar.set_prefix_arg('total_archives', len(archives))
+
+    # Performance time tracking
     total_performance_time = 0.
+    archives_time = []
+    batch_time = []
 
     original_archives = archives
     archives = []
@@ -154,6 +159,17 @@ if __name__ == '__main__':
 
     all_positives = {}
     for n_archive, d_archives in enumerate(archives):
+
+        if params['main', 'time-archive']:
+            current_archive_time = {
+                'archives': d_archives,
+                'time': 0
+            }
+        if params['main', 'time-batch']:
+            current_archive_batch_time = {
+                'archives': d_archives,
+                'batches': [],
+            }
 
         # Unpack
         station = d_archives['station']
@@ -257,11 +273,16 @@ if __name__ == '__main__':
                                         for trace in original_traces]
 
                 # Progress bar
-                progress_bar.set_postfix_arg('start',
-                                             batches[0].stats.starttime.strftime("%Y-%m-%d %H:%M:%S"))
-                progress_bar.set_postfix_arg('end',
-                                             batches[0].stats.endtime.strftime("%Y-%m-%d %H:%M:%S"))
+                s_batch_start_time = batches[0].stats.starttime.strftime("%Y-%m-%d %H:%M:%S")
+                s_batch_end_time = batches[0].stats.endtime.strftime("%Y-%m-%d %H:%M:%S")
+                progress_bar.set_postfix_arg('start', s_batch_start_time)
+                progress_bar.set_postfix_arg('end', s_batch_end_time)
                 progress_bar.print()
+
+                if params['main', 'time-batch']:
+                    current_batch_time = {
+                        'id': f'{s_batch_start_time}..{s_batch_end_time}',
+                    }
 
                 try:
                     scores, performance_time = stools.scan_traces(*batches,
@@ -272,6 +293,11 @@ if __name__ == '__main__':
                     scores, performance_time = None, 0
 
                 total_performance_time += performance_time
+                if params['main', 'time-archive']:
+                    current_archive_time['time'] += performance_time
+                if params['main', 'time-batch']:
+                    current_batch_time['time'] = performance_time
+                    current_archive_batch_time['batches'].append(current_batch_time)
 
                 if scores is None:
                     continue
@@ -346,6 +372,11 @@ if __name__ == '__main__':
                         x['station'] = station
 
                     all_positives[station_name].extend(detected_peaks)
+
+        if params['main', 'time-archive']:
+            archives_time.append(current_archive_time)
+        if params['main', 'time-batch']:
+            batch_time.append(current_archive_batch_time)
 
     # Re-write predictions files
     stools.finalize_predictions(all_positives, params, input_mode=input_mode)
