@@ -84,6 +84,9 @@ def archive_scan_args():
                                                      ' every station scan was performed on.',
                         action='store_true')
     parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
+    parser.add_argument('--time-archive', help='Print out performance time in stdout for each archive',
+                        action='store_true')
+    parser.add_argument('--time-batch', help='Print out per-batch performance time in stdout', action='store_true')
     parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
     parser.add_argument('--print-files', help='Print out all archive file names before scan',
                         action='store_true')
@@ -161,6 +164,8 @@ def archive_scan_dictionary(args):
             'print-precision': 'print_precision',
             'combine-events-range': 'combine_events_range',
             'time': 'time',
+            'time-archive': 'time_archive',
+            'time-batch': 'time_batch',
             'cpu': 'cpu',
             'print-files': 'print_files',
             'config': 'config',

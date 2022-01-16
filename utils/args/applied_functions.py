@@ -230,6 +230,8 @@ def archive_scan():
         'print-precision': [int_converter],
         'combine-events-range': [float_converter],
         'time': [bool_converter],
+        'time-archive': [bool_converter],
+        'time-batch': [bool_converter],
         'cpu': [bool_converter],
         'print-files': [bool_converter],
         'channel-order': [channel_order_converter],
