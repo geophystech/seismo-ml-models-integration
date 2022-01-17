@@ -35,6 +35,7 @@ def apply_default_weights(weight, params, key, defaults):
         return None
     return defaults[params['model-name']]
 
+
 # Type converters
 def type_converter(value, _, __, f_type):
     if value is None:
@@ -43,14 +44,17 @@ def type_converter(value, _, __, f_type):
         return value
     return f_type(value)
 
+
 int_converter = applied_function(f_type=int)(type_converter)
 float_converter = applied_function(f_type=float)(type_converter)
+
 
 # String processing
 def string_trimmer(value, _, __):
     if type(value) is not str:
         return value
     return value.strip()
+
 
 def string_filler(value, _, __, length=0, append=True, filler='_'):
     if type(value) is not str:
@@ -67,7 +71,9 @@ def string_filler(value, _, __, length=0, append=True, filler='_'):
             return filler*l_diff + value
     return value
 
+
 database_filler = applied_function(length=5)(string_filler)
+
 
 def bool_converter(value, _, __):
     if value is None:
@@ -83,10 +89,12 @@ def bool_converter(value, _, __):
             return None
     return bool(value)
 
+
 def favor_default(value, params, key):
     params = params[key]
     if not params['cnn'] and not params['gpd'] and not params['model']:
         return True
+
 
 def utc_datetime_converter(date, _, __):
     """
@@ -101,6 +109,7 @@ def utc_datetime_converter(date, _, __):
     except Exception as e:
         return None
 
+
 def start_date_default(value, _, __):
     if value is None:
         return None
@@ -108,6 +117,7 @@ def start_date_default(value, _, __):
         date = UTCDateTime()
         return UTCDateTime(f'{date.year}-{date.month}-{date.day}')
     return value
+
 
 def end_date_default(value, params, key):
     params = params[key]
@@ -121,6 +131,7 @@ def end_date_default(value, params, key):
         return date + 24 * 60 * 60 - 0.000001
     return value
 
+
 def trace_size_converter(value, params, key):
     """
     Converts trace size from seconds to samples
@@ -133,6 +144,7 @@ def trace_size_converter(value, params, key):
     if not params['frequency']:
         raise AttributeError('No frequency specified for trace-size argument!')
     return int(float(value) * params['frequency'])
+
 
 def threshold_converter(value, _, __):
     if value is None:
@@ -183,6 +195,7 @@ def threshold_converter(value, _, __):
             sys.exit(2)
 
     return threshold_labels
+
 
 def channel_order_converter(value, _, __):
     if value is None:
