@@ -1,4 +1,3 @@
-import numpy as np
 from obspy import read
 import sys
 
@@ -8,6 +7,7 @@ from utils.seisan import get_archives
 from utils.progress_bar import ProgressBar
 from utils.configure.configure_archive_scan import configure
 from utils import utils
+from time import time
 
 # Silence tensorflow warnings
 import os
@@ -132,6 +132,7 @@ if __name__ == '__main__':
     # Performance time tracking
     total_performance_time = 0.
     archives_time = []
+    archives_walltime = []
     batch_time = []
 
     original_archives = archives
@@ -163,7 +164,13 @@ if __name__ == '__main__':
         if params['main', 'time-archive']:
             current_archive_time = {
                 'archives': d_archives,
-                'time': 0
+                'time': None
+            }
+        if params['main', 'walltime-archive']:
+            current_archive_walltime = {
+                'archives': d_archives,
+                'time': None,
+                'start-time': time()
             }
         if params['main', 'time-batch']:
             current_archive_batch_time = {
@@ -294,6 +301,8 @@ if __name__ == '__main__':
 
                 total_performance_time += performance_time
                 if params['main', 'time-archive']:
+                    if current_archive_time['time'] is None:
+                        current_archive_time['time'] = 0
                     current_archive_time['time'] += performance_time
                 if params['main', 'time-batch']:
                     current_batch_time['time'] = performance_time
@@ -375,6 +384,9 @@ if __name__ == '__main__':
 
         if params['main', 'time-archive']:
             archives_time.append(current_archive_time)
+        if params['main', 'walltime-archive']:
+            current_archive_walltime['time'] = time() - current_archive_walltime['start-time']
+            archives_walltime.append(current_archive_walltime)
         if params['main', 'time-batch']:
             batch_time.append(current_archive_batch_time)
 
@@ -385,5 +397,7 @@ if __name__ == '__main__':
         utils.print_time_batch(batch_time)
     if params['main', 'time-archive']:
         utils.print_time_archive(archives_time)
+    if params['main', 'walltime-archive']:
+        utils.print_time_archive(archives_walltime, walltime=True)
     if params['main', 'time']:
         print(f'\nTotal prediction time: {total_performance_time:.6} seconds')

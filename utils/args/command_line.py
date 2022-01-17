@@ -86,7 +86,9 @@ def archive_scan_args():
     parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
     parser.add_argument('--time-archive', help='Print out performance time in stdout for each archive',
                         action='store_true')
-    parser.add_argument('--time-batch', help='Print out per-batch performance time in stdout', action='store_true')
+    parser.add_argument('--walltime-archive', help='Print out walltime per archive scan',
+                        action='store_true')
+    parser.add_argument('--time-batch', help='Print out per-batch prediction time in stdout', action='store_true')
     parser.add_argument('--cpu', help='Disable GPU usage', action='store_true')
     parser.add_argument('--print-files', help='Print out all archive file names before scan',
                         action='store_true')

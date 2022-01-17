@@ -232,6 +232,7 @@ def archive_scan():
         'time': [bool_converter],
         'time-archive': [bool_converter],
         'time-batch': [bool_converter],
+        'walltime-archive': [bool_converter],
         'cpu': [bool_converter],
         'print-files': [bool_converter],
         'channel-order': [channel_order_converter],
