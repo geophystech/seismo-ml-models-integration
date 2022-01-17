@@ -83,8 +83,8 @@ def archive_scan_args():
                                                      ' with detections, otherwise, slice from'
                                                      ' every station scan was performed on.',
                         action='store_true')
-    parser.add_argument('--time', help='Print out performance time in stdout', action='store_true')
-    parser.add_argument('--time-archive', help='Print out performance time in stdout for each archive',
+    parser.add_argument('--time', help='Print out prediction time in stdout', action='store_true')
+    parser.add_argument('--time-archive', help='Print out prediction time in stdout for each archive',
                         action='store_true')
     parser.add_argument('--walltime-archive', help='Print out walltime per archive scan',
                         action='store_true')
@@ -167,6 +167,7 @@ def archive_scan_dictionary(args):
             'combine-events-range': 'combine_events_range',
             'time': 'time',
             'time-archive': 'time_archive',
+            'walltime-archive': 'walltime_archive',
             'time-batch': 'time_batch',
             'cpu': 'cpu',
             'print-files': 'print_files',
