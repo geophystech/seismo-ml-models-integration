@@ -30,7 +30,7 @@ def init_progress_bar(char_length=30, char_empty='.', char_fill='=', char_point=
         progress_bar.set_prefix_expression('{archive} out of {total_archives} [')
     progress_bar.set_postfix_expression('] - Batch: {start} - {end}')
 
-    progress_bar.set_max(traces=1., batches=1., inter=1.)
+    progress_bar.set_max(data=1., inter=1.)
 
     return progress_bar
 
@@ -222,21 +222,20 @@ if __name__ == '__main__':
             original_streams = stools.trim_streams(original_streams, params['main', 'start'], params['main', 'end'])
 
         # Check if stream traces number is equal
-        traces_groups = stools.combined_traces(streams, params)
+        traces_groups, total_data_length = stools.combined_traces(streams, params)
+        total_data_progress = 0
 
         if params.data['invalid_combined_traces_groups']:
             print(f'\nWARNING: invalid combined traces groups detected: '
                   f'{params.data["invalid_combined_traces_groups"]}', file=sys.stderr)
 
         # Update progress bar params
-        progress_bar.change_max('traces', len(traces_groups))
-        progress_bar.set_progress(0, level='traces')
+        progress_bar.change_max('data', total_data_length)
+        progress_bar.set_progress(0, level='data')
 
         # Predict
         last_saved_station = None
         for i, traces in enumerate(traces_groups):
-
-            progress_bar.set_progress(i, level='traces')
 
             original_traces = None
             if original_streams:
@@ -255,13 +254,7 @@ if __name__ == '__main__':
 
             freq = traces[0].stats.sampling_rate
 
-            # Update progress bar parameters
-            progress_bar.change_max('batches', batch_count)
-            progress_bar.set_progress(0, level='batches')
-
             for b in range(batch_count):
-
-                progress_bar.set_progress(b, level='batches')
 
                 detected_peaks = []
 
@@ -284,6 +277,8 @@ if __name__ == '__main__':
                 s_batch_end_time = batches[0].stats.endtime.strftime("%Y-%m-%d %H:%M:%S")
                 progress_bar.set_postfix_arg('start', s_batch_start_time)
                 progress_bar.set_postfix_arg('end', s_batch_end_time)
+                total_data_progress += len(batches[0])
+                progress_bar.set_progress(total_data_progress, level='data')
                 progress_bar.print()
 
                 if params['main', 'time-batch']:

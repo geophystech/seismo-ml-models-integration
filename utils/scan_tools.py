@@ -102,8 +102,9 @@ def combined_traces(streams, params):
 
     traces = []
     params.data['invalid_combined_traces_groups'] = 0
+    total_length = 0
     for i, x in enumerate(result_time_spans):
-        sliced_traces = []
+        sliced_data = []
         for j, stream in enumerate(streams):
 
             trace = stream[x[2][j]]
@@ -111,21 +112,28 @@ def combined_traces(streams, params):
             start_pos = int((x[0] - trace.stats.starttime)*freq)
             end_pos = int((x[1] - trace.stats.starttime)*freq)
 
-            sliced_trace = obspy.Trace(trace.data[start_pos:end_pos])
-            sliced_trace.stats.starttime = x[0]
-            sliced_trace.stats.sampling_rate = freq
+            sliced_data.append((trace.data[start_pos:end_pos], x[0], freq))
 
-            sliced_traces.append(sliced_trace)
-
-        min_length = min([len(trace) for trace in sliced_traces])
-        max_length = max([len(trace) for trace in sliced_traces])
+        min_length = min([len(data[0]) for data in sliced_data])
+        max_length = max([len(data[0]) for data in sliced_data])
         length_diff = max_length - min_length
         if length_diff >= params['main', 'combine-traces-min-length-difference-error']:
             print(f'Warning: Traces of unequal length during combined_traces ({length_diff} samples difference)!',
                   file=sys.stderr)
-        traces.append(sliced_traces)
 
-    return traces
+        if length_diff:
+            sliced_data = [(data[0][:min_length], data[1], data[2]) for data in sliced_data]
+
+        sliced_traces = []
+        for data in sliced_data:
+            sliced_trace = obspy.Trace(data[0])
+            sliced_trace.stats.starttime = data[1]
+            sliced_trace.stats.sampling_rate = data[2]
+            sliced_traces.append(sliced_trace)
+        traces.append(sliced_traces)
+        total_length += min_length
+
+    return traces, total_length
 
 
 def trim_streams(streams, station_name, start=None, end=None):
