@@ -1,7 +1,9 @@
 import os
+import sys
 from operator import itemgetter
 import numpy as np
 import matplotlib.pyplot as plt
+import obspy
 from scipy.signal import find_peaks
 import obspy.core as oc
 from time import time
@@ -54,7 +56,7 @@ def combined_traces(streams, params):
     for i, stream in enumerate(streams):
         j = len(stream) - 1
         while j >= 0:
-            time_span_stacks[i].append([stream[j].stats.starttime, stream[j].stats.endtime])
+            time_span_stacks[i].append([stream[j].stats.starttime, stream[j].stats.endtime, j])
             j -= 1
     for stack in time_span_stacks:
         stack.sort(key=itemgetter(0), reverse=True)
@@ -75,8 +77,10 @@ def combined_traces(streams, params):
 
         if not spans_removed:
             # Sync spans start
+            traces_ids = []
             for stack in time_span_stacks:
                 stack[-1][0] = max_start
+                traces_ids.append(stack[-1][2])
 
             # Sync by end time
             min_end = min([stack[-1][1] for stack in time_span_stacks])
@@ -88,25 +92,38 @@ def combined_traces(streams, params):
                     stack.pop()
 
             # Create a time span if it is longer than set in variable
-            result_time_spans.append((max_start, min_end))
+            result_time_spans.append((max_start, min_end, traces_ids))
 
         for stack in time_span_stacks:
             if not len(stack):
                 spans_remaining = False
                 break
+    result_time_spans.sort(key=itemgetter(0))
 
     traces = []
     params.data['invalid_combined_traces_groups'] = 0
-    for x in result_time_spans:
-        stream_group = [stream.slice(x[0], x[1]) for stream in streams]
-        group_valid = True
-        for stream in stream_group:
-            if len(stream) != 1:
-                group_valid = False
-        if not group_valid:
-            params.data['invalid_combined_traces_groups'] += 1
-            continue
-        traces.append([stream[0] for stream in stream_group])
+    for i, x in enumerate(result_time_spans):
+        sliced_traces = []
+        for j, stream in enumerate(streams):
+
+            trace = stream[x[2][j]]
+            freq = trace.stats.sampling_rate
+            start_pos = int((x[0] - trace.stats.starttime)*freq)
+            end_pos = int((x[1] - trace.stats.starttime)*freq)
+
+            sliced_trace = obspy.Trace(trace.data[start_pos:end_pos])
+            sliced_trace.stats.starttime = x[0]
+            sliced_trace.stats.sampling_rate = freq
+
+            sliced_traces.append(sliced_trace)
+
+        min_length = min([len(trace) for trace in sliced_traces])
+        max_length = max([len(trace) for trace in sliced_traces])
+        length_diff = max_length - min_length
+        if length_diff >= params['main', 'combine-traces-min-length-difference-error']:
+            print(f'Warning: Traces of unequal length during combined_traces ({length_diff} samples difference)!',
+                  file=sys.stderr)
+        traces.append(sliced_traces)
 
     return traces
 
