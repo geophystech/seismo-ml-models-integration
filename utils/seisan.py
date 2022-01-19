@@ -2,6 +2,8 @@ import os
 import sys
 import re
 from os.path import isfile
+
+import obspy
 from obspy import UTCDateTime
 
 
@@ -690,8 +692,15 @@ def slice_waveforms_obspy(event, datetime, params, stations):
     end_datetime = start_datetime + params['main', 'waveform-duration']
 
     from os.path import isfile
+
     for station in stations:
-        path = archive_to_path(station, start_datetime, params['main', 'archives'])
+        archives = archive_to_path(station, start_datetime, params['main', 'archives'])
+        archives = order_group(archives['paths'], params[station['station'], 'channel-order'])
+        if not archives:
+            continue
+        streams = []
+        for _, path in archives['paths'].items():
+            streams.append(obspy.read(path))
 
 
 def slice_event_waveforms(event, datetime, params, stations):
