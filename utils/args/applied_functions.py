@@ -235,6 +235,9 @@ def archive_scan():
         'channel-order': [channel_order_converter],
         'print-params': [bool_converter],
         'evaluate': [bool_converter],
+        'false-positives-range': [float_converter],
+        'false-positives-length': [float_converter],
+        'false-positives-frequency': [int_converter],
     }
 
     return d_applied_functions
