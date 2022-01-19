@@ -1044,11 +1044,11 @@ def get_s_files(date, rea, start=None, end=None):
             if f_day == day:
                 files.append(os.path.join(s_path, f))
     except FileNotFoundError:
-        print(f'Skipping --false-positives for {year}-{month}-{day}: directory {s_path} not found!', file=sys.stderr)
+        print(f'\nSkipping --false-positives for {year}-{month}-{day}: directory {s_path} not found!', file=sys.stderr)
         return None
 
     if not len(files):
-        print(f'Skipping --false-positives for {year}-{month}-{day}: s-file not found!', file=sys.stderr)
+        print(f'\nSkipping --false-positives for {year}-{month}-{day}: s-file not found!', file=sys.stderr)
         return None
 
     if start or end:
@@ -1070,7 +1070,7 @@ def get_s_files(date, rea, start=None, end=None):
                 if int(f_second) == 60:
                     f_second = str(59)
             except ValueError as e:
-                print(f'--false-positives skipping file "{f}": {e}', file=sys.stderr)
+                print(f'\nWarning: --false-positives skipping file "{f}": {e}', file=sys.stderr)
                 continue
 
             # Compare dates
@@ -1079,7 +1079,7 @@ def get_s_files(date, rea, start=None, end=None):
             try:
                 utc_datetime = UTCDateTime(utc_string)
             except ValueError as e:
-                print(f'--false-positives skipping file "{f}": {e}', file=sys.stderr)
+                print(f'\nWarning: --false-positives skipping file "{f}": {e}', file=sys.stderr)
                 continue
 
             if start and start > utc_datetime:
