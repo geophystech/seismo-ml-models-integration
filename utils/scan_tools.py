@@ -842,7 +842,8 @@ def gather_false_positives(detections, params):
     for day in detections:
 
         true_positives = get_events(day['day'], params, start=params['main', 'start'], end=params['main', 'end'])
-        true_positives = combine_by_filed(true_positives, 'station')
+        if len(true_positives):
+            true_positives = combine_by_filed(true_positives, 'station')
 
         # Compare against picks and determine false positives
         daily_detections = day['detections']
