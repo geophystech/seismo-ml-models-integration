@@ -1,3 +1,4 @@
+import sys
 from obspy import read
 
 from ..progress_bar import ProgressBar
