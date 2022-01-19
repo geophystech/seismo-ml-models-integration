@@ -1264,6 +1264,8 @@ def get_events(date, params, start=None, end=None):
     rea = os.path.join(params['main', 'rea'], database)
     files = get_s_files(date, rea, start, end)
 
+    if files is None:
+        return []
     events = []
     for path in files:
         events.extend(get_events_from_s_file(path))
