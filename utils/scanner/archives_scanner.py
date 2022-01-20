@@ -1,13 +1,12 @@
 import sys
 from obspy import read
+from time import time
 
 from ..progress_bar import ProgressBar
 import utils.scan_tools as stools
 
 
-def init_progress_bar(char_length=30,
-                                   char_empty='.', char_fill='=', char_point='>',
-                                   use_station=False):
+def init_progress_bar(char_length=30, char_empty='.', char_fill='=', char_point='>', use_station=False):
 
     progress_bar = ProgressBar()
 
@@ -23,7 +22,7 @@ def init_progress_bar(char_length=30,
         progress_bar.set_prefix_expression('{archive} out of {total_archives} [')
     progress_bar.set_postfix_expression('] - Batch: {start} - {end}')
 
-    progress_bar.set_max(traces=1., batches=1., inter=1.)
+    progress_bar.set_max(data=1., inter=1.)
 
     return progress_bar
 
@@ -41,10 +40,33 @@ def archive_scan(archives, params, input_mode=False):
     else:
         progress_bar = init_progress_bar(use_station=True)
     progress_bar.set_prefix_arg('total_archives', len(archives))
+
+    # Performance time tracking
     total_performance_time = 0.
+    archives_time = []
+    archives_walltime = []
+    batch_time = []
 
     all_positives = {}
     for n_archive, d_archives in enumerate(archives):
+
+        # Time tracking
+        if params['main', 'time-archive']:
+            current_archive_time = {
+                'archives': d_archives,
+                'time': None
+            }
+        if params['main', 'walltime-archive']:
+            current_archive_walltime = {
+                'archives': d_archives,
+                'time': None,
+                'start-time': time()
+            }
+        if params['main', 'time-batch']:
+            current_archive_batch_time = {
+                'archives': d_archives,
+                'batches': [],
+            }
 
         # Unpack
         station = d_archives['station']
@@ -81,20 +103,25 @@ def archive_scan(archives, params, input_mode=False):
             streams = stools.trim_streams(streams, station_name, params['main', 'start'], params['main', 'end'])
 
         if not streams:
+            if station_name:
+                print(f'\nSkipping station: {station_name}: no data in specified time span!', file=sys.stderr)
+            else:
+                print(f'\nSkipping archives: {d_archives}: no data in specified time span!', file=sys.stderr)
             continue
         if original_streams:
             original_streams = stools.trim_streams(original_streams, params['main', 'start'], params['main', 'end'])
 
         # Check if stream traces number is equal
-        traces_groups = stools.combined_traces(streams, params)
+        traces_groups, total_data_length = stools.combined_traces(streams, params)
+        total_data_progress = 0
 
         if params.data['invalid_combined_traces_groups']:
             print(f'\nWARNING: invalid combined traces groups detected: '
                   f'{params.data["invalid_combined_traces_groups"]}', file=sys.stderr)
 
         # Update progress bar params
-        progress_bar.change_max('traces', len(traces_groups))
-        progress_bar.set_progress(0, level='traces')
+        progress_bar.change_max('data', total_data_length)
+        progress_bar.set_progress(0, level='data')
 
         # Predict
         last_saved_station = None
@@ -107,8 +134,6 @@ def archive_scan(archives, params, input_mode=False):
                 original_traces = traces
                 if traces[0].data.shape[0] != original_traces[0].data.shape[0]:
                     continue
-                    # raise AttributeError('WARNING: Traces and original_traces have different sizes, '
-                    #                      'check if preprocessing changes stream length!')
 
             # Determine batch count
             l_trace = traces[0].data.shape[0]
@@ -124,8 +149,6 @@ def archive_scan(archives, params, input_mode=False):
             progress_bar.set_progress(0, level='batches')
 
             for b in range(batch_count):
-
-                progress_bar.set_progress(b, level='batches')
 
                 detected_peaks = []
 
@@ -144,11 +167,18 @@ def archive_scan(archives, params, input_mode=False):
                                         for trace in original_traces]
 
                 # Progress bar
-                progress_bar.set_postfix_arg('start',
-                                             batches[0].stats.starttime.strftime("%Y-%m-%d %H:%M:%S"))
-                progress_bar.set_postfix_arg('end',
-                                             batches[0].stats.endtime.strftime("%Y-%m-%d %H:%M:%S"))
+                s_batch_start_time = batches[0].stats.starttime.strftime("%Y-%m-%d %H:%M:%S")
+                s_batch_end_time = batches[0].stats.endtime.strftime("%Y-%m-%d %H:%M:%S")
+                progress_bar.set_postfix_arg('start', s_batch_start_time)
+                progress_bar.set_postfix_arg('end', s_batch_end_time)
+                total_data_progress += len(batches[0])
+                progress_bar.set_progress(total_data_progress, level='data')
                 progress_bar.print()
+
+                if params['main', 'time-batch']:
+                    current_batch_time = {
+                        'id': f'{s_batch_start_time} .. {s_batch_end_time}',
+                    }
 
                 try:
                     scores, performance_time = stools.scan_traces(*batches,
@@ -159,6 +189,13 @@ def archive_scan(archives, params, input_mode=False):
                     scores, performance_time = None, 0
 
                 total_performance_time += performance_time
+                if params['main', 'time-archive']:
+                    if current_archive_time['time'] is None:
+                        current_archive_time['time'] = 0
+                    current_archive_time['time'] += performance_time
+                if params['main', 'time-batch']:
+                    current_batch_time['time'] = performance_time
+                    current_archive_batch_time['batches'].append(current_batch_time)
 
                 if scores is None:
                     continue
@@ -234,4 +271,18 @@ def archive_scan(archives, params, input_mode=False):
 
                     all_positives[station_name].extend(detected_peaks)
 
-    return all_positives
+        if params['main', 'time-archive']:
+            archives_time.append(current_archive_time)
+        if params['main', 'walltime-archive']:
+            current_archive_walltime['time'] = time() - current_archive_walltime['start-time']
+            archives_walltime.append(current_archive_walltime)
+        if params['main', 'time-batch']:
+            batch_time.append(current_archive_batch_time)
+
+    performance = {
+        'total-performance-time': total_performance_time,
+        'archives-time': archives_time,
+        'archives-walltime': archives_walltime,
+        'batch-time': batch_time,
+    }
+    return all_positives, performance
