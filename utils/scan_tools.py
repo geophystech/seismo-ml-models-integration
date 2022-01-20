@@ -1,3 +1,4 @@
+import sys
 import os
 import sys
 from operator import itemgetter
@@ -5,14 +6,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import obspy
 from scipy.signal import find_peaks
+import obspy
 import obspy.core as oc
 from time import time
-from obspy.core.utcdatetime import UTCDateTime
 from collections import deque
-from .seisan import generate_events
+from .seisan import generate_events, get_events, archive_to_path, order_group
+from . import h5_tools
 
 
-def pre_process_stream(stream, params, station):
+def pre_process_stream(stream, params, station, frequency=None):
     """
     Does preprocessing on the stream (changes it's frequency), does linear detrend and
     highpass filtering with frequency of 2 Hz.
@@ -21,6 +23,9 @@ def pre_process_stream(stream, params, station):
     stream      -- obspy.core.stream object to pre process
     frequency   -- required frequency
     """
+    if not frequency:
+        frequency = params[station, 'frequency']
+
     no_filter = params[station, 'no-filter']
     no_detrend = params[station, 'no-detrend']
 
@@ -30,7 +35,6 @@ def pre_process_stream(stream, params, station):
         # stream.filter('bandpass', freqmin=2, freqmax=5)
         stream.filter(type="highpass", freq=2)
 
-    frequency = params[station, 'frequency']
     required_dt = 1. / frequency
     dt = stream[0].stats.delta
 
@@ -560,15 +564,17 @@ def print_results(_detected_peaks, params, station, upper_case=True, last_statio
             f.write(line)
 
 
-def combine_by_filename(detections, params):
+def combine_by_filename(detections, params, single_filename=False):
     """
-    Combines detections (represented as lists, indexed by stations) by filenames. Also adds a station key to
-        every item to preserve station information.
+    Combines detections (represented as lists, indexed by stations) by filenames.
     """
     combined_by_filename = {}
     for station, items in detections.items():
 
-        filename = params[station, 'out']
+        if single_filename:
+            filename = params['main', 'out']
+        else:
+            filename = params[station, 'out']
 
         # Convert relative filename to absolute
 
@@ -588,9 +594,10 @@ def combine_by_filename(detections, params):
     return combined_by_filename
 
 
-def combine_detections(detections, params, input_mode=False):
+def combine_detections(detections, params,
+                       input_mode=False, filename_grouping=True, combine_different_stations=True):
 
-    detections = combine_by_filename(detections, params)
+    detections = combine_by_filename(detections, params, single_filename=(not filename_grouping))
 
     file_groups = {}
     for filename, items in detections.items():
@@ -623,6 +630,10 @@ def combine_detections(detections, params, input_mode=False):
                 dt = abs(x_time - y['datetime'])
                 if dt > dt_range:
                     break
+                if not combine_different_stations and x['station']['station'] != y['station']['station']:
+                    j -= 1
+                    continue
+
                 nodes_in_range[i].appendleft(j)
                 nodes_including[j].append(i)
                 nodes_connections_count[i][1] += 1
@@ -633,6 +644,8 @@ def combine_detections(detections, params, input_mode=False):
                 dt = abs(x_time - y['datetime'])
                 if dt > dt_range:
                     break
+                if not combine_different_stations and x['station']['station'] != y['station']['station']:
+                    continue
                 nodes_in_range[i].append(j)
                 nodes_including[j].append(i)
                 nodes_connections_count[i][1] += 1
@@ -653,7 +666,7 @@ def combine_detections(detections, params, input_mode=False):
 
             group = []
             # Sort from most to least connections
-            nodes_connections_count.sort(key = connections_getter, reverse=True)
+            nodes_connections_count.sort(key=connections_getter, reverse=True)
 
             idx = nodes_connections_count[i][0]
 
@@ -737,6 +750,178 @@ def finalize_predictions(detections, params, upper_case=True, input_mode=False):
 
     if not input_mode:
         generate_events(detections, params)
+
+
+def combine_daily_detections(detections):
+    """
+    Combines list of detections by days. Resulting data structure is a list of dictionaries:
+    [
+        {'day': UTCDateTime, 'detections': [detections]},
+        ...
+    ]
+    """
+    combined = []
+    current_day = None
+    daily_detections = None
+    for event in detections:
+        event = event[0]  # event[1] is event's datetime, event[0] - event's detections
+        for x in event:
+            x_date = x['datetime']
+            if not current_day:
+                current_day = x_date
+                daily_detections = {'detections': []}
+            if current_day.year != x_date.year or current_day.month != x_date.month or current_day.day != x_date.day:
+                daily_detections['day'] = current_day
+                combined.append(daily_detections)
+                current_day = x_date
+                daily_detections = {'detections': []}
+            daily_detections['detections'].append(x)
+
+    if len(daily_detections['detections']):
+        daily_detections['day'] = current_day
+        combined.append(daily_detections)
+
+    return combined
+
+
+def combine_by_filed(detections, key):
+    """
+    Combines list by filed into dictionaries
+    """
+    combined = {}
+    for x in detections:
+        key_value = x[key]
+        if key_value not in combined:
+            combined[key_value] = []
+        combined[key_value].append(x)
+    return combined
+
+
+def get_false_positive(traces_groups, start, end, params):
+    """
+    Loads data from archive, processes it and then returns as NumPy array.
+    """
+    for traces in traces_groups:
+        starttime = traces[0].stats.starttime
+        endtime = traces[0].stats.endtime
+        if starttime < start < endtime and starttime < end < endtime:
+            data = [trace.data for trace in traces]
+            data_length = int(params['main', 'false-positives-length']*params['main', 'false-positives-frequency'])
+            p_start = int((start - starttime)*params['main', 'false-positives-frequency'])
+            p_end = p_start + data_length
+            for x in data:
+                if p_end >= x.shape[0]:
+                    return None
+            sliced_data = np.zeros((data_length, len(data)))
+            for i, x in enumerate(data):
+                sliced_data[:, i] = x[p_start:p_end]
+            data = sliced_data
+            max_value = np.max(np.abs(data))
+            data /= max_value
+            return data
+    return None
+
+
+def get_archive_false_positives(station, day, dates, params):
+    """
+    Returns NumPy array of processed false positives in shape: (n_false_positives, n_samples, n_channels)
+    :param station:
+    :param dates:
+    :param params:
+    :return:
+    """
+    # Get data
+    archives = archive_to_path(station, day, params['main', 'archives'])
+    archives = order_group(archives['paths'], params[station['station'], 'channel-order'])
+    if not archives:
+        return None
+    streams = [obspy.read(path) for path in archives]
+    for st in streams:
+        pre_process_stream(st, params, station['station'], params['main', 'false-positives-frequency'])
+    streams = trim_streams(streams, station['station'], params['main', 'start'], params['main', 'end'])
+    traces_groups = combined_traces(streams, params)
+
+    data = []
+    for date in dates:
+        start = date - params['main', 'false-positives-length'] / 2
+        end = start + params['main', 'false-positives-length']
+
+        if start.day != end.day:
+            continue
+        x = get_false_positive(traces_groups, start, end, params)
+        if x is not None:
+            data.append(x)
+    return data
+
+
+def gather_false_positives(detections, params):
+    """
+    Collects all false positives and saves them in .h5 file.
+    :param detections:
+    :param params:
+    :return:
+    """
+    detections = combine_detections(detections, params, filename_grouping=False, combine_different_stations=False)
+    detections = detections[params['main', 'out']]
+
+    # Combine by days
+    detections = combine_daily_detections(detections)
+
+    # For each day - read all s-files
+    false_positives_count = 0
+    for day in detections:
+
+        true_positives = get_events(day['day'], params, start=params['main', 'start'], end=params['main', 'end'])
+        if len(true_positives):
+            true_positives = combine_by_filed(true_positives, 'station')
+
+        # Compare against picks and determine false positives
+        daily_detections = day['detections']
+        false_positives = {}
+        for x in daily_detections:
+            x_datetime = x['datetime']
+            x_station = x['station']['station']
+
+            check_passed = True
+            if x_station in true_positives:
+                for tp in true_positives[x_station]:
+                    diff = abs(tp['datetime'] - x_datetime)
+                    if diff < params['main', 'false-positives-range']:
+                        check_passed = False
+                        break
+            if check_passed:
+                if x_station not in false_positives:
+                    false_positives[x_station] = {
+                        'station': x['station'],
+                        'dates': []
+                    }
+                false_positives[x_station]['dates'].append(x_datetime)
+
+        # Check channels number
+        n_channels = None
+        for _, fp in false_positives.items():
+            station = fp['station']
+            n = len(params[station['station'], 'channel-order'])
+            if not n_channels:
+                n_channels = n
+            elif n != n_channels:
+                print('Warning: false positives picking - not equal number of channels for every station in the list!',
+                      file=sys.stderr)
+                return None
+
+        # Prepare and save false positive
+        data = []
+        for _, fp in false_positives.items():
+            x = get_archive_false_positives(fp['station'], day['day'], fp['dates'], params)
+            if x is not None:
+                data.extend(x)
+
+        # Save data
+        data = np.array(data)
+        h5_tools.write_batch(params['main', 'false-positives'], 'false-positives', data)
+        false_positives_count += data.shape[0]
+
+    print(f'\nFalse positives collected: {data.shape[0]} (saved into "{params["main", "false-positives"]}")!')
 
 
 def parse_archive_csv(path):

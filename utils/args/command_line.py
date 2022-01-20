@@ -106,6 +106,19 @@ def archive_scan_args():
                         help='Order of channels, specify with comma separation,'
                              ' without whitespaces. It is possible to specify multiple'
                              ' configurations using semicolon as a group separator: N,E,Z;1,2,Z')
+    parser.add_argument('--false-positives',
+                        help='Path to save false positives into (format .h5). False positives will be gathered '
+                             'only if this argument is provided.', default=None)
+    parser.add_argument('--false-positives-range',
+                        help='How close detection needs to be to a real event (in seconds) in order to count as '
+                             'true positive, default: 10.0 seconds',
+                        default=10.0, type=float)
+    parser.add_argument('--false-positives-length',
+                        help='Length of false positive picks in seconds, default: 8.0',
+                        default=4.0, type=float)
+    parser.add_argument('--false-positives-frequency',
+                        help='To which frequency (in Hz) all false positives should be transformed, default: 100',
+                        default=100, type=int)
     return parser.parse_args()
 
 
@@ -178,6 +191,10 @@ def archive_scan_dictionary(args):
             'mulplt-def': 'mulplt_def',
             'archives': 'archives',
             'channel-order': 'channel_order',
+            'false-positives': 'false_positives',
+            'false-positives-range': 'false_positives_range',
+            'false-positives-length': 'false_positives_length',
+            'false-positives-frequency': 'false_positives_frequency',
         },
     }
 

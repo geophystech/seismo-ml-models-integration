@@ -1,6 +1,9 @@
 import os
 import sys
+import re
 from os.path import isfile
+
+import obspy
 from obspy import UTCDateTime
 
 
@@ -689,8 +692,15 @@ def slice_waveforms_obspy(event, datetime, params, stations):
     end_datetime = start_datetime + params['main', 'waveform-duration']
 
     from os.path import isfile
+
     for station in stations:
-        path = archive_to_path(station, start_datetime, params['main', 'archives'])
+        archives = archive_to_path(station, start_datetime, params['main', 'archives'])
+        archives = order_group(archives['paths'], params[station['station'], 'channel-order'])
+        if not archives:
+            continue
+        streams = []
+        for _, path in archives['paths'].items():
+            streams.append(obspy.read(path))
 
 
 def slice_event_waveforms(event, datetime, params, stations):
@@ -814,6 +824,36 @@ def register_event(s_file, waveform, datetime, database, params):
     print(f'Saved: {full_s_file_path} and {full_waveform_path}')
 
 
+def ask_database_name(params):
+    """
+    Returns database name, based on user input or default value, based on --use-default-database argument.
+    """
+    if not params['main', 'use-default-database']:
+        def database_validation(name):
+            if len(name) > 5:
+                print('Database name should be shorter than or exactly 5 characters long!')
+                return False
+            return True
+
+        database = ask('Enter target database for events registering', default=params['main', 'database'],
+                       validation=database_validation)
+
+        # Make sure database name is 5 characters long!
+        def string_filler(value, length=0, append=True, filler='_'):
+            if len(value) < length:
+                l_diff = length - len(value)
+                if append:
+                    return value + filler * l_diff
+                else:
+                    return filler * l_diff + value
+            return value
+
+        database = string_filler(database, 5)
+    else:
+        database = params['main', 'database']
+    return database
+
+
 def generate_events(events, params):
     """
     Generates s-files for detections.
@@ -918,30 +958,8 @@ def generate_events(events, params):
     if not b_register_event:
         return
 
-    if not params['main', 'use-default-database']:
-        def database_validation(name):
-            if len(name) > 5:
-                print('Database name should be shorter than or exactly 5 characters long!')
-                return False
-            return True
-
-        database = ask('Enter target database for events registering', default=params['main', 'database'],
-                       validation=database_validation)
-
-        # Make sure database name is 5 characters long!
-        def string_filler(value, length=0, append=True, filler='_'):
-            if len(value) < length:
-                l_diff = length - len(value)
-                if append:
-                    return value + filler * l_diff
-                else:
-                    return filler * l_diff + value
-            return value
-
-        database = string_filler(database, 5)
-    else:
-        database = params['main', 'database']
-        print(f'Saving to the database {database}..')
+    database = ask_database_name(params)
+    print(f'Saving to the database {database}..')
 
     for d_event in saved_events:
         s_file = d_event['s-file']
@@ -1007,3 +1025,249 @@ def generate_mulplt_def(path, stations, enforce_unique=False):
                 f.write(f'{current_prefix}{component[:-1]} {component[-1]}\n')
             f.write('\n')
     return path
+
+
+def get_s_files(date, rea, start=None, end=None):
+    """
+    Return list of all s-file paths for specified day, if start or end specified, then all s-files outside
+        start-end span will be ignored.
+    """
+    year = date.strftime('%Y')
+    month = date.strftime('%m')
+    day = date.strftime('%d')
+    s_path = os.path.join(rea, year, month)
+
+    try:
+        files = []
+        for f in os.listdir(s_path):
+            f_day = f[:2]
+            if f_day == day:
+                files.append(os.path.join(s_path, f))
+    except FileNotFoundError:
+        print(f'\nSkipping --false-positives for {year}-{month}-{day}: directory {s_path} not found!', file=sys.stderr)
+        return None
+
+    if not len(files):
+        print(f'\nSkipping --false-positives for {year}-{month}-{day}: s-file not found!', file=sys.stderr)
+        return None
+
+    if start or end:
+        filtered_files = []
+        for f in files:
+            # Extract event date
+            f_basename = os.path.basename(f)
+
+            f_hour = f_basename[3:5]
+            f_minute = f_basename[5:7]
+            f_second = f_basename[8:10]
+
+            # Check if date-time is overflowed
+            try:
+                if int(f_hour) == 24:
+                    f_hour = str(23)
+                if int(f_minute) == 60:
+                    f_minute = str(59)
+                if int(f_second) == 60:
+                    f_second = str(59)
+            except ValueError as e:
+                print(f'\nWarning: --false-positives skipping file "{f}": {e}', file=sys.stderr)
+                continue
+
+            # Compare dates
+            utc_string = f'{year}-{month}-{day}T{f_hour}:{f_minute}:{f_second}'
+
+            try:
+                utc_datetime = UTCDateTime(utc_string)
+            except ValueError as e:
+                print(f'\nWarning: --false-positives skipping file "{f}": {e}', file=sys.stderr)
+                continue
+
+            if start and start > utc_datetime:
+                continue
+            if end and utc_datetime > end:
+                continue
+            filtered_files.append(f)
+        files = filtered_files
+
+    return files
+
+
+def get_meta(lines):
+    """
+    Returns event metadata
+    :param lines:
+    :return:
+    """
+    head = lines[0]
+
+    # Magnitude
+    magnitude = head[55:59].strip()
+    if len(magnitude):
+        magnitude = float(magnitude)
+    else:
+        magnitude = None
+
+    magnitude_type = head[59]
+
+    # Locale
+    loc = head[21]
+    if loc != 'L':
+        raise AttributeError(f'Unsupported locale type "{loc}"! Skipping..')
+
+    # Depth
+    depth = head[38:43].strip()  # in Km
+    if len(depth):
+        depth = float(depth)
+    else:
+        depth = None
+
+    # Parse ID
+    event_id = None
+    q_id = re.compile(r'\bID:')
+    for line in lines:
+
+        f_iter = q_id.finditer(line)
+
+        found = False
+        for match in f_iter:
+            span = match.span()
+
+            if span == (57, 60):
+                found = True
+                break
+
+        if not found:
+            continue
+
+        event_id = line[span[1] : span[1] + 14]
+        break
+
+    return magnitude, magnitude_type, loc, depth, event_id
+
+
+def parse_detections(detections, year, month, day, event_id, magnitude):
+    """
+    Parses s-file station detections table and returns list of event objects.
+    """
+    events = []
+    for i, line in enumerate(detections):
+
+        if not len(line.strip()):
+            continue
+
+        # Read detection parameters
+        try:
+            station = line[1:6].strip()
+            instrument = line[6]
+            phase = line[10:14].strip()
+            hour = int(line[18:20].strip())
+            minute = int(line[20:22].strip())
+            second = float(line[22:28].strip())
+        except ValueError as e:
+            continue
+
+        # Filter events
+
+        # Sometimes it's just more than 60 seconds in a minute with SEISAN..
+        if second >= 60.:
+
+            minute_add = second // 60
+            second = (second % 60)
+
+            minute += minute_add
+            minute = int(minute)
+
+        if minute >= 60:
+
+            if hour != 23:
+                minute = 0
+                hour += 1
+            else:
+                minute = 59
+
+            minute = int(minute)
+            hour = int(hour)
+
+        if hour >= 24:
+            continue
+
+        datetime = UTCDateTime(date_str(year, month, day, hour, minute, second))
+
+        event = {
+            'event_id': event_id,
+            'station': station,
+            'datetime': datetime,
+            'phase': phase,
+            'instrument': instrument
+        }
+        events.append(event)
+
+    return events
+
+
+def get_events_from_s_file(path, start=None, end=None):
+    """
+    Return all events (true positives) from specified s-file, if start or end specified, then all events outside
+        start-end span will be ignored.
+    Events returned as a list in which each pick represented as dictionary.
+    Each dictionary fields represent a property of a pick, e.g.:
+        'daytime', 'station', 'phase'
+    """
+    # Read file if possible
+    try:
+        with open(path, 'r') as f:
+            lines = f.readlines()
+    except UnicodeDecodeError:
+        return []
+    except FileNotFoundError:
+        return []
+
+    # Parse event properties
+    magnitude, magnitude_type, loc, depth, event_id = get_meta(lines)
+
+    if event_id:
+        year = int(event_id[:4])
+        month = int(event_id[4:6])
+        day = int(event_id[6:8])
+    else:
+        year = None
+        month = None
+        day = None
+
+    # Find station detections table
+    table_head = ' STAT SP IPHASW D HRMM SECON CODA AMPLIT PERI AZIMU VELO AIN AR TRES W  DIS CAZ7'
+    detections_table = n_detections_table = None
+    for i, l in enumerate(lines):
+
+        if l[:len(table_head)] == table_head:
+            detections_table = lines[i + 1:]
+            n_detections_table = i + 1 + 1  # + 1 - because number should start with 1
+    # Parse detections
+    events = parse_detections(detections_table, year, month, day, event_id, magnitude)
+
+    return events
+
+
+def get_events(date, params, start=None, end=None):
+    """
+    Return all events (true positives) in specified day, if start or end specified, then all events outside
+        start-end span will be ignored.
+    Events returned as a list in which each event represented as dictionary.
+    Each dictionary fields represent a property of an event, e.g.:
+        'daytime', 'station', 'phase'
+    """
+    if not params['main', 'rea']:
+        # TODO: this error should be moved to the beginning of the script, no exceptions at the very end of the script!
+        raise AttributeError('"rea" option/parameter is not set! "rea" is required for database events reading!')
+
+    database = ask_database_name(params)
+    rea = os.path.join(params['main', 'rea'], database)
+    files = get_s_files(date, rea, start, end)
+
+    if files is None:
+        return []
+    events = []
+    for path in files:
+        events.extend(get_events_from_s_file(path))
+
+    return events

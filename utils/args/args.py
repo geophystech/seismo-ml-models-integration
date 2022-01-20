@@ -62,6 +62,7 @@ def defaults():
             'run-configure': False,
             'channel-order': 'N,E,Z;1,2,Z;Z,Z,Z',
             'combine-traces-min-length-difference-error': 3,
+            'false-positives': None,
         },
     }
     return defs
