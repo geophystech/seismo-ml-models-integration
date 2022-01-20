@@ -894,20 +894,6 @@ def gather_false_positives(detections, params):
     print(f'\nFalse positives collected: {data.shape[0]} (saved into "{params["main", "false-positives"]}")!')
 
 
-def evaluate_predictions(detections, params):
-    """
-    Evaluates all predictions and determines whether they are True Positives, False Positives and also adds
-    False Negative to them. Result is then saved in the output file.
-    """
-    detections = combine_detections(detections, params)
-    print('Detections:')
-    print(detections)
-
-    # events = get_all_station_events(params['main', 'start'], params['main', 'end'])
-    print('Events:')
-    print(events)
-
-
 def parse_archive_csv(path):
     """
     Parses archives names file. Returns list of filename lists: [[archive1, archive2, archive3], ...]
