@@ -122,10 +122,7 @@ if __name__ == '__main__':
     if params['main', 'false-positives']:
         stools.gather_false_positives(all_positives, params)
 
-    if params['main', 'evaluate']:
-        stools.evaluate_predictions(all_positives, params)
-    else:
-        stools.finalize_predictions(all_positives, params, input_mode=input_mode)
+    stools.finalize_predictions(all_positives, params, input_mode=input_mode)
 
     print('')
     if params['main', 'time']:
