@@ -839,7 +839,7 @@ def get_archive_false_positives(station, day, dates, params):
     for st in streams:
         pre_process_stream(st, params, station['station'], params['main', 'false-positives-frequency'])
     streams = trim_streams(streams, station['station'], params['main', 'start'], params['main', 'end'])
-    traces_groups = combined_traces(streams, params)
+    traces_groups, _ = combined_traces(streams, params)
 
     data = []
     for date in dates:
