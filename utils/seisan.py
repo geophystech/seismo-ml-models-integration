@@ -1223,7 +1223,10 @@ def get_events_from_s_file(path, start=None, end=None):
         return []
 
     # Parse event properties
-    magnitude, magnitude_type, loc, depth, event_id = get_meta(lines)
+    try:
+        magnitude, magnitude_type, loc, depth, event_id = get_meta(lines)
+    except Exception:
+        return []
 
     if event_id:
         year = int(event_id[:4])
