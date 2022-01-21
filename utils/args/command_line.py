@@ -105,7 +105,7 @@ def archive_scan_args():
     parser.add_argument('--channel-order',
                         help='Order of channels, specify with comma separation,'
                              ' without whitespaces. It is possible to specify multiple'
-                             ' configurations using semicolon as a group separator: N,E,Z;1,2,Z')
+                             ' configurations using semicolon as a group separator, default: "N,E,Z;1,2,Z;Z,Z,Z"')
     parser.add_argument('--false-positives',
                         help='Path to save false positives into (format .h5). False positives will be gathered '
                              'only if this argument is provided.', default=None)
