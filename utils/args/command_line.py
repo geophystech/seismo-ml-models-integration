@@ -33,7 +33,7 @@ def archive_scan_args():
     parser.add_argument('--trace-size', help='Length of loaded and processed seismic data stream, '
                                              'default: 600 seconds',
                         type=float)
-    parser.add_argument('--shift', help='Sliding windows shift, default: 40 samples (40 ms)',
+    parser.add_argument('--shift', help='Sliding windows shift, default: 10 samples (10 ms)',
                         type=int)
     parser.add_argument('--frequency', help='Model data required frequency, default: 100 Hz', type=float)
     parser.add_argument('--features-number', help='Model single channel input length, default: 400 samples',
