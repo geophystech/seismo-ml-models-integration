@@ -703,9 +703,18 @@ def print_final_predictions(detections, params, upper_case=True, open_mode='w', 
     Group of positives is a list of positive predictions. Each prediction is a dictionary of fields,
     describing the prediction (datetime, station, etc.).
     """
+    groups_started = False
+    singles_started = False
     for filename, groups in detections.items():
         with open(filename, 'w') as f:
             for group, datetime in groups:
+
+                if not groups_started and len(group) > 1:
+                    f.write(f'***COMBINED EVENTS***\n\n')
+                    groups_started = True
+                if not singles_started and len(group) == 1:
+                    f.write(f'***SINGLE DETECTIONS***\n\n')
+                    singles_started = True
 
                 s_datetime = datetime.strftime("%Y-%m-%d %H:%M:%S.%f").rstrip('0')
                 f.write(f'[{s_datetime}]\n')
