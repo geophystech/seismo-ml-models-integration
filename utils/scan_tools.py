@@ -740,11 +740,36 @@ def print_final_predictions(detections, params, upper_case=True, open_mode='w', 
                 f.write('\n')
 
 
+def split_detections(detections, params, input_mode=False):
+
+    r_detections = {}
+    for filename, groups in detections.items():
+
+        r_groups = []
+        r_singles = []
+        for group, datetime in groups:
+            if len(group) > 1:
+                r_groups.append((group, datetime))
+            else:
+                r_singles.append((group, datetime))
+
+        def get_datetime(item):
+            return item[1]
+
+        r_groups.sort(key=get_datetime)
+        r_singles.sort(key=get_datetime)
+        r_detections[filename] = [*r_groups, *r_singles]
+
+    return r_detections
+
+
 def finalize_predictions(detections, params, upper_case=True, input_mode=False):
     """
     Prints out all predictions with additional visual enhancements.
     """
     detections = combine_detections(detections, params, input_mode=input_mode)
+
+    detections = split_detections(detections, params, input_mode=input_mode)
 
     print_final_predictions(detections, params, upper_case=True, input_mode=input_mode)
 
