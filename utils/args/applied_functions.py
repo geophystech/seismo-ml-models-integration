@@ -254,6 +254,10 @@ def archive_scan():
         'false-positives-range': [float_converter],
         'false-positives-length': [float_converter],
         'false-positives-frequency': [int_converter],
+        'advanced-search': [bool_converter],
+        'advanced-search-range': [float_converter],
+        'advanced-search-threshold': [threshold_converter],
+        'advanced-search-shift': [int_converter]
     }
 
     return d_applied_functions

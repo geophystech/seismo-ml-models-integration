@@ -119,6 +119,18 @@ def archive_scan_args():
     parser.add_argument('--false-positives-frequency',
                         help='To which frequency (in Hz) all false positives should be transformed, default: 100',
                         default=100, type=int)
+    parser.add_argument('--advanced-search',
+                        help='Activate advanced search (performs an additional search around detected events, '
+                             'see --combine-events-range), default: False',
+                        action='store_true')
+    parser.add_argument('--advanced-search-range',
+                        help='Range (in seconds) around detected event in which perform advanced search, '
+                             'default: 40 seconds',
+                        type=float)
+    parser.add_argument('--advanced-search-threshold',
+                        help='Positive prediction threshold for advanced search, default: 0.90')
+    parser.add_argument('--advanced-search-shift',
+                        help='Sliding windows shift for advanced search, default: 1 sample (1 ms)')
     return parser.parse_args()
 
 
@@ -195,6 +207,10 @@ def archive_scan_dictionary(args):
             'false-positives-range': 'false_positives_range',
             'false-positives-length': 'false_positives_length',
             'false-positives-frequency': 'false_positives_frequency',
+            'advanced-search': 'advanced_search',
+            'advanced-search-range': 'advanced_search_range',
+            'advanced-search-threshold': 'advanced_search_threshold',
+            'advanced-search-shift': 'advanced_search_shift'
         },
     }
 
