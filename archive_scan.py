@@ -119,7 +119,8 @@ if __name__ == '__main__':
     if params['main', 'false-positives']:
         stools.gather_false_positives(all_positives, params)
 
-    stools.finalize_predictions(all_positives, params, input_mode=input_mode)
+    all_positives, events = stools.finalize_predictions(all_positives, params, input_mode=input_mode)
+    stools.output_predictions(all_positives, params, input_mode=input_mode)
 
     if params['main', 'time-batch']:
         utils.print_time_batch(performance['batch-time'])

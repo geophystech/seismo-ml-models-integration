@@ -772,14 +772,33 @@ def split_detections(detections, params, input_mode=False):
     return r_detections
 
 
-def finalize_predictions(detections, params, upper_case=True, input_mode=False):
+def generate_events_input_mode(detections, params):
+    """
+    Returns a list of potential events (for input_mode detections).
+    """
+    all_events = []
+    for filename, groups in detections.items():
+        for group, datetime in groups:
+            if len(group) >= params['main', 'detections-for-event']:
+                all_events.append({'datetime': datetime, 'detections': group})
+    return all_events
+
+
+def finalize_predictions(detections, params, input_mode=False):
     """
     Prints out all predictions with additional visual enhancements.
     """
     detections = combine_detections(detections, params, input_mode=input_mode)
-
     detections = split_detections(detections, params, input_mode=input_mode)
+    events = generate_events_input_mode(detections, params)
 
+    return detections, events
+
+
+def output_predictions(detections, params, input_mode=False):
+    """
+    Prints out all predictions with additional visual enhancements.
+    """
     print_final_predictions(detections, params, upper_case=True, input_mode=input_mode)
 
     if not input_mode:
