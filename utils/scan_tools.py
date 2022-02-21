@@ -1,10 +1,7 @@
 import sys
-import os
-import sys
 from operator import itemgetter
 import numpy as np
 import matplotlib.pyplot as plt
-import obspy
 from scipy.signal import find_peaks
 import obspy
 import obspy.core as oc
