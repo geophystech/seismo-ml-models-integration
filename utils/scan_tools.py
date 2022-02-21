@@ -564,138 +564,109 @@ def print_results(_detected_peaks, params, station, upper_case=True, last_statio
             f.write(line)
 
 
-def combine_by_filename(detections, params, single_filename=False):
+def combine_detections(detections, params, input_mode, combine_different_stations=True):
     """
-    Combines detections (represented as lists, indexed by stations) by filenames.
+    Combines detections using combine-events-range parameter
+    :param combine_different_stations:
+    :param detections:
+    :param params:
+    :param input_mode:
+    :return:
     """
-    combined_by_filename = {}
-    for station, items in detections.items():
+    # Add true flag to every event
+    for detection in detections:
+        detection['avaliable'] = True
 
-        if single_filename:
-            filename = params['main', 'out']
+    # Build three lists:
+    # All nodes within that node range
+    nodes_in_range = [deque([i]) for i in range(len(detections))]
+    # All nodes which include this node in their range
+    nodes_including = [[] for _ in range(len(detections))]
+    # Amount of connections node has, paired with id
+    nodes_connections_count = [[i, 1] for i in range(len(detections))]
+
+    for i, detection_x in enumerate(detections):
+
+        if input_mode:
+            dt_range = params['main', 'combine-events-range']
         else:
-            filename = params[station, 'out']
+            dt_range = params[detection_x['station']['station'], 'combine-events-range']
 
-        # Convert relative filename to absolute
+        detection_time = detection_x['datetime']
 
-        # Combine
-        if filename not in combined_by_filename:
-            combined_by_filename[filename] = []
-
-        combined_by_filename[filename].extend(items)
-
-    # Sort by datetime
-    def datetime_getter(x):
-        return x['datetime']
-
-    for _, items in combined_by_filename.items():
-        items.sort(key=datetime_getter)
-
-    return combined_by_filename
-
-
-def combine_detections(detections, params,
-                       input_mode=False, filename_grouping=True, combine_different_stations=True):
-
-    detections = combine_by_filename(detections, params, single_filename=(not filename_grouping))
-
-    file_groups = {}
-    for filename, items in detections.items():
-
-        # Add true flag to every event
-        for x in items:
-            x['avaliable'] = True
-
-        # Build three lists:
-        # All nodes within that node range
-        nodes_in_range = [deque([i]) for i in range(len(items))]
-        # All nodes which include this node in their range
-        nodes_including = [[] for _ in range(len(items))]
-        # Amount of connections node has, paired with id
-        nodes_connections_count = [[i, 1] for i in range(len(items))]
-
-        for i, x in enumerate(items):
-
-            if input_mode:
-                dt_range = params['main', 'combine-events-range']
-            else:
-                dt_range = params[x['station']['station'], 'combine-events-range']
-
-            x_time = x['datetime']
-            n_points = 1
-
-            j = i - 1
-            while j >= 0:
-                y = items[j]
-                dt = abs(x_time - y['datetime'])
-                if dt > dt_range:
-                    break
-                if not combine_different_stations and x['station']['station'] != y['station']['station']:
-                    j -= 1
-                    continue
-
-                nodes_in_range[i].appendleft(j)
-                nodes_including[j].append(i)
-                nodes_connections_count[i][1] += 1
+        j = i - 1
+        while j >= 0:
+            detection_y = detections[j]
+            dt = abs(detection_time - detection_y['datetime'])
+            if dt > dt_range:
+                break
+            if not combine_different_stations and detection_x['station']['station'] != detection_y['station']['station']:
                 j -= 1
+                continue
 
-            for j in range(i + 1, len(items)):
-                y = items[j]
-                dt = abs(x_time - y['datetime'])
-                if dt > dt_range:
-                    break
-                if not combine_different_stations and x['station']['station'] != y['station']['station']:
-                    continue
-                nodes_in_range[i].append(j)
-                nodes_including[j].append(i)
-                nodes_connections_count[i][1] += 1
+            nodes_in_range[i].appendleft(j)
+            nodes_including[j].append(i)
+            nodes_connections_count[i][1] += 1
+            j -= 1
 
-        # Sorting by second item
-        def connections_getter(x):
-            return x[1]
+        for j in range(i + 1, len(detections)):
+            detection_y = detections[j]
+            dt = abs(detection_time - detection_y['datetime'])
+            if dt > dt_range:
+                break
+            if not combine_different_stations and detection['station']['station'] != detection_y['station']['station']:
+                continue
+            nodes_in_range[i].append(j)
+            nodes_including[j].append(i)
+            nodes_connections_count[i][1] += 1
 
-        # Sorting by station
-        def station_getter(x):
-            return x['station']['station']
+    # Sorting by second item
+    def connections_getter(x):
+        return x[1]
 
-        def input_getter(x):
-            return x['input']
+    # Sorting by station
+    def station_getter(x):
+        return x['station']['station']
 
-        groups = []
-        for i in range(len(nodes_connections_count)):
+    def input_getter(x):
+        return x['input']
 
-            group = []
-            # Sort from most to least connections
-            nodes_connections_count.sort(key=connections_getter, reverse=True)
+    groups = []
+    for i in range(len(nodes_connections_count)):
 
-            idx = nodes_connections_count[i][0]
+        group = []
+        # Sort from most to least connections
+        nodes_connections_count.sort(key=connections_getter, reverse=True)
 
-            for in_idx in nodes_in_range[idx]:
+        idx = nodes_connections_count[i][0]
 
-                x = items[in_idx]
-                if not x['avaliable']:
-                    continue
+        for in_idx in nodes_in_range[idx]:
 
-                group.append(x)
-                # Remove positive from other groups
-                for j in range(i + 1, len(nodes_connections_count)):
-                    if nodes_connections_count[j][0] in nodes_including[idx]:
-                        nodes_connections_count[j][1] -= 1
-                x['avaliable'] = False
+            detection = detections[in_idx]
+            if not detection['avaliable']:
+                continue
 
-            if len(group):
-                if input_mode:
-                    group.sort(key = input_getter, reverse=True)
-                else:
-                    group.sort(key = station_getter, reverse=True)
-                groups.append([group, items[idx]['datetime']])
+            group.append(detection)
+            # Remove positive from other groups
+            for j in range(i + 1, len(nodes_connections_count)):
+                if nodes_connections_count[j][0] in nodes_including[idx]:
+                    nodes_connections_count[j][1] -= 1
+            detection['avaliable'] = False
 
-        file_groups[filename] = groups
+        if len(group):
+            if input_mode:
+                group.sort(key=input_getter, reverse=True)
+            else:
+                group.sort(key=station_getter, reverse=True)
+            groups.append({
+                'detections': group,
+                'datetime': detections[idx]['datetime']
+            })
 
-    return file_groups
+    return groups
 
 
-def print_final_predictions(detections, params, upper_case=True, open_mode='w', input_mode=False):
+def print_final_predictions(detections, events, params, upper_case=True, open_mode='w', input_mode=False):
     """
     Prints final predictions into a file. As an input takes predictions, sturctured
     as dictionary, indexed by output file name, where each element is a pair:
@@ -772,15 +743,15 @@ def split_detections(detections, params, input_mode=False):
     return r_detections
 
 
-def generate_events_input_mode(detections, params):
+def select_events(detections, params):
     """
-    Returns a list of potential events (for input_mode detections).
+    Returns a list of potential events from detections
     """
     all_events = []
-    for filename, groups in detections.items():
-        for group, datetime in groups:
-            if len(group) >= params['main', 'detections-for-event']:
-                all_events.append({'datetime': datetime, 'detections': group})
+    for group in detections:
+        actual_group = group['detections']
+        if len(actual_group) >= params['main', 'detections-for-event']:
+            all_events.append(group)
     return all_events
 
 
@@ -789,17 +760,17 @@ def finalize_predictions(detections, params, input_mode=False):
     Prints out all predictions with additional visual enhancements.
     """
     detections = combine_detections(detections, params, input_mode=input_mode)
-    detections = split_detections(detections, params, input_mode=input_mode)
-    events = generate_events_input_mode(detections, params)
+    events = select_events(detections, params)
 
     return detections, events
 
 
-def output_predictions(detections, params, input_mode=False):
+def output_predictions(detections, events, params, input_mode=False):
     """
     Prints out all predictions with additional visual enhancements.
     """
-    print_final_predictions(detections, params, upper_case=True, input_mode=input_mode)
+    detections = split_detections(detections, params, input_mode=input_mode)
+    print_final_predictions(detections, events, params, upper_case=True, input_mode=input_mode)
 
     if not input_mode:
         generate_events(detections, params)
