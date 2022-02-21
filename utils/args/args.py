@@ -43,8 +43,6 @@ def defaults():
             'no-filter': False,
             'no-detrend': False,
             'silence-wavetool': False,
-            'plot-positives': False,
-            'plot-positives-original': False,
             'print-scores': False,
             'print-precision': 4,
             'combine-events-range': 30.,

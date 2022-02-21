@@ -319,56 +319,6 @@ def normalize_global(data):
     data /= m
 
 
-def plot_positives(scores, windows, threshold):
-    idx = 0
-    save_name = 'positive_' + str(idx) + '.jpg'
-    while os.path.exists(save_name):
-        idx += 1
-        save_name = 'positive_' + str(idx) + '.jpg'
-
-    for i in range(len(scores)):
-
-        if scores[i][1] > threshold:
-            fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
-
-            ax1.set_ylabel('N', rotation=0.)
-            ax1.plot(windows[i, :, 0], 'r')
-
-            ax2.set_ylabel('E', rotation=0.)
-            ax2.plot(windows[i, :, 1], 'g')
-
-            ax3.set_ylabel('Z', rotation=0.)
-            ax3.plot(windows[i, :, 2], 'y')
-
-            plt.savefig(save_name)
-            plt.clf()
-
-
-def plot_oririnal_positives(scores, original_windows, threshold, original_scores=None):
-    idx = 0
-    save_name = 'original_positive_' + str(idx) + '.jpg'
-    while os.path.exists(save_name):
-        idx += 1
-        save_name = 'original_positive_' + str(idx) + '.jpg'
-
-    for i in range(len(scores)):
-
-        if scores[i][1] > threshold:
-            fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
-
-            ax1.set_ylabel('N', rotation=0.)
-            ax1.plot(original_windows[i, :, 0], 'r')
-
-            ax2.set_ylabel('E', rotation=0.)
-            ax2.plot(original_windows[i, :, 1], 'g')
-
-            ax3.set_ylabel('Z', rotation=0.)
-            ax3.plot(original_windows[i, :, 2], 'y')
-
-            plt.savefig(save_name)
-            plt.clf()
-
-
 def scan_traces(*_traces, params=None, n_features=400, shift=10, original_data=None, station='main'):
     """
     Get predictions on the group of traces.
@@ -401,13 +351,6 @@ def scan_traces(*_traces, params=None, n_features=400, shift=10, original_data=N
         for x in _traces:
             l_windows.append(sliding_window(x.data, n_features=n_features, n_shift=params[station, 'shift']))
 
-        if params[station, 'plot-positives-original']:
-            original_l_windows = []
-            for x in original_data:
-                original_l_windows.append(sliding_window(x.data,
-                                                         n_features=n_features,
-                                                         n_shift=params[station, 'shift']))
-
         w_length = min([x.shape[0] for x in l_windows])
 
         # Prepare data
@@ -415,16 +358,8 @@ def scan_traces(*_traces, params=None, n_features=400, shift=10, original_data=N
         for _i in range(len(l_windows)):
             windows[:, :, _i] = l_windows[_i][:w_length]
 
-        if params[station, 'plot-positives-original']:
-            original_windows = np.zeros((w_length, n_features, len(original_l_windows)))
-            for _i in range(len(original_l_windows)):
-                original_windows[:, :, _i] = original_l_windows[_i][:w_length]
-
         # Global max normalization:
         normalize_windows_global(windows)
-        if params[station, 'plot-positives-original']:
-            normalize_windows_global(original_windows)
-
     else:
         min_size = min([tr.data.shape[0] for tr in _traces])
 
@@ -434,26 +369,12 @@ def scan_traces(*_traces, params=None, n_features=400, shift=10, original_data=N
             data[:, i] = tr.data[:min_size]
 
         normalize_global(data)
-
         windows = sliding_window_strided(data, 400, params[station, 'shift'], False)
-
-        if params[station, 'plot-positives-original']:
-            original_windows = windows.copy()
 
     # Predict
     start_time = time()
     _scores = model.predict(windows, verbose=False, batch_size=batch_size)
     performance_time = time() - start_time
-    # TODO: create another flag for this, e.g. --culculate-original-probs or something
-    if params[station, 'plot-positives-original']:
-        original_scores = model.predict(original_windows, verbose=False, batch_size=batch_size)
-
-    # Positives plotting
-    threshold = 0.95
-    if params[station, 'plot-positives']:
-        plot_positives(_scores, windows, threshold)
-    if params[station, 'plot-positives-original']:
-        plot_oririnal_positives(_scores, original_windows, threshold, original_scores)
 
     return _scores, performance_time
 

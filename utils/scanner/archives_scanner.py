@@ -101,13 +101,6 @@ def archive_scan(archives, params, input_mode=False, advanced=False):
         for path in l_archives:
             streams.append(read(path))
 
-        # If --plot-positives-original, save original streams
-        original_streams = None
-        if params[station_name, 'plot-positives-original']:
-            original_streams = []
-            for path in l_archives:
-                original_streams.append(read(path))
-
         # Pre-process data
         for st in streams:
             stools.pre_process_stream(st, params, station_name)
@@ -124,8 +117,6 @@ def archive_scan(archives, params, input_mode=False, advanced=False):
             else:
                 print(f'\nSkipping archives: {d_archives}: no data in specified time span!', file=sys.stderr)
             continue
-        if original_streams:
-            original_streams = stools.trim_streams(original_streams, archive_start, archive_end)
 
         # Check if stream traces number is equal
         traces_groups, total_data_length = stools.combined_traces(streams, params)
@@ -144,12 +135,6 @@ def archive_scan(archives, params, input_mode=False, advanced=False):
         for i, traces in enumerate(traces_groups):
 
             progress_bar.set_progress(i, level='traces')
-
-            original_traces = None
-            if original_streams:
-                original_traces = traces
-                if traces[0].data.shape[0] != original_traces[0].data.shape[0]:
-                    continue
 
             # Determine batch count
             l_trace = traces[0].data.shape[0]
@@ -177,10 +162,6 @@ def archive_scan(archives, params, input_mode=False, advanced=False):
                 t_start = traces[0].stats.starttime
 
                 batches = [trace.slice(t_start + start_pos / freq, t_start + end_pos / freq) for trace in traces]
-                original_batches = None
-                if original_traces:
-                    original_batches = [trace.slice(t_start + start_pos / freq, t_start + end_pos / freq)
-                                        for trace in original_traces]
 
                 # Progress bar
                 s_batch_start_time = batches[0].stats.starttime.strftime("%Y-%m-%d %H:%M:%S")
@@ -199,8 +180,7 @@ def archive_scan(archives, params, input_mode=False, advanced=False):
                 try:
                     scores, performance_time = stools.scan_traces(*batches,
                                                                   params=params,
-                                                                  station=station_name,
-                                                                  original_data=original_batches)
+                                                                  station=station_name)
                 except ValueError:
                     scores, performance_time = None, 0
 

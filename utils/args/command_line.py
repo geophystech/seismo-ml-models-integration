@@ -44,10 +44,6 @@ def archive_scan_args():
     parser.add_argument('--no-filter', help='Do not filter input waveforms', action='store_true')
     parser.add_argument('--no-detrend', help='Do not detrend input waveforms', action='store_true')
     parser.add_argument('--silence-wavetool', help='Do not output any wavetool messages', action='store_true')
-    parser.add_argument('--plot-positives', help='Plot positives waveforms', action='store_true')
-    parser.add_argument('--plot-positives-original', help='Plot positives original waveforms, before '
-                                                          'pre-processing',
-                        action='store_true')
     parser.add_argument('--print-scores', help='Prints model prediction scores and according wave forms data'
                                                ' in .npy files',
                         action='store_true')
@@ -184,9 +180,7 @@ def archive_scan_dictionary(args):
             'no-detrend': 'no_detrend',
             'trace-normalization': 'trace_normalization',
             'frequency': 'frequency',
-            'plot-positives': 'plot_positives',
             'silence-wavetool': 'silence_wavetool',
-            'plot-positives-original': 'plot_positives_original',
             'print-scores': 'print_scores',
             'print-precision': 'print_precision',
             'combine-events-range': 'combine_events_range',
