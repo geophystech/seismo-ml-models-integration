@@ -27,9 +27,10 @@ def init_progress_bar(char_length=30, char_empty='.', char_fill='=', char_point=
     return progress_bar
 
 
-def archive_scan(archives, params, input_mode=False):
+def archive_scan(archives, params, input_mode=False, advanced=False):
     """
 
+    :param advanced:
     :param archives:
     :param params:
     :param input_mode:
@@ -47,7 +48,7 @@ def archive_scan(archives, params, input_mode=False):
     archives_walltime = []
     batch_time = []
 
-    all_positives = {}
+    all_positives = []
     for n_archive, d_archives in enumerate(archives):
 
         # Time tracking
@@ -75,6 +76,21 @@ def archive_scan(archives, params, input_mode=False):
         else:
             station_name = station['station']
         l_archives = d_archives['paths']
+        archive_start = d_archives['start'] if 'start' in d_archives else params['main', 'start']
+        archive_end = d_archives['end'] if 'end' in d_archives else params['main', 'end']
+
+        # Replace parameters for advanced search
+        if advanced:
+            if input_mode:
+                original_threshold = params['main', 'threshold']
+                original_shift = params['main', 'shift']
+                params['main', 'threshold'] = params['main', 'advanced-search-threshold']
+                params['main', 'shift'] = params['main', 'advanced-search-shift']
+            else:
+                original_threshold = params[station_name, 'threshold']
+                original_shift = params[station_name, 'shift']
+                params[station_name, 'threshold'] = params[station_name, 'advanced-search-threshold']
+                params[station_name, 'shift'] = params[station_name, 'advanced-search-shift']
 
         # Update progress bar parameters
         progress_bar.set_prefix_arg('archive', n_archive + 1)
@@ -100,7 +116,7 @@ def archive_scan(archives, params, input_mode=False):
         if input_mode:
             streams = stools.trim_streams(streams, station_name)
         else:
-            streams = stools.trim_streams(streams, station_name, params['main', 'start'], params['main', 'end'])
+            streams = stools.trim_streams(streams, station_name, archive_start, archive_end)
 
         if not streams:
             if station_name:
@@ -109,7 +125,7 @@ def archive_scan(archives, params, input_mode=False):
                 print(f'\nSkipping archives: {d_archives}: no data in specified time span!', file=sys.stderr)
             continue
         if original_streams:
-            original_streams = stools.trim_streams(original_streams, params['main', 'start'], params['main', 'end'])
+            original_streams = stools.trim_streams(original_streams, archive_start, archive_end)
 
         # Check if stream traces number is equal
         traces_groups, total_data_length = stools.combined_traces(streams, params)
@@ -253,23 +269,27 @@ def archive_scan(archives, params, input_mode=False):
                 # Save extensive station information for every detection for later output!
                 if input_mode:
                     last_saved_station = None
-                    str_archives = ';'.join(l_archives)
-                    if str_archives not in all_positives:
-                        all_positives[str_archives] = []
-
-                    for x in detected_peaks:
-                        x['input'] = str_archives
-
-                    all_positives[str_archives].extend(detected_peaks)
                 else:
                     last_saved_station = station_name
-                    if station_name not in all_positives:
-                        all_positives[station_name] = []
 
+                if input_mode:
+                    for x in detected_peaks:
+                        x['input'] = l_archives
+                else:
                     for x in detected_peaks:
                         x['station'] = station
+                        x['input'] = l_archives
 
-                    all_positives[station_name].extend(detected_peaks)
+                all_positives.extend(detected_peaks)
+
+        # Return original parameter values after advanced search
+        if advanced:
+            if input_mode:
+                params['main', 'threshold'] = original_threshold
+                params['main', 'shift'] = original_shift
+            else:
+                params[station_name, 'threshold'] = original_threshold
+                params[station_name, 'shift'] = original_shift
 
         if params['main', 'time-archive']:
             archives_time.append(current_archive_time)
@@ -286,3 +306,58 @@ def archive_scan(archives, params, input_mode=False):
         'batch-time': batch_time,
     }
     return all_positives, performance
+
+
+def advanced_search(events, params, input_mode=False):
+    # Generate list of archives/timespans to search
+    advanced_search_list = []
+    search_range = int(params['main', 'advanced-search-range'])
+    for event in events:
+        dt = event['datetime']
+        unique_archives = []
+        search_list = []
+        for detection in event['detections']:
+            if detection['input'] not in unique_archives:
+                unique_archives.append(detection['input'])
+                search_list.append({
+                    'paths': detection['input'],
+                    'station': detection['station'],
+                    'start': dt - search_range,
+                    'end': dt + search_range,
+                })
+        advanced_search_list.append({
+            'datetime': dt,
+            'search_list': search_list
+        })
+
+    # Temporarily replace params
+
+    # Advanced search
+    advanced_events = []
+    for search_item in advanced_search_list:
+        archives = search_item['search_list']
+        dt = search_item['datetime']
+        print(f'\nPerforming advanced search for event at {dt.strftime("%Y-%m-%d %H:%M:%S")}..')
+        all_positives, performance = archive_scan(archives, params, input_mode=input_mode, advanced=True)
+        all_positives = stools.combine_detections(all_positives, params, input_mode=input_mode)
+        advanced_events.extend(all_positives)
+
+    print('\nInitial events:')
+    for event in events:
+        print(f'Event {event["datetime"].strftime("%Y-%m-%d %H:%M:%S")}')
+        print('Detections:')
+        for x in event['detections']:
+            print(f'--- {x["station"]["station"]} {x["datetime"].strftime("%Y-%m-%d %H:%M:%S")} '
+                  f'p: {x["pseudo-probability"]}')
+
+    print('\nSearch results:')
+    for event in all_positives:
+        print(f'Event {event["datetime"].strftime("%Y-%m-%d %H:%M:%S")}')
+        print('Detections:')
+        for x in event['detections']:
+            print(f'--- {x["station"]["station"]} {x["datetime"].strftime("%Y-%m-%d %H:%M:%S")} '
+                  f'p: {x["pseudo-probability"]}')
+
+    # Reset params initial values
+
+    return []
