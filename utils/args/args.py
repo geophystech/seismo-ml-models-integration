@@ -13,6 +13,8 @@ def get_unsupported_station_parameters_list():
         'use-default-database',
         # Environment
         'input', 'seisan', 'mulplt-def', 'archives', 'database', 'rea', 'wav',
+        # Advanced search
+        'advanced-search', 'advanced-search-range',
     ]
 
 
