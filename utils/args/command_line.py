@@ -102,6 +102,14 @@ def archive_scan_args():
                         help='Order of channels, specify with comma separation,'
                              ' without whitespaces. It is possible to specify multiple'
                              ' configurations using semicolon as a group separator, default: "N,E,Z;1,2,Z;Z,Z,Z"')
+    parser.add_argument('--plot-batches',
+                        help='Plots input batches (after preprocessing) '
+                             'and saves them as .png images (in current directory)',
+                        action='store_true')
+    parser.add_argument('--plot-scores',
+                        help='Plots prediction scores '
+                             'and saves them as .png images (in current directory)',
+                        action='store_true')
     parser.add_argument('--false-positives',
                         help='Path to save false positives into (format .h5). False positives will be gathered '
                              'only if this argument is provided.', default=None)
@@ -204,7 +212,9 @@ def archive_scan_dictionary(args):
             'advanced-search': 'advanced_search',
             'advanced-search-range': 'advanced_search_range',
             'advanced-search-threshold': 'advanced_search_threshold',
-            'advanced-search-shift': 'advanced_search_shift'
+            'advanced-search-shift': 'advanced_search_shift',
+            'plot-batches': 'plot_batches',
+            'plot-scores': 'plot_scores',
         },
     }
 
