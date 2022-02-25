@@ -86,3 +86,4 @@ def plot_wave(data, basename):
         axes[i].plot(data[:, i], linewidth=1., color='#000')
 
     plt.savefig(f'{basename}.jpg')
+    plt.close()

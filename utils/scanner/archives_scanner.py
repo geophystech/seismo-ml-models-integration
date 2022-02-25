@@ -3,6 +3,7 @@ from obspy import read
 from time import time
 
 from ..progress_bar import ProgressBar
+from ..print_tools import plot_wave
 import utils.scan_tools as stools
 
 
@@ -161,7 +162,9 @@ def archive_scan(archives, params, input_mode=False, advanced=False):
                 end_pos = start_pos + b_size
                 t_start = traces[0].stats.starttime
 
-                batches = [trace.slice(t_start + start_pos / freq, t_start + end_pos / freq) for trace in traces]
+                b_start = t_start + start_pos / freq
+                b_end = t_start + end_pos / freq
+                batches = [trace.slice(b_start, b_end) for trace in traces]
 
                 # Progress bar
                 s_batch_start_time = batches[0].stats.starttime.strftime("%Y-%m-%d %H:%M:%S")
@@ -176,6 +179,15 @@ def archive_scan(archives, params, input_mode=False, advanced=False):
                     current_batch_time = {
                         'id': f'{s_batch_start_time} .. {s_batch_end_time}',
                     }
+
+                if params[station_name, 'plot-batches']:
+                    save_name = 'batch_'
+                    if advanced:
+                        save_name += 'advanced_'
+                    if station_name:
+                        save_name += station_name + '_'
+                    save_name += b_start.strftime("%Y-%m-%d_%H:%M:%S") + '__' + b_end.strftime("%Y-%m-%d_%H:%M:%S")
+                    plot_wave(batches, save_name)
 
                 try:
                     scores, performance_time = stools.scan_traces(*batches,
@@ -199,6 +211,15 @@ def archive_scan(archives, params, input_mode=False, advanced=False):
                 restored_scores = stools.restore_scores(scores,
                                                         (len(batches[0]), len(params['main', 'model-labels'])),
                                                         params[station_name, 'shift'])
+
+                if params[station_name, 'plot-scores']:
+                    save_name = 'scores_'
+                    if advanced:
+                        save_name += 'advanced_'
+                    if station_name:
+                        save_name += station_name + '_'
+                    save_name += b_start.strftime("%Y-%m-%d_%H:%M:%S") + '__' + b_end.strftime("%Y-%m-%d_%H:%M:%S")
+                    plot_wave(restored_scores, save_name)
 
                 # Get indexes of predicted events
                 predicted_labels = {}
