@@ -331,8 +331,6 @@ def advanced_search(events, params, input_mode=False):
             'search_list': search_list
         })
 
-    # Temporarily replace params
-
     # Advanced search
     advanced_events = []
     for search_item in advanced_search_list:
@@ -340,25 +338,8 @@ def advanced_search(events, params, input_mode=False):
         dt = search_item['datetime']
         print(f'\nPerforming advanced search for event at {dt.strftime("%Y-%m-%d %H:%M:%S")}..')
         all_positives, performance = archive_scan(archives, params, input_mode=input_mode, advanced=True)
-        all_positives = stools.combine_detections(all_positives, params, input_mode=input_mode)
         advanced_events.extend(all_positives)
 
-    print('\nInitial events:')
-    for event in events:
-        print(f'Event {event["datetime"].strftime("%Y-%m-%d %H:%M:%S")}')
-        print('Detections:')
-        for x in event['detections']:
-            print(f'--- {x["station"]["station"]} {x["datetime"].strftime("%Y-%m-%d %H:%M:%S")} '
-                  f'p: {x["pseudo-probability"]}')
+    advanced_events = stools.combine_detections(advanced_events, params, input_mode=input_mode)
 
-    print('\nSearch results:')
-    for event in all_positives:
-        print(f'Event {event["datetime"].strftime("%Y-%m-%d %H:%M:%S")}')
-        print('Detections:')
-        for x in event['detections']:
-            print(f'--- {x["station"]["station"]} {x["datetime"].strftime("%Y-%m-%d %H:%M:%S")} '
-                  f'p: {x["pseudo-probability"]}')
-
-    # Reset params initial values
-
-    return []
+    return events

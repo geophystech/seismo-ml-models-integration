@@ -482,15 +482,21 @@ def print_results(_detected_peaks, params, station, upper_case=True, last_statio
             f.write(line)
 
 
-def combine_detections(detections, params, input_mode, combine_different_stations=True):
+def combine_detections(detections, params, input_mode, combine_different_stations=True, input_sorted=False):
     """
     Combines detections using combine-events-range parameter
+    :param input_sorted:
     :param combine_different_stations:
     :param detections:
     :param params:
     :param input_mode:
     :return:
     """
+    if not input_sorted:
+        def datetime_getter(x):
+            return x['datetime'];
+        detections.sort(key=datetime_getter)
+
     # Add true flag to every event
     for detection in detections:
         detection['avaliable'] = True
@@ -584,32 +590,90 @@ def combine_detections(detections, params, input_mode, combine_different_station
     return groups
 
 
-def print_final_predictions(detections, events, params, upper_case=True, open_mode='w', input_mode=False):
-    """
-    Prints final predictions into a file. As an input takes predictions, sturctured
-    as dictionary, indexed by output file name, where each element is a pair:
-    (group of positives, datetime).
-    Group of positives is a list of positive predictions. Each prediction is a dictionary of fields,
-    describing the prediction (datetime, station, etc.).
-    """
-    groups_started = False
-    singles_started = False
-    for filename, groups in detections.items():
-        with open(filename, 'w') as f:
-            for group, datetime in groups:
+def split_all_events_by_filename(events, params, keep_all_fields=False):
+    filename_groups = []
+    for event in events:
+        filename_groups.append(split_event_by_filename(event, params, keep_all_fields))
+    filename_event_dictionary = {}
+    for group in filename_groups:
+        for filename, event in group.items():
+            if filename not in filename_event_dictionary:
+                filename_event_dictionary[filename] = []
+            filename_event_dictionary[filename].append(event)
+    return filename_event_dictionary
 
-                if not groups_started and len(group) > 1:
-                    f.write(f'***COMBINED EVENTS***\n\n')
-                    groups_started = True
-                if not singles_started and len(group) == 1:
-                    f.write(f'***SINGLE DETECTIONS***\n\n')
-                    singles_started = True
 
-                s_datetime = datetime.strftime("%Y-%m-%d %H:%M:%S.%f").rstrip('0')
+def split_event_by_filename(event, params, keep_all_fields=False):
+    """
+    Splits events (dictionary with the list of detections) by output filename.
+    Returns dictionary of format: {'filename': event_dictionary},
+    also adds to event_dictionary filed 'original_count' which displays how many detections total
+    present in the event before the split.
+    Note, that if keep_all_fields is not True, than new events will only have fields:
+        'detections', 'datetime', 'original_count'
+    :return: dictionary {'filename': event_dictionary}
+    """
+    # Split detections
+    result_events = {}
+    original_count = len(event['detections'])
+    default_fields = ['datetime', 'detections', 'original_count']
+    for detection in event['detections']:
+        station = detection['station']['station']
+        filename = params[station, 'out']
+        if filename not in result_events:
+            result_events[filename] = {
+                'datetime': event['datetime'],
+                'original_count': original_count,
+                'detections': []
+            }
+            if keep_all_fields:
+                for key, value in event.items():
+                    if key not in default_fields:
+                        result_events[filename][key] = value
+        result_events[filename]['detections'].append(detection)
+    return result_events
+
+
+def print_predictions(filename_groups, params, file_start_tag=None, append_to_files=None,
+                      input_mode=False, upper_case=False):
+    """
+    Prints events combined by output filename (dictionary: {filename: [list_of_events], ...})
+        returns list of filenames to which output was performed.
+    :param filename_groups:
+    :param params:
+    :param file_start_tag:
+    :param append_to_files:
+    :param input_mode:
+    :param upper_case:
+    :return: list of output filenames
+    """
+
+    print('\nprint_predictions input:')
+    print(filename_groups)
+
+    if not append_to_files:
+        append_to_files = []
+    file_was_opened = []
+
+    for filename, groups in filename_groups.items():
+
+        started = False
+        mode = 'w'
+        if filename in append_to_files:
+            mode = 'a'
+
+        with open(filename, mode) as f:
+            if filename not in file_was_opened:
+                file_was_opened.append(filename)
+            if file_start_tag and not started:
+                f.write(file_start_tag)
+                started = True
+
+            for event in groups:
+                s_datetime = event['datetime'].strftime("%Y-%m-%d %H:%M:%S.%f").rstrip('0')
                 f.write(f'[{s_datetime}]\n')
 
-                for record in group:
-
+                for record in event['detections']:
                     if input_mode:
                         station = record['input']
                     else:
@@ -620,57 +684,64 @@ def print_final_predictions(detections, events, params, upper_case=True, open_mo
                     # Print station if provided
                     if station:
                         line += f'{station} '
-
                     # Print wave type
                     tp = record['type'].upper() if upper_case else record['type']
                     line += f'{tp} '
-
                     # Print pseudo-probability
                     line += f'{truncate(record["pseudo-probability"], precision):1.{precision}f} '
-
                     # Print time
                     dt_str = record["datetime"].strftime("%Y-%m-%d %H:%M:%S.%f").rstrip('0')
                     line += f'{dt_str}\n'
-
                     # Write
                     f.write(line)
+    return file_was_opened
 
-                f.write('\n')
 
+def print_final_predictions(detections, events, params, advanced_search=False, upper_case=True, input_mode=False):
+    """
+    Prints final predictions into a file. As an input takes predictions, sturctured
+    as dictionary, indexed by output file name, where each element is a pair:
+    (group of positives, datetime).
+    Group of positives is a list of positive predictions. Each prediction is a dictionary of fields,
+    describing the prediction (datetime, station, etc.).
+    """
+    def detections_count_getter(x):
+        return len(x['detections'])
 
-def split_detections(detections, params, input_mode=False):
+    detections.sort(key=detections_count_getter, reverse=True)
+    events.sort(key=detections_count_getter, reverse=True)
 
-    r_detections = {}
-    for filename, groups in detections.items():
+    detections = split_all_events_by_filename(detections, params)
+    events = split_all_events_by_filename(events, params)
 
-        r_groups = []
-        r_singles = []
-        for group, datetime in groups:
-            if len(group) > 1:
-                r_groups.append((group, datetime))
-            else:
-                r_singles.append((group, datetime))
+    if advanced_search:
+        events_start_str = '***ADVANCED SEARCH***\n\n'
+    else:
+        events_start_str = '***EVENTS***\n\n'
 
-        def get_datetime(item):
-            return item[1]
-
-        r_groups.sort(key=get_datetime)
-        r_singles.sort(key=get_datetime)
-        r_detections[filename] = [*r_groups, *r_singles]
-
-    return r_detections
+    # Print events
+    append_to_files = print_predictions(events, params,
+                                        file_start_tag=events_start_str,
+                                        input_mode=input_mode, upper_case=upper_case)
+    # Print the rest of non-combined detections
+    print_predictions(detections, params,
+                      file_start_tag='***OTHER DETECTIONS***\n\n', append_to_files=append_to_files,
+                      input_mode=input_mode, upper_case=upper_case)
 
 
 def select_events(detections, params):
     """
-    Returns a list of potential events from detections
+    Returns a list of potential events from detections and all detections, without selected events
     """
     all_events = []
+    other_detections = []
     for group in detections:
         actual_group = group['detections']
         if len(actual_group) >= params['main', 'detections-for-event']:
             all_events.append(group)
-    return all_events
+        else:
+            other_detections.append(group)
+    return all_events, other_detections
 
 
 def finalize_predictions(detections, params, input_mode=False):
@@ -678,20 +749,23 @@ def finalize_predictions(detections, params, input_mode=False):
     Prints out all predictions with additional visual enhancements.
     """
     detections = combine_detections(detections, params, input_mode=input_mode)
-    events = select_events(detections, params)
+    events, detections = select_events(detections, params)
 
     return detections, events
 
 
-def output_predictions(detections, events, params, input_mode=False):
+def output_predictions(detections, events, params, advanced_search=False, input_mode=False):
     """
     Prints out all predictions with additional visual enhancements.
     """
-    detections = split_detections(detections, params, input_mode=input_mode)
-    print_final_predictions(detections, events, params, upper_case=True, input_mode=input_mode)
+    print_final_predictions(detections, events, params,
+                            advanced_search=advanced_search, upper_case=True, input_mode=input_mode)
 
     if not input_mode:
-        generate_events(detections, params)
+        if advanced_search_events:
+            generate_events(advanced_search_events, params)
+        else:
+            generate_events(events, params)
 
 
 def combine_daily_detections(detections):
