@@ -647,10 +647,6 @@ def print_predictions(filename_groups, params, file_start_tag=None, append_to_fi
     :param upper_case:
     :return: list of output filenames
     """
-
-    print('\nprint_predictions input:')
-    print(filename_groups)
-
     if not append_to_files:
         append_to_files = []
     file_was_opened = []
