@@ -64,7 +64,7 @@ def defaults():
             'combine-traces-min-length-difference-error': 3,
             'false-positives': None,
             'advanced-search': False,
-            'advanced-search-range': 40.,
+            'advanced-search-range': 150.,
             'advanced-search-threshold': 0.9,
             'advanced-search-shift': 1,
             'plot-batches': False,
