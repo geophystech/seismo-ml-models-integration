@@ -725,7 +725,7 @@ def print_final_predictions(detections, events, params, advanced_search=False, u
                                         input_mode=input_mode, upper_case=upper_case)
     # Print the rest of non-combined detections
     print_predictions(detections, params,
-                      file_start_tag='***OTHER DETECTIONS***\n\n', append_to_files=append_to_files,
+                      file_start_tag='\n***OTHER DETECTIONS***\n\n', append_to_files=append_to_files,
                       input_mode=input_mode, upper_case=upper_case)
 
 
@@ -762,10 +762,7 @@ def output_predictions(detections, events, params, advanced_search=False, input_
                             advanced_search=advanced_search, upper_case=True, input_mode=input_mode)
 
     if not input_mode:
-        if advanced_search_events:
-            generate_events(advanced_search_events, params)
-        else:
-            generate_events(events, params)
+        generate_events(events, params)
 
 
 def combine_daily_detections(detections):
