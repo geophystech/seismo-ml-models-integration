@@ -342,4 +342,4 @@ def advanced_search(events, params, input_mode=False):
 
     advanced_events = stools.combine_detections(advanced_events, params, input_mode=input_mode)
 
-    return events
+    return advanced_events
