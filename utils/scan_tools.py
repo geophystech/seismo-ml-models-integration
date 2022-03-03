@@ -454,6 +454,9 @@ def print_results(_detected_peaks, params, station, upper_case=True, last_statio
     precision = params[station, 'print-precision']
     filename = params[station, 'out']
 
+    if not len(_detected_peaks):
+        return
+
     with open(filename, 'a') as f:
 
         if station != last_station:
@@ -690,6 +693,7 @@ def print_predictions(filename_groups, params, file_start_tag=None, append_to_fi
                     line += f'{dt_str}\n'
                     # Write
                     f.write(line)
+            f.write('\n')
     return file_was_opened
 
 
