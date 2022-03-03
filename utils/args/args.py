@@ -67,6 +67,7 @@ def defaults():
             'advanced-search-range': 150.,
             'advanced-search-threshold': 0.9,
             'advanced-search-shift': 1,
+            'advanced-search-combine': False,
             'plot-batches': False,
             'plot-scores': False,
         },

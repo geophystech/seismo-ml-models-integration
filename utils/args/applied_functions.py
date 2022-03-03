@@ -256,6 +256,7 @@ def archive_scan():
         'advanced-search-range': [float_converter],
         'advanced-search-threshold': [threshold_converter],
         'advanced-search-shift': [int_converter],
+        'advanced-search-combine': [bool_converter],
         'plot-batches': [bool_converter],
         'plot-scores': [bool_converter],
     }

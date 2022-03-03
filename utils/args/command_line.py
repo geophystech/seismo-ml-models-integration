@@ -131,6 +131,11 @@ def archive_scan_args():
                         help='Range (in seconds) around detected event in which perform advanced search, '
                              'default: 40 seconds',
                         type=float)
+    parser.add_argument('--advanced-search-combine',
+                        help='If set, will combine detections in advanced search in events, '
+                             'using --combine-events-range parameter. Otherwise, all detections from '
+                             'advanced search will be treated as single event',
+                        action='store_true')
     parser.add_argument('--advanced-search-threshold',
                         help='Positive prediction threshold for advanced search, default: 0.90')
     parser.add_argument('--advanced-search-shift',
@@ -213,6 +218,7 @@ def archive_scan_dictionary(args):
             'advanced-search-range': 'advanced_search_range',
             'advanced-search-threshold': 'advanced_search_threshold',
             'advanced-search-shift': 'advanced_search_shift',
+            'advanced-search-combine': 'advanced_search_combine',
             'plot-batches': 'plot_batches',
             'plot-scores': 'plot_scores',
         },
