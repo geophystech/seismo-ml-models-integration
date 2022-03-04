@@ -171,6 +171,30 @@ def get_archives(seisan, mulplt, archives, params):
     return archives_paths
 
 
+def get_archives_advanced(date, params):
+    """
+    Returns list of archives (same as get_archives), but assumes, that params['main', 'stations'] already
+    set as list of stations, and returns archives only for a single date.
+    :param date:
+    :param params:
+    :return:
+    """
+    paths = [archive_to_path(group, date, params['main', 'archives']) for group in params['main', 'stations']]
+
+    # Order channels and convert them into nested lists
+    archives_paths = []
+    for group in paths:
+        l_ordered = order_group(group['paths'], params[group['station']['station'], 'channel-order'])
+        if not l_ordered:
+            continue
+        archives_paths.append({
+            'paths': l_ordered,
+            'station': group['station']
+        })
+
+    return archives_paths
+
+
 def parse_multplt(path):
     """
     Parses multplt.def file and returns list of lists like: [station, channel type (e.g. SH), channel (E, N or Z)].

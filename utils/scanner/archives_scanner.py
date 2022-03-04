@@ -5,6 +5,7 @@ from time import time
 from ..progress_bar import ProgressBar
 from ..print_tools import plot_wave
 import utils.scan_tools as stools
+import utils.seisan as seisan
 
 
 def init_progress_bar(char_length=30, char_empty='.', char_fill='=', char_point='>', use_station=False):
@@ -313,23 +314,44 @@ def advanced_search(events, params, input_mode=False):
     # Generate list of archives/timespans to search
     advanced_search_list = []
     search_range = int(params['main', 'advanced-search-range'])
-    for event in events:
-        dt = event['datetime']
-        unique_archives = []
-        search_list = []
-        for detection in event['detections']:
-            if detection['input'] not in unique_archives:
-                unique_archives.append(detection['input'])
+    if params['main', 'advanced-search-all-stations']:
+        for event in events:
+            dt = event['datetime']
+            start = dt - search_range
+            end = dt + search_range
+            archives = seisan.get_archives_advanced(dt, params)
+            search_list = []
+            for archive in archives:
                 search_list.append({
-                    'paths': detection['input'],
-                    'station': detection['station'],
-                    'start': dt - search_range,
-                    'end': dt + search_range,
+                    'paths': archive['paths'],
+                    'station': archive['station'],
+                    'start': start,
+                    'end': end,
                 })
-        advanced_search_list.append({
-            'datetime': dt,
-            'search_list': search_list
-        })
+            advanced_search_list.append({
+                'datetime': dt,
+                'search_list': search_list
+            })
+    else:
+        for event in events:
+            dt = event['datetime']
+            start = dt - search_range
+            end = dt + search_range
+            unique_archives = []
+            search_list = []
+            for detection in event['detections']:
+                if detection['input'] not in unique_archives:
+                    unique_archives.append(detection['input'])
+                    search_list.append({
+                        'paths': detection['input'],
+                        'station': detection['station'],
+                        'start': start,
+                        'end': end,
+                    })
+            advanced_search_list.append({
+                'datetime': dt,
+                'search_list': search_list
+            })
 
     # Advanced search
     advanced_events = []
