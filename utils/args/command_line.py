@@ -140,6 +140,9 @@ def archive_scan_args():
                         help='Positive prediction threshold for advanced search, default: 0.90')
     parser.add_argument('--advanced-search-shift',
                         help='Sliding windows shift for advanced search, default: 1 sample (1 ms)')
+    parser.add_argument('--advanced-search-all-stations',
+                        help='Perform advanced search on full list of stations, not only on stations with detections',
+                        action='store_true')
     return parser.parse_args()
 
 
@@ -219,6 +222,7 @@ def archive_scan_dictionary(args):
             'advanced-search-threshold': 'advanced_search_threshold',
             'advanced-search-shift': 'advanced_search_shift',
             'advanced-search-combine': 'advanced_search_combine',
+            'advanced-search-all-stations': 'advanced_search_all_stations',
             'plot-batches': 'plot_batches',
             'plot-scores': 'plot_scores',
         },
