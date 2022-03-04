@@ -52,3 +52,23 @@ variables access).
 - `key` - current variable index.
 Function returns value which is then applied to current variable.
 You can also alter existing variable or add new by manipulating `params`.
+
+### 6. Advanced search
+With flag `--advanced-search` (or option `advanced-search = true` in config file) enabled, 
+for every _detected event_ (_detected event_ is a combination of closely packed detection with number of events greater or equal 
+`detections-for-event` parameter value) additional scan will be performed.
+This scan could have different threshold and window shift to extract more detailed information about
+event.
+
+Note: that scan will be performed only on stations on which detections were found (you can change that behaviour).
+
+List of related command line options / parameters:
+- `--advanced-search` - enable advanced search
+- `--advanced-search-range <number>` - range of search (in seconds) around detected events, default: 30
+- `--advanced-search-threshold <threshold>` - threshold for advanced search, could be set just like regular `--threshold`:
+with number from 0 to 1.0 or for _p_ and _s_ labels individually, default: 0.9
+- `--advanced-search-shift <number>` - window shift for advanced search (in samples), default: 2
+- `--advanced-search-combine` - if specified (or set in config: `advanced-search-combine = true`) 
+will combine all detections in advanced search as single event, otherwise will use normal event combination
+method. Without this option enabled, if `advanced-search-range` is larger than `combine-events-range`, advanced search
+for a single event could potentially yeild multiple events.
