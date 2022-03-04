@@ -485,7 +485,48 @@ def print_results(_detected_peaks, params, station, upper_case=True, last_statio
             f.write(line)
 
 
-def combine_detections(detections, params, input_mode, combine_different_stations=True, input_sorted=False):
+def combine_detections_single_event(detections, input_sorted=False):
+    """
+    Combines detections into a single event. Events datetime will be a timestamp of a central detection.
+    :param detections:
+    :param input_sorted:
+    :return:
+    """
+    if not input_sorted:
+        def datetime_getter(x):
+            return x['datetime']
+        detections.sort(key=datetime_getter)
+
+    if len(detections) == 0:
+        return []
+    if len(detections) == 1:
+        return [{
+            'detections': detections,
+            'datetime': detections[0]['datetime']
+        }]
+
+    start_dt = detections[0]['datetime']
+    end_dt = detections[-1]['datetime']
+    middle_dt = start_dt + (end_dt - start_dt)/2
+    closest_id = 0
+    closest_diff = abs(detections[closest_id]['datetime'] - middle_dt)
+
+    for i, detection in enumerate(detections[1:]):
+
+        current_diff = abs(detection['datetime'] - middle_dt)
+        if current_diff > closest_diff:
+            break
+        closest_diff = current_diff
+        closest_id = i
+
+    return [{
+        'detections': detections,
+        'datetime': detections[closest_id]['datetime']
+    }]
+
+
+def combine_detections(detections, params, input_mode,
+                       combine_different_stations=True, input_sorted=False):
     """
     Combines detections using combine-events-range parameter
     :param input_sorted:
@@ -497,7 +538,7 @@ def combine_detections(detections, params, input_mode, combine_different_station
     """
     if not input_sorted:
         def datetime_getter(x):
-            return x['datetime'];
+            return x['datetime']
         detections.sort(key=datetime_getter)
 
     # Add true flag to every event

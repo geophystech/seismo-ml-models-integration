@@ -340,6 +340,9 @@ def advanced_search(events, params, input_mode=False):
         all_positives, performance = archive_scan(archives, params, input_mode=input_mode, advanced=True)
         advanced_events.extend(all_positives)
 
-    advanced_events = stools.combine_detections(advanced_events, params, input_mode=input_mode)
+    if params['main', 'advanced-search-combine']:
+        advanced_events = stools.combine_detections_single_event(advanced_events)
+    else:
+        advanced_events = stools.combine_detections(advanced_events, params, input_mode=input_mode)
 
     return advanced_events
