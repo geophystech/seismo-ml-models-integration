@@ -709,9 +709,14 @@ def print_predictions(filename_groups, params, file_start_tag=None, append_to_fi
                 f.write(file_start_tag)
                 started = True
 
+            first_event = True
             for event in groups:
                 s_datetime = event['datetime'].strftime("%Y-%m-%d %H:%M:%S.%f").rstrip('0')
-                f.write(f'[{s_datetime}]\n')
+                if first_event:
+                    f.write(f'[{s_datetime}]\n')
+                    first_event = False
+                else:
+                    f.write(f'\n[{s_datetime}]\n')
 
                 for record in event['detections']:
                     if input_mode:
