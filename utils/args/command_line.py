@@ -44,10 +44,6 @@ def archive_scan_args():
     parser.add_argument('--no-filter', help='Do not filter input waveforms', action='store_true')
     parser.add_argument('--no-detrend', help='Do not detrend input waveforms', action='store_true')
     parser.add_argument('--silence-wavetool', help='Do not output any wavetool messages', action='store_true')
-    parser.add_argument('--plot-positives', help='Plot positives waveforms', action='store_true')
-    parser.add_argument('--plot-positives-original', help='Plot positives original waveforms, before '
-                                                          'pre-processing',
-                        action='store_true')
     parser.add_argument('--print-scores', help='Prints model prediction scores and according wave forms data'
                                                ' in .npy files',
                         action='store_true')
@@ -106,6 +102,14 @@ def archive_scan_args():
                         help='Order of channels, specify with comma separation,'
                              ' without whitespaces. It is possible to specify multiple'
                              ' configurations using semicolon as a group separator, default: "N,E,Z;1,2,Z;Z,Z,Z"')
+    parser.add_argument('--plot-batches',
+                        help='Plots input batches (after preprocessing) '
+                             'and saves them as .png images (in current directory)',
+                        action='store_true')
+    parser.add_argument('--plot-scores',
+                        help='Plots prediction scores '
+                             'and saves them as .png images (in current directory)',
+                        action='store_true')
     parser.add_argument('--false-positives',
                         help='Path to save false positives into (format .h5). False positives will be gathered '
                              'only if this argument is provided.', default=None)
@@ -119,6 +123,23 @@ def archive_scan_args():
     parser.add_argument('--false-positives-frequency',
                         help='To which frequency (in Hz) all false positives should be transformed, default: 100',
                         default=100, type=int)
+    parser.add_argument('--advanced-search',
+                        help='Activate advanced search (performs an additional search around detected events, '
+                             'see --combine-events-range), default: False',
+                        action='store_true')
+    parser.add_argument('--advanced-search-range',
+                        help='Range (in seconds) around detected event in which perform advanced search, '
+                             'default: 40 seconds',
+                        type=float)
+    parser.add_argument('--advanced-search-combine',
+                        help='If set, will combine detections in advanced search in events, '
+                             'using --combine-events-range parameter. Otherwise, all detections from '
+                             'advanced search will be treated as single event',
+                        action='store_true')
+    parser.add_argument('--advanced-search-threshold',
+                        help='Positive prediction threshold for advanced search, default: 0.90')
+    parser.add_argument('--advanced-search-shift',
+                        help='Sliding windows shift for advanced search, default: 1 sample (1 ms)')
     return parser.parse_args()
 
 
@@ -172,9 +193,7 @@ def archive_scan_dictionary(args):
             'no-detrend': 'no_detrend',
             'trace-normalization': 'trace_normalization',
             'frequency': 'frequency',
-            'plot-positives': 'plot_positives',
             'silence-wavetool': 'silence_wavetool',
-            'plot-positives-original': 'plot_positives_original',
             'print-scores': 'print_scores',
             'print-precision': 'print_precision',
             'combine-events-range': 'combine_events_range',
@@ -195,6 +214,13 @@ def archive_scan_dictionary(args):
             'false-positives-range': 'false_positives_range',
             'false-positives-length': 'false_positives_length',
             'false-positives-frequency': 'false_positives_frequency',
+            'advanced-search': 'advanced_search',
+            'advanced-search-range': 'advanced_search_range',
+            'advanced-search-threshold': 'advanced_search_threshold',
+            'advanced-search-shift': 'advanced_search_shift',
+            'advanced-search-combine': 'advanced_search_combine',
+            'plot-batches': 'plot_batches',
+            'plot-scores': 'plot_scores',
         },
     }
 

@@ -236,9 +236,7 @@ def archive_scan():
         'trace-normalization': [bool_converter],
         'wavetool-waveforms': [bool_converter],
         'detection-stations': [bool_converter],
-        'plot-positives': [bool_converter],
         'silence-wavetool': [bool_converter],
-        'plot-positives-original': [bool_converter],
         'print-scores': [bool_converter],
         'print-precision': [int_converter],
         'combine-events-range': [float_converter],
@@ -254,6 +252,13 @@ def archive_scan():
         'false-positives-range': [float_converter],
         'false-positives-length': [float_converter],
         'false-positives-frequency': [int_converter],
+        'advanced-search': [bool_converter],
+        'advanced-search-range': [float_converter],
+        'advanced-search-threshold': [threshold_converter],
+        'advanced-search-shift': [int_converter],
+        'advanced-search-combine': [bool_converter],
+        'plot-batches': [bool_converter],
+        'plot-scores': [bool_converter],
     }
 
     return d_applied_functions

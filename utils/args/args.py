@@ -10,9 +10,11 @@ def get_unsupported_station_parameters_list():
         # Info output and computation restriction
         'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms', 'register-events',
         'detection-stations', 'waveform-duration', 'generate-s-files', 'silence-wavetool',
-        'use-default-database',
+        'use-default-database', 'plot-batches', 'plot-scores'
         # Environment
         'input', 'seisan', 'mulplt-def', 'archives', 'database', 'rea', 'wav',
+        # Advanced search
+        'advanced-search', 'advanced-search-range', 'advanced-search-combine'
     ]
 
 
@@ -41,8 +43,6 @@ def defaults():
             'no-filter': False,
             'no-detrend': False,
             'silence-wavetool': False,
-            'plot-positives': False,
-            'plot-positives-original': False,
             'print-scores': False,
             'print-precision': 4,
             'combine-events-range': 30.,
@@ -63,6 +63,13 @@ def defaults():
             'channel-order': 'N,E,Z;1,2,Z;Z,Z,Z',
             'combine-traces-min-length-difference-error': 3,
             'false-positives': None,
+            'advanced-search': False,
+            'advanced-search-range': 30.,
+            'advanced-search-threshold': 0.9,
+            'advanced-search-shift': 2,
+            'advanced-search-combine': False,
+            'plot-batches': False,
+            'plot-scores': False,
         },
     }
     return defs

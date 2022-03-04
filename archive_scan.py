@@ -6,7 +6,7 @@ from utils.args import archive_scan as archive_scan_params
 from utils.seisan import get_archives
 from utils.configure.configure_archive_scan import configure
 from utils import utils
-from utils.scanner import archive_scan
+import utils.scanner as scanner
 
 # Silence tensorflow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -113,13 +113,21 @@ if __name__ == '__main__':
         print()
 
     # Scan
-    all_positives, performance = archive_scan(archives, params)
+    all_positives, performance = scanner.archive_scan(archives, params)
 
     # Re-write predictions files
     if params['main', 'false-positives']:
         stools.gather_false_positives(all_positives, params)
 
-    stools.finalize_predictions(all_positives, params, input_mode=input_mode)
+    all_positives, events = stools.finalize_predictions(all_positives, params, input_mode=input_mode)
+
+    advanced_search_events = None
+    if params['main', 'advanced-search']:
+        advanced_search_events = scanner.advanced_search(events, params, input_mode=input_mode)
+        stools.output_predictions(all_positives, advanced_search_events, params,
+                                  advanced_search=True, input_mode=input_mode)
+    else:
+        stools.output_predictions(all_positives, events, params, input_mode=input_mode)
 
     if params['main', 'time-batch']:
         utils.print_time_batch(performance['batch-time'])

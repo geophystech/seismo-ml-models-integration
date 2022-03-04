@@ -3,6 +3,7 @@ from obspy import read
 from time import time
 
 from ..progress_bar import ProgressBar
+from ..print_tools import plot_wave
 import utils.scan_tools as stools
 
 
@@ -27,9 +28,10 @@ def init_progress_bar(char_length=30, char_empty='.', char_fill='=', char_point=
     return progress_bar
 
 
-def archive_scan(archives, params, input_mode=False):
+def archive_scan(archives, params, input_mode=False, advanced=False):
     """
 
+    :param advanced:
     :param archives:
     :param params:
     :param input_mode:
@@ -47,7 +49,7 @@ def archive_scan(archives, params, input_mode=False):
     archives_walltime = []
     batch_time = []
 
-    all_positives = {}
+    all_positives = []
     for n_archive, d_archives in enumerate(archives):
 
         # Time tracking
@@ -75,6 +77,21 @@ def archive_scan(archives, params, input_mode=False):
         else:
             station_name = station['station']
         l_archives = d_archives['paths']
+        archive_start = d_archives['start'] if 'start' in d_archives else params['main', 'start']
+        archive_end = d_archives['end'] if 'end' in d_archives else params['main', 'end']
+
+        # Replace parameters for advanced search
+        if advanced:
+            if input_mode:
+                original_threshold = params['main', 'threshold']
+                original_shift = params['main', 'shift']
+                params['main', 'threshold'] = params['main', 'advanced-search-threshold']
+                params['main', 'shift'] = params['main', 'advanced-search-shift']
+            else:
+                original_threshold = params[station_name, 'threshold']
+                original_shift = params[station_name, 'shift']
+                params[station_name, 'threshold'] = params[station_name, 'advanced-search-threshold']
+                params[station_name, 'shift'] = params[station_name, 'advanced-search-shift']
 
         # Update progress bar parameters
         progress_bar.set_prefix_arg('archive', n_archive + 1)
@@ -85,13 +102,6 @@ def archive_scan(archives, params, input_mode=False):
         for path in l_archives:
             streams.append(read(path))
 
-        # If --plot-positives-original, save original streams
-        original_streams = None
-        if params[station_name, 'plot-positives-original']:
-            original_streams = []
-            for path in l_archives:
-                original_streams.append(read(path))
-
         # Pre-process data
         for st in streams:
             stools.pre_process_stream(st, params, station_name)
@@ -100,7 +110,7 @@ def archive_scan(archives, params, input_mode=False):
         if input_mode:
             streams = stools.trim_streams(streams, station_name)
         else:
-            streams = stools.trim_streams(streams, station_name, params['main', 'start'], params['main', 'end'])
+            streams = stools.trim_streams(streams, station_name, archive_start, archive_end)
 
         if not streams:
             if station_name:
@@ -108,8 +118,6 @@ def archive_scan(archives, params, input_mode=False):
             else:
                 print(f'\nSkipping archives: {d_archives}: no data in specified time span!', file=sys.stderr)
             continue
-        if original_streams:
-            original_streams = stools.trim_streams(original_streams, params['main', 'start'], params['main', 'end'])
 
         # Check if stream traces number is equal
         traces_groups, total_data_length = stools.combined_traces(streams, params)
@@ -128,12 +136,6 @@ def archive_scan(archives, params, input_mode=False):
         for i, traces in enumerate(traces_groups):
 
             progress_bar.set_progress(i, level='traces')
-
-            original_traces = None
-            if original_streams:
-                original_traces = traces
-                if traces[0].data.shape[0] != original_traces[0].data.shape[0]:
-                    continue
 
             # Determine batch count
             l_trace = traces[0].data.shape[0]
@@ -160,11 +162,9 @@ def archive_scan(archives, params, input_mode=False):
                 end_pos = start_pos + b_size
                 t_start = traces[0].stats.starttime
 
-                batches = [trace.slice(t_start + start_pos / freq, t_start + end_pos / freq) for trace in traces]
-                original_batches = None
-                if original_traces:
-                    original_batches = [trace.slice(t_start + start_pos / freq, t_start + end_pos / freq)
-                                        for trace in original_traces]
+                b_start = t_start + start_pos / freq
+                b_end = t_start + end_pos / freq
+                batches = [trace.slice(b_start, b_end) for trace in traces]
 
                 # Progress bar
                 s_batch_start_time = batches[0].stats.starttime.strftime("%Y-%m-%d %H:%M:%S")
@@ -180,11 +180,19 @@ def archive_scan(archives, params, input_mode=False):
                         'id': f'{s_batch_start_time} .. {s_batch_end_time}',
                     }
 
+                if params[station_name, 'plot-batches']:
+                    save_name = 'batch_'
+                    if advanced:
+                        save_name += 'advanced_'
+                    if station_name:
+                        save_name += station_name + '_'
+                    save_name += b_start.strftime("%Y-%m-%d_%H:%M:%S") + '__' + b_end.strftime("%Y-%m-%d_%H:%M:%S")
+                    plot_wave(batches, save_name)
+
                 try:
                     scores, performance_time = stools.scan_traces(*batches,
                                                                   params=params,
-                                                                  station=station_name,
-                                                                  original_data=original_batches)
+                                                                  station=station_name)
                 except ValueError:
                     scores, performance_time = None, 0
 
@@ -203,6 +211,15 @@ def archive_scan(archives, params, input_mode=False):
                 restored_scores = stools.restore_scores(scores,
                                                         (len(batches[0]), len(params['main', 'model-labels'])),
                                                         params[station_name, 'shift'])
+
+                if params[station_name, 'plot-scores']:
+                    save_name = 'scores_'
+                    if advanced:
+                        save_name += 'advanced_'
+                    if station_name:
+                        save_name += station_name + '_'
+                    save_name += b_start.strftime("%Y-%m-%d_%H:%M:%S") + '__' + b_end.strftime("%Y-%m-%d_%H:%M:%S")
+                    plot_wave(restored_scores, save_name)
 
                 # Get indexes of predicted events
                 predicted_labels = {}
@@ -253,23 +270,27 @@ def archive_scan(archives, params, input_mode=False):
                 # Save extensive station information for every detection for later output!
                 if input_mode:
                     last_saved_station = None
-                    str_archives = ';'.join(l_archives)
-                    if str_archives not in all_positives:
-                        all_positives[str_archives] = []
-
-                    for x in detected_peaks:
-                        x['input'] = str_archives
-
-                    all_positives[str_archives].extend(detected_peaks)
                 else:
                     last_saved_station = station_name
-                    if station_name not in all_positives:
-                        all_positives[station_name] = []
 
+                if input_mode:
+                    for x in detected_peaks:
+                        x['input'] = l_archives
+                else:
                     for x in detected_peaks:
                         x['station'] = station
+                        x['input'] = l_archives
 
-                    all_positives[station_name].extend(detected_peaks)
+                all_positives.extend(detected_peaks)
+
+        # Return original parameter values after advanced search
+        if advanced:
+            if input_mode:
+                params['main', 'threshold'] = original_threshold
+                params['main', 'shift'] = original_shift
+            else:
+                params[station_name, 'threshold'] = original_threshold
+                params[station_name, 'shift'] = original_shift
 
         if params['main', 'time-archive']:
             archives_time.append(current_archive_time)
@@ -286,3 +307,42 @@ def archive_scan(archives, params, input_mode=False):
         'batch-time': batch_time,
     }
     return all_positives, performance
+
+
+def advanced_search(events, params, input_mode=False):
+    # Generate list of archives/timespans to search
+    advanced_search_list = []
+    search_range = int(params['main', 'advanced-search-range'])
+    for event in events:
+        dt = event['datetime']
+        unique_archives = []
+        search_list = []
+        for detection in event['detections']:
+            if detection['input'] not in unique_archives:
+                unique_archives.append(detection['input'])
+                search_list.append({
+                    'paths': detection['input'],
+                    'station': detection['station'],
+                    'start': dt - search_range,
+                    'end': dt + search_range,
+                })
+        advanced_search_list.append({
+            'datetime': dt,
+            'search_list': search_list
+        })
+
+    # Advanced search
+    advanced_events = []
+    for search_item in advanced_search_list:
+        archives = search_item['search_list']
+        dt = search_item['datetime']
+        print(f'\nPerforming advanced search for event at {dt.strftime("%Y-%m-%d %H:%M:%S")}..')
+        all_positives, performance = archive_scan(archives, params, input_mode=input_mode, advanced=True)
+        advanced_events.extend(all_positives)
+
+    if params['main', 'advanced-search-combine']:
+        advanced_events = stools.combine_detections_single_event(advanced_events)
+    else:
+        advanced_events = stools.combine_detections(advanced_events, params, input_mode=input_mode)
+
+    return advanced_events
