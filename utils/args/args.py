@@ -14,7 +14,7 @@ def get_unsupported_station_parameters_list():
         # Environment
         'input', 'seisan', 'mulplt-def', 'archives', 'database', 'rea', 'wav',
         # Advanced search
-        'advanced-search', 'advanced-search-range', 'advanced-search-combine'
+        'advanced-search', 'advanced-search-range', 'advanced-search-combine', 'advanced-search-all-stations'
     ]
 
 
@@ -68,6 +68,7 @@ def defaults():
             'advanced-search-threshold': 0.9,
             'advanced-search-shift': 2,
             'advanced-search-combine': False,
+            'advanced-search-all-stations': False,
             'plot-batches': False,
             'plot-scores': False,
         },
