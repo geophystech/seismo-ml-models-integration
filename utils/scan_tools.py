@@ -751,11 +751,11 @@ def print_final_predictions(detections, events, params, advanced_search=False, u
     Group of positives is a list of positive predictions. Each prediction is a dictionary of fields,
     describing the prediction (datetime, station, etc.).
     """
-    def detections_count_getter(x):
-        return len(x['detections'])
+    def detections_datetime_getter(x):
+        return x['datetime']
 
-    detections.sort(key=detections_count_getter, reverse=True)
-    events.sort(key=detections_count_getter, reverse=True)
+    detections.sort(key=detections_datetime_getter)
+    events.sort(key=detections_datetime_getter)
 
     detections = split_all_events_by_filename(detections, params)
     events = split_all_events_by_filename(events, params)
