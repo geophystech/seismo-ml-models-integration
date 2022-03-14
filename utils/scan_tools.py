@@ -485,11 +485,12 @@ def print_results(_detected_peaks, params, station, upper_case=True, last_statio
             f.write(line)
 
 
-def combine_detections_single_event(detections, input_sorted=False):
+def combine_detections_single_event(detections, input_sorted=False, original_detections_count=None):
     """
     Combines detections into a single event. Events datetime will be a timestamp of a central detection.
     :param detections:
     :param input_sorted:
+    :param original_detections_count
     :return:
     """
     if not input_sorted:
@@ -500,10 +501,13 @@ def combine_detections_single_event(detections, input_sorted=False):
     if len(detections) == 0:
         return []
     if len(detections) == 1:
-        return [{
+        event = [{
             'detections': detections,
             'datetime': detections[0]['datetime']
         }]
+        if original_detections_count is not None:
+            event[0]['original_detections_count'] = original_detections_count
+        return event
 
     start_dt = detections[0]['datetime']
     end_dt = detections[-1]['datetime']
@@ -519,10 +523,13 @@ def combine_detections_single_event(detections, input_sorted=False):
         closest_diff = current_diff
         closest_id = i
 
-    return [{
+    event = [{
         'detections': detections,
         'datetime': detections[closest_id]['datetime']
     }]
+    if original_detections_count is not None:
+        event[0]['original_detections_count'] = original_detections_count
+    return event
 
 
 def combine_detections(detections, params, input_mode,
@@ -679,7 +686,7 @@ def split_event_by_filename(event, params, keep_all_fields=False):
 
 
 def print_predictions(filename_groups, params, file_start_tag=None, append_to_files=None,
-                      input_mode=False, upper_case=False):
+                      input_mode=False, upper_case=False, advanced_print=False):
     """
     Prints events combined by output filename (dictionary: {filename: [list_of_events], ...})
         returns list of filenames to which output was performed.
@@ -689,6 +696,7 @@ def print_predictions(filename_groups, params, file_start_tag=None, append_to_fi
     :param append_to_files:
     :param input_mode:
     :param upper_case:
+    :param advanced_print
     :return: list of output filenames
     """
     if not append_to_files:
@@ -718,6 +726,10 @@ def print_predictions(filename_groups, params, file_start_tag=None, append_to_fi
                 else:
                     f.write(f'\n[{s_datetime}]\n')
 
+                if advanced_print and 'original_count' in event:
+                    f.write(f'>>Detections BEFORE advanced search: {event["original_count"]}\n')
+                    f.write(f'>>Detections AFTER advanced search: {len(event["detections"])}\n')
+
                 for record in event['detections']:
                     if input_mode:
                         station = record['input']
@@ -740,6 +752,7 @@ def print_predictions(filename_groups, params, file_start_tag=None, append_to_fi
                     # Write
                     f.write(line)
             f.write('\n')
+
     return file_was_opened
 
 
@@ -757,18 +770,22 @@ def print_final_predictions(detections, events, params, advanced_search=False, u
     detections.sort(key=detections_datetime_getter)
     events.sort(key=detections_datetime_getter)
 
+    # Debug info
     detections = split_all_events_by_filename(detections, params)
     events = split_all_events_by_filename(events, params)
 
     if advanced_search:
         events_start_str = '***ADVANCED SEARCH***\n\n'
+        advanced_print = True
     else:
         events_start_str = '***EVENTS***\n\n'
+        advanced_print = False
 
     # Print events
     append_to_files = print_predictions(events, params,
                                         file_start_tag=events_start_str,
-                                        input_mode=input_mode, upper_case=upper_case)
+                                        input_mode=input_mode, upper_case=upper_case,
+                                        advanced_print=advanced_print)
     # Print the rest of non-combined detections
     print_predictions(detections, params,
                       file_start_tag='\n***OTHER DETECTIONS***\n\n', append_to_files=append_to_files,

@@ -9,7 +9,6 @@ import utils.seisan as seisan
 
 
 def init_progress_bar(char_length=30, char_empty='.', char_fill='=', char_point='>', use_station=False):
-
     progress_bar = ProgressBar()
 
     progress_bar.set_length(char_length)
@@ -335,6 +334,7 @@ def advanced_search(events, params, input_mode=False):
     else:
         for event in events:
             dt = event['datetime']
+            detections_count = len(event['detections'])
             start = dt - search_range
             end = dt + search_range
             unique_archives = []
@@ -350,7 +350,8 @@ def advanced_search(events, params, input_mode=False):
                     })
             advanced_search_list.append({
                 'datetime': dt,
-                'search_list': search_list
+                'search_list': search_list,
+                'original_detections_count': detections_count,
             })
 
     # Advanced search
@@ -360,11 +361,14 @@ def advanced_search(events, params, input_mode=False):
         dt = search_item['datetime']
         print(f'\nPerforming advanced search for event at {dt.strftime("%Y-%m-%d %H:%M:%S")}..')
         all_positives, performance = archive_scan(archives, params, input_mode=input_mode, advanced=True)
-        advanced_events.extend(all_positives)
 
-    if params['main', 'advanced-search-combine']:
-        advanced_events = stools.combine_detections_single_event(advanced_events)
-    else:
-        advanced_events = stools.combine_detections(advanced_events, params, input_mode=input_mode)
+        if params['main', 'advanced-search-combine']:
+            current_advanced_events = stools.combine_detections_single_event(all_positives,
+                                                                             original_detections_count=search_item[
+                                                                                 'original_detections_count'])
+        else:
+            current_advanced_events = stools.combine_detections(all_positives, params, input_mode=input_mode)
+
+        advanced_events.extend(current_advanced_events)
 
     return advanced_events
