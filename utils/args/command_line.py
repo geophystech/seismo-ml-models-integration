@@ -116,13 +116,13 @@ def archive_scan_args():
     parser.add_argument('--false-positives-range',
                         help='How close detection needs to be to a real event (in seconds) in order to count as '
                              'true positive, default: 10.0 seconds',
-                        default=10.0, type=float)
+                        type=float)
     parser.add_argument('--false-positives-length',
                         help='Length of false positive picks in seconds, default: 8.0',
-                        default=4.0, type=float)
+                        type=float)
     parser.add_argument('--false-positives-frequency',
                         help='To which frequency (in Hz) all false positives should be transformed, default: 100',
-                        default=100, type=int)
+                        type=int)
     parser.add_argument('--advanced-search',
                         help='Activate advanced search (performs an additional search around detected events, '
                              'see --combine-events-range), default: False',
