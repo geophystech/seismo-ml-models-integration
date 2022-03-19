@@ -726,8 +726,8 @@ def print_predictions(filename_groups, params, file_start_tag=None, append_to_fi
                 else:
                     f.write(f'\n[{s_datetime}]\n')
 
-                if advanced_print and 'original_count' in event:
-                    f.write(f'>>Detections BEFORE advanced search: {event["original_count"]}\n')
+                if advanced_print and 'original_detections_count' in event:
+                    f.write(f'>>Detections BEFORE advanced search: {event["original_detections_count"]}\n')
                     f.write(f'>>Detections AFTER advanced search: {len(event["detections"])}\n')
 
                 for record in event['detections']:
@@ -770,9 +770,8 @@ def print_final_predictions(detections, events, params, advanced_search=False, u
     detections.sort(key=detections_datetime_getter)
     events.sort(key=detections_datetime_getter)
 
-    # Debug info
     detections = split_all_events_by_filename(detections, params)
-    events = split_all_events_by_filename(events, params)
+    events = split_all_events_by_filename(events, params, keep_all_fields=True)
 
     if advanced_search:
         events_start_str = '***ADVANCED SEARCH***\n\n'

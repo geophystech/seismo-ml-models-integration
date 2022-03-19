@@ -316,6 +316,7 @@ def advanced_search(events, params, input_mode=False):
     if params['main', 'advanced-search-all-stations']:
         for event in events:
             dt = event['datetime']
+            detections_count = len(event['detections'])
             start = dt - search_range
             end = dt + search_range
             archives = seisan.get_archives_advanced(dt, params)
@@ -329,7 +330,8 @@ def advanced_search(events, params, input_mode=False):
                 })
             advanced_search_list.append({
                 'datetime': dt,
-                'search_list': search_list
+                'search_list': search_list,
+                'original_detections_count': detections_count,
             })
     else:
         for event in events:
@@ -364,8 +366,8 @@ def advanced_search(events, params, input_mode=False):
 
         if params['main', 'advanced-search-combine']:
             current_advanced_events = stools.combine_detections_single_event(all_positives,
-                                                                             original_detections_count=search_item[
-                                                                                 'original_detections_count'])
+                                                                             original_detections_count=
+                                                                             search_item['original_detections_count'])
         else:
             current_advanced_events = stools.combine_detections(all_positives, params, input_mode=input_mode)
 
