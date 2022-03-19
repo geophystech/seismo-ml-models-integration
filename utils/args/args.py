@@ -79,6 +79,21 @@ def defaults():
     return defs
 
 
+def pre_defaults_processing(params):
+    """
+    Process arguments before applying default values. Applying default values erases information about
+    unset parameters.
+    """
+    # Activate advanced-search if necessary
+    if not params['main', 'advanced-search']:
+        if params['main', 'advanced-search-range'] \
+                or params['main', 'advanced-search-threshold']\
+                or params['main', 'advanced-search-shift']\
+                or params['main', 'advanced-search-combine']\
+                or params['main', 'advanced-search-all-stations']:
+            params['main', 'advanced-search'] = True
+
+
 def archive_scan():
 
     # Command line arguments parsing
@@ -92,6 +107,9 @@ def archive_scan():
     # Parse environment variables
     from .env import archive_scan as env_params
     env_params(params)
+
+    # Pre-defaults processing
+    pre_defaults_processing(params)
 
     # Apply default values
     d_defaults = defaults()
