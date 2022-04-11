@@ -171,6 +171,30 @@ def get_archives(seisan, mulplt, archives, params):
     return archives_paths
 
 
+def get_archives_advanced(date, params):
+    """
+    Returns list of archives (same as get_archives), but assumes, that params['main', 'stations'] already
+    set as list of stations, and returns archives only for a single date.
+    :param date:
+    :param params:
+    :return:
+    """
+    paths = [archive_to_path(group, date, params['main', 'archives']) for group in params['main', 'stations']]
+
+    # Order channels and convert them into nested lists
+    archives_paths = []
+    for group in paths:
+        l_ordered = order_group(group['paths'], params[group['station']['station'], 'channel-order'])
+        if not l_ordered:
+            continue
+        archives_paths.append({
+            'paths': l_ordered,
+            'station': group['station']
+        })
+
+    return archives_paths
+
+
 def parse_multplt(path):
     """
     Parses multplt.def file and returns list of lists like: [station, channel type (e.g. SH), channel (E, N or Z)].
@@ -859,10 +883,10 @@ def generate_events(events, params):
     Generates s-files for detections.
     """
     groups_counter = 0
-    for filename, groups in events.items():
-        for group, datetime in groups:
-            if len(group) >= params['main', 'detections-for-event']:
-                groups_counter += 1
+    for event in events:
+        group = event['detections']
+        if len(group) >= params['main', 'detections-for-event']:
+            groups_counter += 1
 
     print(f'\n\nPotential events detected: {groups_counter}')
 
@@ -888,38 +912,39 @@ def generate_events(events, params):
     l_s_files = []
     l_waveforms = []
     saved_events = []
-    for filename, groups in events.items():
-        for group, datetime in groups:
-            if len(group) >= params['main', 'detections-for-event']:
+    for event in events:
+        datetime = event['datetime']
+        group = event['detections']
+        if len(group) >= params['main', 'detections-for-event']:
 
-                c_saved_event = {}
+            c_saved_event = {}
 
-                # Waveforms file generation
-                if params['main', 'generate-s-files'] == 'ask each':
-                    question = f'Do you want to generate s-file for potential event: ' \
-                               f'{datetime.strftime("%Y%m%d%H%M%S")} ({len(group)} positives)?'
-                    b_events_generation = ask_yes_no(question)
-                if params['main', 'generate-waveforms'] == 'ask each':
-                    question = f'Do you want to extract waveforms for potential event: ' \
-                               f'{datetime.strftime("%Y%m%d%H%M%S")} ({len(group)} positives)?'
-                    b_waveforms_generation = ask_yes_no(question)
+            # Waveforms file generation
+            if params['main', 'generate-s-files'] == 'ask each':
+                question = f'Do you want to generate s-file for potential event: ' \
+                           f'{datetime.strftime("%Y%m%d%H%M%S")} ({len(group)} positives)?'
+                b_events_generation = ask_yes_no(question)
+            if params['main', 'generate-waveforms'] == 'ask each':
+                question = f'Do you want to extract waveforms for potential event: ' \
+                           f'{datetime.strftime("%Y%m%d%H%M%S")} ({len(group)} positives)?'
+                b_waveforms_generation = ask_yes_no(question)
 
-                waveforms_name = None
-                if b_waveforms_generation:
-                    if params['main', 'detection-stations']:
-                        stations_list = detection_station_list(group, params)
-                    waveforms_name = slice_event_waveforms(group, datetime, params, stations_list)
+            waveforms_name = None
+            if b_waveforms_generation:
+                if params['main', 'detection-stations']:
+                    stations_list = detection_station_list(group, params)
+                waveforms_name = slice_event_waveforms(group, datetime, params, stations_list)
 
-                if waveforms_name:
-                    l_waveforms.append(waveforms_name)
-                    c_saved_event['waveform'] = waveforms_name
+            if waveforms_name:
+                l_waveforms.append(waveforms_name)
+                c_saved_event['waveform'] = waveforms_name
 
-                if b_events_generation:
-                    s_name = generate_event(group, datetime, params, waveforms_name)
-                    l_s_files.append(s_name)
-                    c_saved_event['s-file'] = s_name
-                    c_saved_event['datetime'] = datetime
-                    saved_events.append(c_saved_event)
+            if b_events_generation:
+                s_name = generate_event(group, datetime, params, waveforms_name)
+                l_s_files.append(s_name)
+                c_saved_event['s-file'] = s_name
+                c_saved_event['datetime'] = datetime
+                saved_events.append(c_saved_event)
 
     print('\nGenerated s-files:')
     for x in l_s_files:

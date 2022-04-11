@@ -10,9 +10,11 @@ def get_unsupported_station_parameters_list():
         # Info output and computation restriction
         'time', 'cpu', 'print-files', 'generate-waveforms', 'wavetool-waveforms', 'register-events',
         'detection-stations', 'waveform-duration', 'generate-s-files', 'silence-wavetool',
-        'use-default-database',
+        'use-default-database', 'plot-batches', 'plot-scores'
         # Environment
         'input', 'seisan', 'mulplt-def', 'archives', 'database', 'rea', 'wav',
+        # Advanced search
+        'advanced-search', 'advanced-search-range', 'advanced-search-combine', 'advanced-search-all-stations'
     ]
 
 
@@ -32,7 +34,7 @@ def defaults():
             'loader_argv': '',
             'out': 'predictions.txt',
             'threshold': 0.95,
-            'batch-size': 150,
+            'batch-size': 200,
             'trace-size': 600,
             'shift': 10,
             'frequency': 100.,
@@ -41,8 +43,6 @@ def defaults():
             'no-filter': False,
             'no-detrend': False,
             'silence-wavetool': False,
-            'plot-positives': False,
-            'plot-positives-original': False,
             'print-scores': False,
             'print-precision': 4,
             'combine-events-range': 30.,
@@ -63,9 +63,35 @@ def defaults():
             'channel-order': 'N,E,Z;1,2,Z;Z,Z,Z',
             'combine-traces-min-length-difference-error': 3,
             'false-positives': None,
+            'false-positives-range': 10.,
+            'false-positives-length': 4.,
+            'false-positives-frequency': 100,
+            'advanced-search': False,
+            'advanced-search-range': 30.,
+            'advanced-search-threshold': 0.9,
+            'advanced-search-shift': 2,
+            'advanced-search-combine': False,
+            'advanced-search-all-stations': False,
+            'plot-batches': False,
+            'plot-scores': False,
         },
     }
     return defs
+
+
+def pre_defaults_processing(params):
+    """
+    Process arguments before applying default values. Applying default values erases information about
+    unset parameters.
+    """
+    # Activate advanced-search if necessary
+    if not params['main', 'advanced-search']:
+        if params['main', 'advanced-search-range'] \
+                or params['main', 'advanced-search-threshold']\
+                or params['main', 'advanced-search-shift']\
+                or params['main', 'advanced-search-combine']\
+                or params['main', 'advanced-search-all-stations']:
+            params['main', 'advanced-search'] = True
 
 
 def archive_scan():
@@ -81,6 +107,9 @@ def archive_scan():
     # Parse environment variables
     from .env import archive_scan as env_params
     env_params(params)
+
+    # Pre-defaults processing
+    pre_defaults_processing(params)
 
     # Apply default values
     d_defaults = defaults()
